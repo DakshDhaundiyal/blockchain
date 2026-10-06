@@ -510,7 +510,7 @@ footer          { flex-shrink: 0; }
 
 /* ─── HOW IT WORKS ──────────────────────────────────────── */
 .hiw-section {
-  margin: 0 0 56px;
+  margin-bottom: 56px;
 }
 
 .section-label {
