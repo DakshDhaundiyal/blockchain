@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+
+{% block title %}Logistics & Transport Portal - TrustHarvest{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="fw-bold mb-1"><i class="bi bi-truck text-primary me-2"></i>Logistics & Transport Management</h2>
+        <p class="text-muted mb-0">Record cold chain telemetry, update shipment location, and track custody handover.</p>
+    </div>
+    <span class="badge bg-primary py-2 px-3"><i class="bi bi-person-badge me-1"></i> Transporter: {{ session.get('username') }}</span>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-5">
+        <div class="card card-custom shadow-sm">
+            <div class="card-header card-header-ag">
+                <h5 class="mb-0 fw-bold"><i class="bi bi-geo-alt-fill me-2"></i>Log Transport Checkpoint</h5>
+            </div>
+            <div class="card-body p-4">
+                <form method="POST" action="{{ url_for('add_transport_data') }}">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Select Harvest Batch</label>
+                        <select name="product_id" class="form-select" required>
+                            <option value="" disabled selected>-- Select Batch to Update --</option>
+                            {% for p in products %}
+                            <option value="{{ p.id }}">
+                                {{ p.batch_id }} - {{ p.name }} (Current: {{ p.status }})
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Logistics Status</label>
+                        <select name="status" class="form-select" required>
+                            <option value="Picked Up from Farm">Picked Up from Farm</option>
+                            <option value="In Transit (Cold-Storage)">In Transit (Cold-Storage)</option>
+                            <option value="Cross-Dock Hub Inspected">Cross-Dock Hub Inspected</option>
+                            <option value="Customs / Ag Inspection Cleared">Customs / Ag Inspection Cleared</option>
+                            <option value="Delivered to Distribution Center">Delivered to Distribution Center</option>
+                            <option value="Delivered to Retailer">Delivered to Retailer</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Current Location / Facility</label>
+                        <input type="text" name="current_location" class="form-control" placeholder="e.g. Interstate 90 East, Mile 142 or Spokane Depot" required>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <label class="form-label fw-semibold">Temperature</label>
+                            <input type="text" name="temperature" class="form-control" placeholder="e.g. 3.5 °C" value="4.0 °C">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label fw-semibold">Vehicle / Fleet ID</label>
+                            <input type="text" name="vehicle_number" class="form-control" placeholder="e.g. TRK-7842" required>
+                        </div>
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold">Condition Notes</label>
+                        <textarea name="notes" class="form-control" rows="2" placeholder="Cold storage intact, packaging inspected..."></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100 py-2 fw-bold">
+                        <i class="bi bi-save me-1"></i> Update Shipment Status
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-7">
+        <div class="card card-custom shadow-sm">
+            <div class="card-header card-header-ag d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 fw-bold"><i class="bi bi-clock-history me-2"></i>Recent Transport Checkpoints</h5>
+                <span class="badge bg-secondary">{{ transport_entries|length }} Updates</span>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Batch ID</th>
+                                <th>Status</th>
+                                <th>Location & Temp</th>
+                                <th>Vehicle & Time</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for t in transport_entries %}
+                            <tr>
+                                <td class="fw-bold font-monospace text-success">{{ t.product.batch_id }}</td>
+                                <td><span class="badge bg-primary text-white">{{ t.status }}</span></td>
+                                <td>
+                                    <div>{{ t.current_location }}</div>
+                                    <small class="badge bg-info-subtle text-info-emphasis border">{{ t.temperature or 'N/A' }}</small>
+                                </td>
+                                <td>
+                                    <div class="small fw-semibold">{{ t.vehicle_number or 'Unspecified' }}</div>
+                                    <div class="text-muted smaller">{{ t.timestamp.strftime('%Y-%m-%d %H:%M') if t.timestamp else '' }}</div>
+                                </td>
+                                <td>
+                                    <a href="{{ url_for('verify_batch', batch_id=t.product.batch_id) }}" class="btn btn-sm btn-outline-success">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="5" class="text-center py-5 text-muted">
+                                    <i class="bi bi-truck fs-1 d-block mb-2"></i>
+                                    No transit checkpoint updates logged yet.
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

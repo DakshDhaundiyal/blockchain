@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% block title %}Register - TrustHarvest{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center py-4">
+    <div class="col-md-6">
+        <div class="card card-custom shadow">
+            <div class="card-header card-header-ag text-center py-3">
+                <h4 class="mb-0 fw-bold"><i class="bi bi-person-plus me-2"></i>Create Stakeholder Account</h4>
+            </div>
+            <div class="card-body p-4">
+                <form method="POST" action="{{ url_for('register') }}">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Role in Supply Chain</label>
+                        <select name="role" class="form-select" required>
+                            <option value="" disabled selected>-- Select Your Role --</option>
+                            <option value="farmer">Farmer (Producer)</option>
+                            <option value="transporter">Transporter (Logistics)</option>
+                            <option value="retailer">Retailer (Distributor / Store)</option>
+                            <option value="customer">Customer (Consumer)</option>
+                        </select>
+                        <div class="form-text">Choose your designated function in the food supply network.</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Username</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-person"></i></span>
+                            <input type="text" name="username" class="form-control" placeholder="Unique username" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Full Name / Organization</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-building"></i></span>
+                            <input type="text" name="full_name" class="form-control" placeholder="e.g. Green Valley Farm or John Doe" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Contact / Phone / Location</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-geo-alt"></i></span>
+                            <input type="text" name="contact" class="form-control" placeholder="Contact number or location" required>
+                        </div>
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold">Password</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-key"></i></span>
+                            <input type="password" name="password" class="form-control" placeholder="Choose a secure password" required minlength="4">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-ag-primary w-100 py-2 fw-bold">Complete Registration</button>
+                </form>
+
+                <div class="mt-4 pt-3 border-top text-center">
+                    <small class="text-muted">Already registered? <a href="{{ url_for('login') }}" class="text-success fw-bold">Sign in here</a></small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

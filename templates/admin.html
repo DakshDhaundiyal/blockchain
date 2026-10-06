@@ -1,0 +1,262 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Analytics & Management - TrustHarvest{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="fw-bold mb-1"><i class="bi bi-speedometer2 text-danger me-2"></i>Executive Supply Chain Admin</h2>
+        <p class="text-muted mb-0">Platform oversight, smart contract audit records, user management & real-time analytics.</p>
+    </div>
+    <span class="badge bg-danger py-2 px-3"><i class="bi bi-shield-lock me-1"></i> System Administrator</span>
+</div>
+
+<!-- Key Performance Indicators -->
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="card card-custom p-3 stat-card shadow-sm h-100">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <span class="text-muted small fw-semibold">TOTAL USERS</span>
+                    <h3 class="fw-bold mb-0 mt-1">{{ total_users }}</h3>
+                </div>
+                <div class="bg-primary bg-opacity-10 text-primary p-3 rounded-circle"><i class="bi bi-people fs-4"></i></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card card-custom p-3 stat-card shadow-sm h-100">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <span class="text-muted small fw-semibold">ACTIVE BATCHES</span>
+                    <h3 class="fw-bold mb-0 mt-1">{{ total_products }}</h3>
+                </div>
+                <div class="bg-success bg-opacity-10 text-success p-3 rounded-circle"><i class="bi bi-box-seam fs-4"></i></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card card-custom p-3 stat-card shadow-sm h-100">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <span class="text-muted small fw-semibold">TRANSIT LOGS</span>
+                    <h3 class="fw-bold mb-0 mt-1">{{ total_transports }}</h3>
+                </div>
+                <div class="bg-warning bg-opacity-10 text-warning p-3 rounded-circle"><i class="bi bi-truck fs-4"></i></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card card-custom p-3 stat-card shadow-sm h-100">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <span class="text-muted small fw-semibold">CUSTOMER REVIEWS</span>
+                    <h3 class="fw-bold mb-0 mt-1">{{ total_feedback }}</h3>
+                </div>
+                <div class="bg-info bg-opacity-10 text-info p-3 rounded-circle"><i class="bi bi-star-fill fs-4"></i></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Chart.js Analytics Section -->
+<div class="row g-4 mb-4">
+    <div class="col-lg-4">
+        <div class="card card-custom shadow-sm h-100">
+            <div class="card-header card-header-ag">
+                <h6 class="mb-0 fw-bold"><i class="bi bi-bar-chart-line me-2"></i>Batches Per Farmer</h6>
+            </div>
+            <div class="card-body">
+                <canvas id="farmerChart" height="220"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card card-custom shadow-sm h-100">
+            <div class="card-header card-header-ag">
+                <h6 class="mb-0 fw-bold"><i class="bi bi-pie-chart me-2"></i>Supply Chain Status Distribution</h6>
+            </div>
+            <div class="card-body">
+                <canvas id="statusChart" height="220"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card card-custom shadow-sm h-100">
+            <div class="card-header card-header-ag">
+                <h6 class="mb-0 fw-bold"><i class="bi bi-star-half me-2"></i>Customer Rating Feedback</h6>
+            </div>
+            <div class="card-body">
+                <canvas id="ratingChart" height="220"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- User Management Table -->
+<div class="card card-custom shadow-sm mb-4">
+    <div class="card-header card-header-ag d-flex justify-content-between align-items-center">
+        <h5 class="mb-0 fw-bold"><i class="bi bi-person-gear me-2"></i>User & Stakeholder Directory</h5>
+        <span class="badge bg-secondary">{{ users|length }} Accounts</span>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>ID</th>
+                        <th>Username</th>
+                        <th>Full Name / Org</th>
+                        <th>Role</th>
+                        <th>Contact</th>
+                        <th>Created</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for u in users %}
+                    <tr>
+                        <td>{{ u.id }}</td>
+                        <td class="fw-bold">{{ u.username }}</td>
+                        <td>{{ u.full_name or '-' }}</td>
+                        <td>
+                            {% if u.role == 'admin' %}
+                                <span class="badge bg-danger">Admin</span>
+                            {% elif u.role == 'farmer' %}
+                                <span class="badge bg-success">Farmer</span>
+                            {% elif u.role == 'transporter' %}
+                                <span class="badge bg-primary">Transporter</span>
+                            {% elif u.role == 'retailer' %}
+                                <span class="badge bg-warning text-dark">Retailer</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Customer</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ u.contact or '-' }}</td>
+                        <td>{{ u.created_at.strftime('%Y-%m-%d') if u.created_at else '-' }}</td>
+                        <td>
+                            {% if u.id != session.get('user_id') %}
+                            <form action="{{ url_for('delete_user', user_id=u.id) }}" method="POST" onsubmit="return confirm('Delete this user?');" class="d-inline">
+                                <button type="submit" class="btn btn-sm btn-outline-danger py-0 px-2">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </form>
+                            {% else %}
+                            <span class="text-muted small">Current User</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Products and Traceability Monitoring Table -->
+<div class="card card-custom shadow-sm mb-4">
+    <div class="card-header card-header-ag d-flex justify-content-between align-items-center">
+        <h5 class="mb-0 fw-bold"><i class="bi bi-diagram-3 me-2"></i>All Supply Chain Products & On-Chain Audit</h5>
+        <span class="badge bg-secondary">{{ products|length }} Batches</span>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Batch ID</th>
+                        <th>Produce</th>
+                        <th>Farmer</th>
+                        <th>Status</th>
+                        <th>On-Chain Hash</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in products %}
+                    <tr>
+                        <td class="fw-bold font-monospace text-success">{{ p.batch_id }}</td>
+                        <td>{{ p.name }}</td>
+                        <td>{{ p.farmer.username }}</td>
+                        <td><span class="badge bg-info text-dark">{{ p.status }}</span></td>
+                        <td>
+                            <div class="font-monospace small text-truncate" style="max-width: 220px;" title="{{ p.on_chain_hash }}">
+                                {{ p.on_chain_hash }}
+                            </div>
+                        </td>
+                        <td>
+                            <a href="{{ url_for('verify_batch', batch_id=p.batch_id) }}" class="btn btn-sm btn-ag-primary">
+                                <i class="bi bi-shield-check me-1"></i> Verify
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    // 1. Farmer Chart
+    const farmerData = {{ farmer_chart_data | tojson }};
+    new Chart(document.getElementById('farmerChart'), {
+        type: 'bar',
+        data: {
+            labels: farmerData.labels,
+            datasets: [{
+                label: 'Batches Harvested',
+                data: farmerData.counts,
+                backgroundColor: '#2d6a4f'
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+        }
+    });
+
+    // 2. Status Distribution Chart
+    const statusData = {{ status_chart_data | tojson }};
+    new Chart(document.getElementById('statusChart'), {
+        type: 'doughnut',
+        data: {
+            labels: statusData.labels,
+            datasets: [{
+                data: statusData.counts,
+                backgroundColor: ['#40916c', '#0d6efd', '#ffc107', '#198754', '#6c757d']
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { position: 'bottom' }
+            }
+        }
+    });
+
+    // 3. Feedback Rating Chart
+    const ratingData = {{ rating_chart_data | tojson }};
+    new Chart(document.getElementById('ratingChart'), {
+        type: 'bar',
+        data: {
+            labels: ['1 Star', '2 Stars', '3 Stars', '4 Stars', '5 Stars'],
+            datasets: [{
+                label: 'Feedback Count',
+                data: ratingData,
+                backgroundColor: '#8d5b4c'
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+        }
+    });
+});
+</script>
+{% endblock %}

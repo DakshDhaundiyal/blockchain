@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+
+{% block title %}Farmer Portal - TrustHarvest{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="fw-bold mb-1"><i class="bi bi-flower1 text-success me-2"></i>Farmer Management Portal</h2>
+        <p class="text-muted mb-0">Register fresh harvest batches, timestamp on Ethereum, and generate tamper-proof QR codes.</p>
+    </div>
+    <span class="badge bg-success py-2 px-3"><i class="bi bi-person-badge me-1"></i> Farmer: {{ session.get('username') }}</span>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-5">
+        <div class="card card-custom shadow-sm h-100">
+            <div class="card-header card-header-ag">
+                <h5 class="mb-0 fw-bold"><i class="bi bi-plus-circle me-2"></i>Register New Harvest Batch</h5>
+            </div>
+            <div class="card-body p-4">
+                <form method="POST" action="{{ url_for('add_product') }}" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Product Name</label>
+                        <input type="text" name="name" class="form-control" placeholder="e.g. Organic Honeycrisp Apples" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Quantity / Weight</label>
+                        <input type="text" name="quantity" class="form-control" placeholder="e.g. 500 kg or 250 boxes" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Farming Method</label>
+                        <select name="farming_method" class="form-select" required>
+                            <option value="100% Certified Organic">100% Certified Organic</option>
+                            <option value="Hydroponic Controlled">Hydroponic Controlled</option>
+                            <option value="Regenerative Agriculture">Regenerative Agriculture</option>
+                            <option value="Traditional Natural">Traditional Natural</option>
+                            <option value="Greenhouse Solar">Greenhouse Solar</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Packaging Date</label>
+                        <input type="date" name="packaging_date" class="form-control" required value="{{ today_str }}">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Farm Location / Region</label>
+                        <input type="text" name="farm_location" class="form-control" placeholder="e.g. Yakima Valley, Washington" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Certifications</label>
+                        <input type="text" name="certifications" class="form-control" placeholder="e.g. USDA Organic, Non-GMO Verified" value="USDA Organic Certified">
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold">Product Photo</label>
+                        <input type="file" name="image" class="form-control" accept="image/*">
+                        <div class="form-text">Optional photo; default produce visual used if omitted.</div>
+                    </div>
+                    <button type="submit" class="btn btn-ag-primary w-100 py-2 fw-bold">
+                        <i class="bi bi-shield-lock me-1"></i> Seal & Store on Blockchain
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-7">
+        <div class="card card-custom shadow-sm h-100">
+            <div class="card-header card-header-ag d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 fw-bold"><i class="bi bi-collection me-2"></i>My Registered Harvest Batches</h5>
+                <span class="badge bg-secondary">{{ products|length }} Total</span>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Batch ID & Produce</th>
+                                <th>Quantity & Method</th>
+                                <th>QR Code</th>
+                                <th>Blockchain Hash</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for p in products %}
+                            <tr>
+                                <td>
+                                    <div class="fw-bold font-monospace text-success">{{ p.batch_id }}</div>
+                                    <div class="small fw-semibold">{{ p.name }}</div>
+                                    <div class="text-muted smaller">Packed: {{ p.packaging_date }}</div>
+                                </td>
+                                <td>
+                                    <div>{{ p.quantity }}</div>
+                                    <span class="badge bg-light text-dark border">{{ p.farming_method }}</span>
+                                </td>
+                                <td>
+                                    {% if p.qr_code %}
+                                    <a href="{{ url_for('static', filename='qr/' + p.qr_code) }}" target="_blank">
+                                        <img src="{{ url_for('static', filename='qr/' + p.qr_code) }}" alt="QR" width="55" height="55" class="border rounded shadow-sm p-1">
+                                    </a>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="font-monospace small text-truncate" style="max-width: 140px;" title="{{ p.on_chain_hash }}">
+                                        {{ p.on_chain_hash }}
+                                    </div>
+                                    <span class="badge bg-success-subtle text-success border border-success-subtle">
+                                        <i class="bi bi-check2-circle"></i> On-Chain
+                                    </span>
+                                </td>
+                                <td>
+                                    <a href="{{ url_for('verify_batch', batch_id=p.batch_id) }}" class="btn btn-sm btn-outline-success">
+                                        <i class="bi bi-eye"></i> Verify
+                                    </a>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="5" class="text-center py-5 text-muted">
+                                    <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                                    No harvest batches created yet. Use the form on the left to register your first crop!
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

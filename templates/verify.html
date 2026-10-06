@@ -1,0 +1,282 @@
+{% extends "base.html" %}
+
+{% block title %}Verification: {{ product.batch_id }} - TrustHarvest{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <a href="{{ url_for('customer_dashboard') }}" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left me-1"></i> Back to Lookup
+    </a>
+</div>
+
+<!-- Big College Demo Status Banner -->
+<div class="card card-custom shadow mb-4 text-center overflow-hidden border-0">
+    <div class="py-4 px-3 {{ 'bg-success bg-opacity-10' if is_verified else 'bg-danger bg-opacity-10' }}">
+        {% if is_verified %}
+            <div class="d-inline-flex align-items-center badge-verified mb-2">
+                <i class="bi bi-shield-fill-check fs-2 me-2"></i>
+                <span class="fs-3 fw-bold">BLOCKCHAIN VERIFIED</span>
+            </div>
+            <p class="text-success fw-semibold mt-2 mb-0 fs-5">
+                <i class="bi bi-check-circle-fill me-1"></i> Cryptographic Integrity Confirmed: Harvest origin data matches Ethereum ledger 100%.
+            </p>
+        {% else %}
+            <div class="d-inline-flex align-items-center badge-tampered mb-2">
+                <i class="bi bi-shield-fill-x fs-2 me-2"></i>
+                <span class="fs-3 fw-bold">TAMPER DETECTED</span>
+            </div>
+            <p class="text-danger fw-semibold mt-2 mb-0 fs-5">
+                <i class="bi bi-exclamation-triangle-fill me-1"></i> Warning: Database record has been altered! Hash does not match the immutable blockchain ledger.
+            </p>
+        {% endif %}
+    </div>
+
+    <!-- Hash Comparison Bar -->
+    <div class="bg-white p-3 border-top text-start">
+        <div class="row g-2 align-items-center small">
+            <div class="col-md-6">
+                <span class="fw-bold text-muted d-block"><i class="bi bi-database me-1"></i> Current Recomputed Hash (from Database):</span>
+                <div class="hash-box {{ 'text-success' if is_verified else 'text-danger fw-bold' }}">
+                    {{ computed_hash }}
+                </div>
+            </div>
+            <div class="col-md-6">
+                <span class="fw-bold text-muted d-block"><i class="bi bi-link-45deg me-1"></i> Immutable On-Chain Hash (from Smart Contract):</span>
+                <div class="hash-box text-primary">
+                    {{ on_chain_hash or 'Not Found on Blockchain' }}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <!-- Product Overview Card -->
+    <div class="col-lg-4">
+        <div class="card card-custom shadow-sm mb-4">
+            <div class="card-header card-header-ag">
+                <h5 class="mb-0 fw-bold"><i class="bi bi-box-seam me-2"></i>Produce Details</h5>
+            </div>
+            <div class="card-body text-center p-4">
+                <div class="mb-3">
+                    <img src="{{ url_for('static', filename='uploads/' + product.image) }}" alt="{{ product.name }}" class="img-fluid rounded border shadow-sm" style="max-height: 220px; object-fit: cover;">
+                </div>
+                <h4 class="fw-bold mb-1">{{ product.name }}</h4>
+                <p class="text-muted font-monospace small mb-3">Batch ID: {{ product.batch_id }}</p>
+
+                <div class="text-start bg-light p-3 rounded mb-3 small">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span class="text-muted">Quantity:</span>
+                        <span class="fw-semibold">{{ product.quantity }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-1">
+                        <span class="text-muted">Farming Method:</span>
+                        <span class="fw-semibold">{{ product.farming_method }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-1">
+                        <span class="text-muted">Packaging Date:</span>
+                        <span class="fw-semibold">{{ product.packaging_date }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-1">
+                        <span class="text-muted">Farmer:</span>
+                        <span class="fw-semibold">{{ product.farmer.full_name or product.farmer.username }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span class="text-muted">Current Status:</span>
+                        <span class="badge bg-primary">{{ product.status }}</span>
+                    </div>
+                </div>
+
+                {% if product.qr_code %}
+                <div class="border rounded p-3 bg-white">
+                    <span class="fw-semibold small d-block mb-2 text-muted"><i class="bi bi-qr-code me-1"></i> Scan for Instant Mobile Verification</span>
+                    <img src="{{ url_for('static', filename='qr/' + product.qr_code) }}" alt="QR Code" class="img-fluid" style="max-width: 150px;">
+                    <div class="small text-muted font-monospace mt-1">{{ config_base_url }}/verify/{{ product.batch_id }}</div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Full Journey Timeline -->
+    <div class="col-lg-8">
+        <div class="card card-custom shadow-sm mb-4">
+            <div class="card-header card-header-ag d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 fw-bold"><i class="bi bi-signpost-split me-2"></i>Full Supply-Chain Journey Timeline</h5>
+                <span class="badge bg-success">Farm &rarr; Logistics &rarr; Retail</span>
+            </div>
+            <div class="card-body p-4">
+                <ul class="timeline">
+                    <!-- 1. Farm Stage -->
+                    <li class="timeline-item">
+                        <div class="timeline-icon completed">
+                            <i class="bi bi-flower1"></i>
+                        </div>
+                        <div class="timeline-content">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h6 class="fw-bold text-success mb-0">Stage 1: Farm Harvest & Stamping</h6>
+                                <span class="badge bg-light text-dark border">{{ product.packaging_date }}</span>
+                            </div>
+                            <p class="mb-1 text-muted small">
+                                Harvested and packed by <strong>{{ product.farmer.full_name or product.farmer.username }}</strong>
+                                {% if product.farmer_data and product.farmer_data.farm_location %}
+                                    at <em>{{ product.farmer_data.farm_location }}</em>
+                                {% endif %}.
+                            </p>
+                            {% if product.farmer_data %}
+                                <div class="bg-light p-2 rounded small mt-2">
+                                    {% if product.farmer_data.certifications %}
+                                        <div><strong>Certifications:</strong> {{ product.farmer_data.certifications }}</div>
+                                    {% endif %}
+                                    {% if product.farmer_data.notes %}
+                                        <div class="text-muted fst-italic">"{{ product.farmer_data.notes }}"</div>
+                                    {% endif %}
+                                </div>
+                            {% endif %}
+                            <div class="mt-2 text-muted small">
+                                <i class="bi bi-shield-check text-success"></i> SHA-256 seal deployed on Ethereum smart contract.
+                            </div>
+                        </div>
+                    </li>
+
+                    <!-- 2. Logistics & Transport Stage -->
+                    {% if product.transport_data %}
+                        {% for t in product.transport_data %}
+                        <li class="timeline-item">
+                            <div class="timeline-icon completed">
+                                <i class="bi bi-truck"></i>
+                            </div>
+                            <div class="timeline-content">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <h6 class="fw-bold text-primary mb-0">Stage 2: Transport &bull; {{ t.status }}</h6>
+                                    <span class="badge bg-light text-dark border">{{ t.timestamp.strftime('%Y-%m-%d %H:%M') if t.timestamp else '' }}</span>
+                                </div>
+                                <div class="small mb-1">
+                                    <strong>Location:</strong> {{ t.current_location }}
+                                </div>
+                                <div class="row g-2 small text-muted">
+                                    <div class="col-sm-6">
+                                        <i class="bi bi-thermometer-half text-danger"></i> Temp: <span class="badge bg-info-subtle text-info-emphasis">{{ t.temperature or 'Amb' }}</span>
+                                    </div>
+                                    <div class="col-sm-6">
+                                        <i class="bi bi-truck-flatbed"></i> Vehicle: {{ t.vehicle_number or 'Fleet Unit' }}
+                                    </div>
+                                </div>
+                                {% if t.notes %}
+                                <div class="bg-light p-2 rounded small mt-2 text-muted fst-italic">
+                                    "{{ t.notes }}"
+                                </div>
+                                {% endif %}
+                            </div>
+                        </li>
+                        {% endfor %}
+                    {% else %}
+                        <li class="timeline-item">
+                            <div class="timeline-icon">
+                                <i class="bi bi-truck"></i>
+                            </div>
+                            <div class="timeline-content text-muted">
+                                <h6 class="fw-bold mb-1">Stage 2: Transport</h6>
+                                <small>Shipment awaiting carrier pickup.</small>
+                            </div>
+                        </li>
+                    {% endif %}
+
+                    <!-- 3. Retailer Stage -->
+                    {% if product.retail_data %}
+                    <li class="timeline-item">
+                        <div class="timeline-icon completed">
+                            <i class="bi bi-shop"></i>
+                        </div>
+                        <div class="timeline-content">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h6 class="fw-bold text-warning-emphasis mb-0">Stage 3: Retail Stock & Distribution</h6>
+                                <span class="badge bg-light text-dark border">{{ product.retail_data.arrival_date or 'Received' }}</span>
+                            </div>
+                            <div class="small mb-1">
+                                <strong>Store:</strong> {{ product.retail_data.store_name }} ({{ product.retail_data.store_location }})
+                            </div>
+                            <div class="row g-2 small text-muted">
+                                <div class="col-sm-6">
+                                    <strong>Retail Price:</strong> <span class="badge bg-success fs-6">${{ '%.2f'|format(product.retail_data.price) if product.retail_data.price else 'N/A' }}</span>
+                                </div>
+                                <div class="col-sm-6">
+                                    <strong>Stock:</strong> {{ product.retail_data.stock_quantity }} (Shelf Life: {{ product.retail_data.shelf_life }})
+                                </div>
+                            </div>
+                        </div>
+                    </li>
+                    {% else %}
+                    <li class="timeline-item">
+                        <div class="timeline-icon">
+                            <i class="bi bi-shop"></i>
+                        </div>
+                        <div class="timeline-content text-muted">
+                            <h6 class="fw-bold mb-1">Stage 3: Retail Distribution</h6>
+                            <small>Produce has not yet reached retail stocking.</small>
+                        </div>
+                    </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+
+        <!-- Consumer Feedback Card -->
+        <div class="card card-custom shadow-sm">
+            <div class="card-header card-header-ag d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 fw-bold"><i class="bi bi-chat-heart me-2"></i>Customer Reviews & Feedback</h5>
+                <span class="badge bg-secondary">{{ product.feedback|length }} Feedback(s)</span>
+            </div>
+            <div class="card-body p-4">
+                <form action="{{ url_for('submit_feedback', batch_id=product.batch_id) }}" method="POST" class="mb-4 bg-light p-3 rounded">
+                    <h6 class="fw-bold mb-2">Submit Verified Feedback</h6>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Your Name</label>
+                            <input type="text" name="customer_name" class="form-control form-control-sm" placeholder="e.g. Alice" value="{{ session.get('username', '') }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Quality Rating</label>
+                            <select name="rating" class="form-select form-select-sm">
+                                <option value="5">&#9733;&#9733;&#9733;&#9733;&#9733; (5/5) Exceptional Quality</option>
+                                <option value="4">&#9733;&#9733;&#9733;&#9733;&#9734; (4/5) Very Fresh</option>
+                                <option value="3">&#9733;&#9733;&#9733;&#9734;&#9734; (3/5) Average</option>
+                                <option value="2">&#9733;&#9733;&#9734;&#9734;&#9734; (2/5) Below Expectation</option>
+                                <option value="1">&#9733;&#9734;&#9734;&#9734;&#9734; (1/5) Poor</option>
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label small fw-semibold">Comments</label>
+                            <textarea name="comment" class="form-control form-control-sm" rows="2" placeholder="Share your experience regarding produce freshness, packaging, or flavor..." required></textarea>
+                        </div>
+                        <div class="col-12">
+                            <button type="submit" class="btn btn-sm btn-ag-primary fw-bold">
+                                <i class="bi bi-send me-1"></i> Post Feedback
+                            </button>
+                        </div>
+                    </div>
+                </form>
+
+                <div class="feedback-list">
+                    {% for fb in product.feedback %}
+                    <div class="border-bottom pb-2 mb-2">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="fw-bold small">{{ fb.customer_name or 'Anonymous Customer' }}</span>
+                            <div>
+                                {% for _ in range(fb.rating) %}
+                                    <span class="text-warning">&#9733;</span>
+                                {% endfor %}
+                                <span class="text-muted smaller">({{ fb.created_at.strftime('%Y-%m-%d') if fb.created_at else '' }})</span>
+                            </div>
+                        </div>
+                        <p class="mb-0 small text-muted">{{ fb.comment }}</p>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-3 text-muted small">No customer feedback submitted yet for this batch.</div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
