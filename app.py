@@ -55,18 +55,35 @@ def role_required(*allowed_roles):
 
 @app.route('/')
 def landing():
+    from blockchain import get_w3, load_config
     product_count = Product.query.count()
     user_count = User.query.count()
     transport_count = TransportData.query.count()
     feedback_count = Feedback.query.count()
     recent_products = Product.query.order_by(Product.created_at.desc()).limit(8).all()
+
+    # Blockchain network status (best-effort)
+    network_block = None
+    contract_address = None
+    try:
+        w3 = get_w3()
+        network_block = w3.eth.block_number
+        cfg = load_config()
+        contract_address = cfg.get('contract_address', '')
+        if contract_address:
+            contract_address = contract_address[:10] + '…' + contract_address[-6:]
+    except Exception:
+        pass
+
     return render_template(
         'landing.html',
         product_count=product_count,
         user_count=user_count,
         transport_count=transport_count,
         feedback_count=feedback_count,
-        recent_products=recent_products
+        recent_products=recent_products,
+        network_block=network_block,
+        contract_address=contract_address,
     )
 
 @app.route('/register', methods=['GET', 'POST'])
