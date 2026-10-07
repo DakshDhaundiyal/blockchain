@@ -10,16 +10,20 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 CONFIG_PATH = os.path.join(BASE_DIR, "config.json")
 CONTRACT_PATH = os.path.join(BASE_DIR, "contracts", "TrustHarvest.sol")
 
-def get_w3():
+def get_w3(die_on_error=True):
     try:
-        w3 = Web3(Web3.HTTPProvider(GANACHE_URL, request_kwargs={"timeout": 5}))
+        w3 = Web3(Web3.HTTPProvider(GANACHE_URL, request_kwargs={"timeout": 2}))
         if not w3.is_connected():
-            print(f"Error: Unable to connect to Ganache at {GANACHE_URL}. Please ensure Ganache is running.", file=sys.stderr)
-            sys.exit(1)
+            if die_on_error:
+                print(f"Error: Unable to connect to Ganache at {GANACHE_URL}. Please ensure Ganache is running.", file=sys.stderr)
+                sys.exit(1)
+            return None
         return w3
     except Exception:
-        print(f"Error: Unable to connect to Ganache at {GANACHE_URL}. Please ensure Ganache is running.", file=sys.stderr)
-        sys.exit(1)
+        if die_on_error:
+            print(f"Error: Unable to connect to Ganache at {GANACHE_URL}. Please ensure Ganache is running.", file=sys.stderr)
+            sys.exit(1)
+        return None
 
 def load_config():
     if os.path.exists(CONFIG_PATH):
@@ -117,9 +121,14 @@ def store_hash(batch_id, hash_val):
     return receipt.transactionHash.hex()
 
 def get_hash(batch_id):
-    w3 = get_w3()
-    contract = get_or_deploy_contract(w3)
-    return contract.functions.getHash(batch_id).call()
+    try:
+        w3 = get_w3(die_on_error=False)
+        if not w3:
+            return None
+        contract = get_or_deploy_contract(w3)
+        return contract.functions.getHash(batch_id).call()
+    except Exception:
+        return None
 
 def compute_batch_hash(batch_id, name, quantity, farming_method, packaging_date, farmer_id, image):
     data = {

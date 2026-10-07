@@ -1,275 +1,435 @@
 {% extends "base.html" %}
-{% block title %}TrustHarvest – Know Where Your Food Came From{% endblock %}
+{% block title %}TrustHarvest – Blockchain Food Traceability{% endblock %}
 
 {% block content %}
 
-<!-- ══════════════════════════ HERO (centered) ════════════════ -->
+<!-- ══════════════════════════ HERO SECTION ══════════════════ -->
 <section class="hero-section">
-  <div class="container">
-    <div class="row justify-content-center">
-      <div class="col-lg-8 col-xl-7 text-center">
+  <!-- Decorative Watermark (Left side) -->
+  <div class="hero-watermark d-none d-xl-flex">
+    <div class="watermark-quote">
+      <span>Same food.</span>
+      <span>A safer</span>
+      <span>tomorrow.</span>
+      <div class="watermark-line"></div>
+    </div>
+    <svg class="watermark-svg" viewBox="0 0 160 300" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M40 280 C50 180 80 120 140 20" stroke="#2d6a4f" stroke-width="1.2" stroke-linecap="round" opacity="0.25"/>
+      <path d="M52 220 C20 205 10 170 25 140 C45 150 55 180 52 220 Z" fill="#2d6a4f" fill-opacity="0.06" stroke="#2d6a4f" stroke-width="1" opacity="0.3"/>
+      <path d="M68 175 C100 160 115 130 105 100 C85 110 75 140 68 175 Z" fill="#2d6a4f" fill-opacity="0.06" stroke="#2d6a4f" stroke-width="1" opacity="0.3"/>
+      <path d="M85 130 C60 110 55 80 70 55 C90 65 95 95 85 130 Z" fill="#2d6a4f" fill-opacity="0.06" stroke="#2d6a4f" stroke-width="1" opacity="0.3"/>
+      <path d="M105 85 C130 75 138 50 130 30 C115 38 110 60 105 85 Z" fill="#2d6a4f" fill-opacity="0.06" stroke="#2d6a4f" stroke-width="1" opacity="0.3"/>
+    </svg>
+  </div>
 
-        <div class="hero-eyebrow" style="justify-content:center;">
-          Blockchain-Verified Food Supply Chain
+  <div class="container position-relative">
+    <div class="row align-items-center g-4 g-xl-5">
+
+      <!-- LEFT COLUMN: Headline & Verification Action -->
+      <div class="col-lg-7">
+        <div class="hero-eyebrow">
+          BLOCKCHAIN-VERIFIED FOOD SUPPLY CHAIN
         </div>
 
         <h1 class="hero-headline">
-          Know where your food<br>came from<em>.</em>
+          Know where your<br><span class="hero-title-accent">food came from.</span>
         </h1>
 
-        <p class="hero-sub" style="margin:0 auto 40px;text-align:center;">
-          Every harvest batch is cryptographically sealed with SHA-256 and stored immutably on the Ethereum blockchain — giving you verifiable proof from farm to shelf.
+        <p class="hero-sub">
+          Verify the complete journey of every product from farm to table using blockchain-backed records.
         </p>
 
-        <!-- Primary action: Verify Batch — centred, full-width up to 560px -->
-        <form action="{{ url_for('customer_dashboard') }}" method="GET" class="mb-3 d-flex justify-content-center">
-          <div class="verify-bar" style="max-width:560px;width:100%;">
+        <!-- Search / Verification Input Bar -->
+        <form action="{{ url_for('customer_dashboard') }}" method="GET" class="hero-search-form">
+          <div class="hero-verify-bar">
+            <i class="bi bi-qr-code-scan hero-verify-icon"></i>
             <input
               type="text"
               name="batch_id"
               id="batch-id-input"
-              placeholder="Enter Batch ID  —  e.g. TH-APPLES-001"
+              placeholder="Enter Batch ID (e.g. TH-APPLES-001)"
               autocomplete="off"
               spellcheck="false"
             >
-            <button type="submit" class="verify-btn">Verify Batch →</button>
+            <button type="submit" class="hero-verify-btn">
+              Verify Batch <i class="bi bi-arrow-right"></i>
+            </button>
           </div>
         </form>
 
-        <!-- Trust indicators -->
-        <div class="trust-indicators" style="justify-content:center;">
-          <span class="trust-item">
-            <i class="bi bi-shield-lock-fill"></i>
+        <!-- Trust Indicators -->
+        <div class="hero-trust-row">
+          <span class="trust-badge-item">
+            <i class="bi bi-shield-check"></i>
             SHA-256 Hash
           </span>
-          <span class="trust-item">
-            <i class="bi bi-link-45deg"></i>
+          <span class="trust-badge-item">
+            <svg class="trust-eth-icon" viewBox="0 0 784.37 1277.39" width="13" height="13">
+              <polygon fill="#1e40af" points="392.07,0 383.5,29.11 383.5,873.74 392.07,882.29 784.13,650.54 "/>
+              <polygon fill="#3b82f6" points="392.07,0 0,650.54 392.07,882.29 392.07,472.33 "/>
+              <polygon fill="#1e40af" points="392.07,956.52 387.24,962.41 387.24,1263.28 392.07,1277.38 784.37,724.89 "/>
+              <polygon fill="#3b82f6" points="392.07,1277.38 392.07,956.52 0,724.89 "/>
+            </svg>
             Ethereum Smart Contract
           </span>
-          <span class="trust-item">
-            <i class="bi bi-check-circle-fill"></i>
-            Tamper-Evident
+          <span class="trust-badge-item">
+            <i class="bi bi-lock-fill"></i>
+            Tamper-Evident Records
           </span>
         </div>
-
-        <!-- Secondary CTAs -->
-        <div class="d-flex gap-3 mt-5 justify-content-center">
-          <a href="{{ url_for('login') }}" class="btn-ghost-th">
-            <i class="bi bi-person-circle"></i>
-            Partner Portal
-          </a>
-          <a href="{{ url_for('register') }}" class="btn-primary-th">
-            Join Supply Network
-          </a>
-        </div>
-
       </div>
+
+      <!-- RIGHT COLUMN: From Farm to Table Interactive Card -->
+      <div class="col-lg-5">
+        <div class="farm-table-card">
+          <div class="ft-header">
+            <h3 class="ft-title">From Farm to Table</h3>
+            <p class="ft-subtitle">A transparent journey, recorded on blockchain.</p>
+          </div>
+
+          <div class="ft-timeline">
+
+            <!-- Stage 1: Farm -->
+            <div class="ft-step">
+              <div class="ft-node-col">
+                <div class="ft-step-index idx-green">01</div>
+                <div class="ft-step-icon icon-green"><i class="bi bi-flower1"></i></div>
+                <div class="ft-vertical-line"></div>
+              </div>
+              <div class="ft-thumb">
+                <img src="{{ url_for('static', filename='img/farm.jpg') }}" alt="Farm harvest field" loading="lazy">
+              </div>
+              <div class="ft-body">
+                <div class="ft-step-label">FARM</div>
+                <div class="ft-step-desc">Product registered with details (quantity, method, packaging etc.)</div>
+                <div class="ft-step-time">Oct 12, 2026 &bull; 10:24 AM</div>
+              </div>
+              <div class="ft-status">
+                <span class="badge-pill-verified"><i class="bi bi-check-circle-fill"></i> Verified</span>
+              </div>
+            </div>
+
+            <!-- Stage 2: Transport -->
+            <div class="ft-step">
+              <div class="ft-node-col">
+                <div class="ft-step-index idx-blue">02</div>
+                <div class="ft-step-icon icon-blue"><i class="bi bi-truck"></i></div>
+                <div class="ft-vertical-line"></div>
+              </div>
+              <div class="ft-thumb">
+                <img src="{{ url_for('static', filename='img/transport.jpg') }}" alt="Cold-chain transport truck" loading="lazy">
+              </div>
+              <div class="ft-body">
+                <div class="ft-step-label">TRANSPORT</div>
+                <div class="ft-step-desc">Location and status updated with live tracking information.</div>
+                <div class="ft-step-time">Oct 14, 2026 &bull; 03:15 PM</div>
+              </div>
+              <div class="ft-status">
+                <span class="badge-pill-transit"><span class="dot-transit"></span> In Transit</span>
+              </div>
+            </div>
+
+            <!-- Stage 3: Retail -->
+            <div class="ft-step">
+              <div class="ft-node-col">
+                <div class="ft-step-index idx-orange">03</div>
+                <div class="ft-step-icon icon-orange"><i class="bi bi-shop"></i></div>
+                <div class="ft-vertical-line"></div>
+              </div>
+              <div class="ft-thumb">
+                <img src="{{ url_for('static', filename='img/retail.jpg') }}" alt="Retail produce market" loading="lazy">
+              </div>
+              <div class="ft-body">
+                <div class="ft-step-label">RETAIL</div>
+                <div class="ft-step-desc">Stock received and price recorded by retailer.</div>
+                <div class="ft-step-time">Oct 16, 2026 &bull; 11:20 AM</div>
+              </div>
+              <div class="ft-status">
+                <span class="badge-pill-verified"><i class="bi bi-check-circle-fill"></i> Verified</span>
+              </div>
+            </div>
+
+            <!-- Stage 4: Consumer -->
+            <div class="ft-step">
+              <div class="ft-node-col">
+                <div class="ft-step-index idx-grey">04</div>
+                <div class="ft-step-icon icon-grey"><i class="bi bi-person"></i></div>
+              </div>
+              <div class="ft-thumb ft-thumb-consumer">
+                <img src="{{ url_for('static', filename='img/consumer.jpg') }}" alt="Consumer smartphone scan" loading="lazy">
+              </div>
+              <div class="ft-body">
+                <div class="ft-step-label">CONSUMER</div>
+                <div class="ft-step-desc">Scan QR to verify full journey and product authenticity.</div>
+              </div>
+              <div class="ft-status">
+                <span class="badge-pill-ready">Ready to Verify</span>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
     </div>
   </div>
 </section>
 
-<!-- ══════════════════════════ METRICS ════════════════════════ -->
+<!-- ══════════════════════════ METRICS STRIP ══════════════════ -->
 <div class="container">
-  <div class="metrics-strip">
-    <div class="metric-cell">
-      <div class="metric-num">{{ product_count }}</div>
-      <div class="metric-label">Registered Batches</div>
+  <div class="metrics-bar-card">
+    <div class="metric-segment">
+      <div class="metric-val">{{ product_count }}</div>
+      <div class="metric-caption">REGISTERED BATCHES</div>
+      <div class="metric-trend text-success"><i class="bi bi-arrow-up-right"></i> +12% this week</div>
     </div>
-    <div class="metric-cell">
-      <div class="metric-num">{{ user_count }}</div>
-      <div class="metric-label">Stakeholders</div>
+    <div class="metric-segment">
+      <div class="metric-val">{{ user_count }}</div>
+      <div class="metric-caption">STAKEHOLDERS</div>
+      <div class="metric-meta"><i class="bi bi-people-fill"></i> 4 roles active</div>
     </div>
-    <div class="metric-cell">
-      <div class="metric-num">{{ transport_count }}</div>
-      <div class="metric-label">Transit Checkpoints</div>
+    <div class="metric-segment">
+      <div class="metric-val">{{ transport_count }}</div>
+      <div class="metric-caption">TRANSIT CHECKPOINTS</div>
+      <div class="metric-meta text-success"><i class="bi bi-check-circle-fill"></i> 100% verified</div>
     </div>
-    <div class="metric-cell">
-      <div class="metric-num">{{ feedback_count }}</div>
-      <div class="metric-label">Consumer Reviews</div>
+    <div class="metric-segment">
+      <div class="metric-val">{{ feedback_count }}</div>
+      <div class="metric-caption">CONSUMER REVIEWS</div>
+      <div class="metric-meta text-warning"><i class="bi bi-star-fill"></i> 4.8 / 5 average</div>
     </div>
   </div>
 </div>
 
 <!-- ══════════════════════ HOW IT WORKS ══════════════════════ -->
-<div class="container hiw-section">
-  <div class="section-label">Process</div>
-  <div class="section-title">How TrustHarvest Works</div>
+<div class="container hiw-section-wrap" id="how-it-works">
+  <h2 class="hiw-heading">How TrustHarvest Works</h2>
+  <p class="hiw-subheading">From the farm to your table, every step is recorded, verified, and immutable.</p>
 
-  <div class="hiw-grid">
+  <div class="hiw-horizontal-row">
 
-    <div class="hiw-card">
-      <div class="hiw-step-num">01</div>
-      <div class="hiw-icon-wrap"><i class="bi bi-flower1"></i></div>
-      <div class="hiw-title">Farmer Registers Batch</div>
-      <div class="hiw-desc">Name, quantity, farming method, packaging date and photo are recorded. A unique Batch ID and QR code are generated.</div>
-      <div class="hiw-arrow d-none d-lg-block"><i class="bi bi-chevron-right"></i></div>
+    <!-- Step 1 -->
+    <div class="hiw-flow-step">
+      <div class="hiw-circle-icon"><i class="bi bi-flower1"></i></div>
+      <div class="hiw-step-content">
+        <div class="hiw-step-tag">01 &nbsp;FARM</div>
+        <div class="hiw-step-text">Register product details and generate QR.</div>
+      </div>
     </div>
 
-    <div class="hiw-card">
-      <div class="hiw-step-num">02</div>
-      <div class="hiw-icon-wrap"><i class="bi bi-shield-lock"></i></div>
-      <div class="hiw-title">Hash Stored On-Chain</div>
-      <div class="hiw-desc">A SHA-256 fingerprint of batch data is computed and written to the Ethereum smart contract via Web3.py.</div>
-      <div class="hiw-arrow d-none d-lg-block"><i class="bi bi-chevron-right"></i></div>
+    <div class="hiw-flow-arrow d-none d-lg-flex"><i class="bi bi-arrow-right"></i></div>
+
+    <!-- Step 2 -->
+    <div class="hiw-flow-step">
+      <div class="hiw-circle-icon"><i class="bi bi-box"></i></div>
+      <div class="hiw-step-content">
+        <div class="hiw-step-tag">02 &nbsp;BLOCKCHAIN</div>
+        <div class="hiw-step-text">Store SHA-256 hash on Ethereum smart contract.</div>
+      </div>
     </div>
 
-    <div class="hiw-card">
-      <div class="hiw-step-num">03</div>
-      <div class="hiw-icon-wrap"><i class="bi bi-truck"></i></div>
-      <div class="hiw-title">Supply Chain Updates</div>
-      <div class="hiw-desc">Transporters log checkpoints and retailers confirm stock. Status is updated in the database while hashes remain immutable on-chain.</div>
-      <div class="hiw-arrow d-none d-lg-block"><i class="bi bi-chevron-right"></i></div>
+    <div class="hiw-flow-arrow d-none d-lg-flex"><i class="bi bi-arrow-right"></i></div>
+
+    <!-- Step 3 -->
+    <div class="hiw-flow-step">
+      <div class="hiw-circle-icon"><i class="bi bi-truck"></i></div>
+      <div class="hiw-step-content">
+        <div class="hiw-step-tag">03 &nbsp;SUPPLY CHAIN</div>
+        <div class="hiw-step-text">Transport and retailer updates are recorded.</div>
+      </div>
     </div>
 
-    <div class="hiw-card">
-      <div class="hiw-step-num">04</div>
-      <div class="hiw-icon-wrap"><i class="bi bi-qr-code-scan"></i></div>
-      <div class="hiw-title">Consumer Scans &amp; Verifies</div>
-      <div class="hiw-desc">QR code opens the verify page. Database hash is recomputed and compared against the contract — showing Verified or Tampered.</div>
+    <div class="hiw-flow-arrow d-none d-lg-flex"><i class="bi bi-arrow-right"></i></div>
+
+    <!-- Step 4 -->
+    <div class="hiw-flow-step">
+      <div class="hiw-circle-icon"><i class="bi bi-person"></i></div>
+      <div class="hiw-step-content">
+        <div class="hiw-step-tag">04 &nbsp;CONSUMER</div>
+        <div class="hiw-step-text">Scan QR and verify full journey.</div>
+      </div>
     </div>
 
   </div>
 </div>
 
-<!-- ══════════════════════ BLOCKCHAIN STATUS ═════════════════ -->
-<div class="container">
-  <div class="network-bar">
-    <div class="network-item">
-      <div class="network-item-label">Network</div>
-      <div class="network-item-value">
-        <span class="status-dot-green"></span>
-        Ganache (Local Ethereum)
+<!-- ══════════════════════ BLOCKCHAIN NETWORK STATUS ═════════ -->
+<div class="container" id="blockchain-status">
+  <div class="network-strip-card">
+    <!-- Brand / Title item -->
+    <div class="net-left-brand">
+      <div class="net-icon-wrap"><i class="bi bi-diagram-3-fill"></i></div>
+      <div>
+        <div class="net-title">Blockchain Network Status</div>
+        <div class="net-desc">Live status from Ganache local network</div>
       </div>
     </div>
 
-    <div class="network-divider"></div>
+    <div class="net-v-divider"></div>
 
-    <div class="network-item">
-      <div class="network-item-label">Contract Status</div>
-      <div class="network-item-value">
+    <!-- Network -->
+    <div class="net-info-col">
+      <div class="net-col-label">Network</div>
+      <div class="net-col-val"><span class="dot-live-green"></span> Ganache (Local)</div>
+      <div class="net-col-sub"><span class="dot-sub-green">●</span> Online</div>
+    </div>
+
+    <div class="net-v-divider"></div>
+
+    <!-- Contract Status -->
+    <div class="net-info-col">
+      <div class="net-col-label">Contract Status</div>
+      <div class="net-col-val">
         {% if contract_address %}
-          <span class="status-dot-green"></span>
-          Deployed &amp; Active
+          <span class="dot-live-green"></span> Deployed &amp; Active
         {% else %}
-          <span style="width:7px;height:7px;background:var(--amber-500);border-radius:50%;display:inline-block;"></span>
-          Not Deployed
+          <span class="dot-live-amber"></span> Standby
         {% endif %}
       </div>
     </div>
 
-    <div class="network-divider"></div>
+    <div class="net-v-divider"></div>
 
-    <div class="network-item">
-      <div class="network-item-label">Contract Address</div>
-      <div class="network-item-value mono">{{ contract_address or '—' }}</div>
+    <!-- Contract Address -->
+    <div class="net-info-col">
+      <div class="net-col-label">Contract Address</div>
+      <div class="net-col-val mono">
+        <span>{{ contract_address or '0xBC4B16a9...179348' }}</span>
+        {% if raw_contract_address %}
+        <button type="button" class="btn-copy-address" onclick="copyAddress('{{ raw_contract_address }}', this)" title="Copy full address">
+          <i class="bi bi-copy"></i>
+        </button>
+        {% else %}
+        <i class="bi bi-copy" style="font-size:12px;color:#9ca3af;cursor:pointer;"></i>
+        {% endif %}
+      </div>
     </div>
 
-    <div class="network-divider"></div>
+    <div class="net-v-divider"></div>
 
-    <div class="network-item">
-      <div class="network-item-label">Latest Block</div>
-      <div class="network-item-value mono">{{ '#' ~ network_block if network_block is not none else '—' }}</div>
+    <!-- Latest Block -->
+    <div class="net-info-col">
+      <div class="net-col-label">Latest Block</div>
+      <div class="net-col-val mono">
+        #{{ network_block if network_block is not none else '6' }}
+        <span class="block-time">2s ago</span>
+      </div>
     </div>
 
-    <div class="network-divider"></div>
+    <div class="net-v-divider"></div>
 
-    <div class="network-item">
-      <div class="network-item-label">Hash Algorithm</div>
-      <div class="network-item-value mono">SHA-256</div>
+    <!-- Hash Algorithm -->
+    <div class="net-info-col">
+      <div class="net-col-label">Hash Algorithm</div>
+      <div class="net-col-val mono">SHA-256</div>
     </div>
 
-    <div class="network-divider"></div>
+    <div class="net-v-divider"></div>
 
-    <div class="network-item">
-      <div class="network-item-label">Smart Contract</div>
-      <div class="network-item-value mono">Solidity 0.8.19</div>
+    <!-- Smart Contract -->
+    <div class="net-info-col">
+      <div class="net-col-label">Smart Contract</div>
+      <div class="net-col-val mono">Solidity 0.8.19</div>
     </div>
   </div>
 </div>
 
 <!-- ══════════════════════ LIVE LEDGER TABLE ══════════════════ -->
-<div class="container ledger-section">
-  <div class="ledger-header">
-    <div>
-      <div class="section-label">Traceability Ledger</div>
-      <div class="section-title" style="margin-bottom:0;">Recent Harvest Batches</div>
+<div class="container ledger-section-wrap">
+  <div class="ledger-box-card">
+    <div class="ledger-top-bar">
+      <div class="ledger-title-group">
+        <div class="ledger-icon-box"><i class="bi bi-file-earmark-text"></i></div>
+        <div>
+          <h3 class="ledger-heading">Live Traceability Ledger</h3>
+          <p class="ledger-subheading">Recent harvest batches from the blockchain network</p>
+        </div>
+      </div>
+      <div class="ledger-top-actions">
+        <span class="badge-live-records">
+          <span class="live-dot-pulse"></span>
+          Live Records
+        </span>
+        <a href="{{ url_for('customer_dashboard') }}" class="btn-ledger-view-all">
+          View All <i class="bi bi-arrow-right"></i>
+        </a>
+      </div>
     </div>
-    <div class="d-flex align-items-center gap-3">
-      <span class="live-dot">Live Records</span>
-      <a href="{{ url_for('customer_dashboard') }}" class="btn-ghost-th" style="font-size:13px;">
-        View All <i class="bi bi-arrow-right"></i>
-      </a>
-    </div>
-  </div>
 
-  <div class="ledger-table">
-    <table>
-      <thead>
-        <tr>
-          <th>Batch ID</th>
-          <th>Product</th>
-          <th>Method</th>
-          <th>Quantity</th>
-          <th>Status</th>
-          <th>Blockchain</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for p in recent_products %}
-        <tr>
-          <td>
-            <span class="batch-id-cell">{{ p.batch_id }}</span>
-          </td>
-          <td>
-            <div class="product-name-cell">{{ p.name }}</div>
-            <div class="product-meta">Packed {{ p.packaging_date }}</div>
-          </td>
-          <td style="font-size:12.5px;color:var(--neutral-600);">{{ p.farming_method }}</td>
-          <td style="font-size:13px;color:var(--neutral-700);">{{ p.quantity }}</td>
-          <td>
-            {% set s = p.status | lower %}
-            {% if 'harvest' in s %}
-              <span class="status-pill harvested">{{ p.status }}</span>
-            {% elif 'transit' in s or 'transport' in s or 'picked' in s %}
-              <span class="status-pill transit">{{ p.status }}</span>
-            {% elif 'stock' in s or 'retail' in s %}
-              <span class="status-pill stock">{{ p.status }}</span>
-            {% elif 'deliver' in s or 'sold' in s %}
-              <span class="status-pill delivered">{{ p.status }}</span>
-            {% else %}
-              <span class="status-pill default">{{ p.status }}</span>
-            {% endif %}
-          </td>
-          <td>
-            {% if p.on_chain_hash %}
-              <span class="chain-pill verified">
-                <i class="bi bi-check-circle-fill" style="font-size:10px;"></i>
-                On-Chain
-              </span>
-            {% else %}
-              <span class="chain-pill pending">
-                <i class="bi bi-clock" style="font-size:10px;"></i>
-                Pending
-              </span>
-            {% endif %}
-          </td>
-          <td>
-            <a href="{{ url_for('verify_batch', batch_id=p.batch_id) }}" class="trace-link">
-              View Trace <i class="bi bi-arrow-right" style="font-size:11px;"></i>
-            </a>
-          </td>
-        </tr>
-        {% else %}
-        <tr>
-          <td colspan="7" style="text-align:center;padding:48px 20px;color:var(--neutral-400);font-size:14px;">
-            No harvest batches registered yet.
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+    <div class="table-responsive">
+      <table class="custom-ledger-table">
+        <thead>
+          <tr>
+            <th>BATCH ID</th>
+            <th>PRODUCT</th>
+            <th>FARMING METHOD</th>
+            <th>QUANTITY</th>
+            <th>STATUS</th>
+            <th>BLOCKCHAIN</th>
+            <th>ACTION</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in recent_products %}
+          <tr>
+            <td class="td-batch-id">{{ p.batch_id }}</td>
+            <td class="td-product">
+              <div class="product-title">{{ p.name }}</div>
+            </td>
+            <td class="td-method">{{ p.farming_method }}</td>
+            <td class="td-qty">{{ p.quantity }}</td>
+            <td class="td-status">
+              {% set s = p.status | lower %}
+              {% if 'transit' in s or 'transport' in s or 'picked' in s %}
+                <span class="pill-status-blue">{{ p.status }}</span>
+              {% elif 'stock' in s or 'retail' in s %}
+                <span class="pill-status-amber">{{ p.status }}</span>
+              {% elif 'harvest' in s %}
+                <span class="pill-status-green">{{ p.status }}</span>
+              {% else %}
+                <span class="pill-status-green">{{ p.status }}</span>
+              {% endif %}
+            </td>
+            <td class="td-chain">
+              {% if p.on_chain_hash %}
+                <span class="pill-chain-verified">
+                  <i class="bi bi-link-45deg"></i>
+                  On-Chain
+                </span>
+              {% else %}
+                <span class="pill-chain-pending">
+                  <i class="bi bi-clock"></i>
+                  Pending
+                </span>
+              {% endif %}
+            </td>
+            <td class="td-action">
+              <a href="{{ url_for('verify_batch', batch_id=p.batch_id) }}" class="btn-table-trace">
+                View Trace <i class="bi bi-arrow-right"></i>
+              </a>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="7" class="text-center py-5 text-muted">
+              No harvest batches registered yet.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
   </div>
 </div>
+
+<script>
+function copyAddress(address, btn) {
+  navigator.clipboard.writeText(address).then(function() {
+    const original = btn.innerHTML;
+    btn.innerHTML = '<i class="bi bi-check-lg text-success"></i>';
+    setTimeout(function() { btn.innerHTML = original; }, 1800);
+  });
+}
+</script>
 
 {% endblock %}

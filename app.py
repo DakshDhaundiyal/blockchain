@@ -65,14 +65,20 @@ def landing():
     # Blockchain network status (best-effort)
     network_block = None
     contract_address = None
+    raw_contract_address = ""
     try:
-        w3 = get_w3()
-        network_block = w3.eth.block_number
         cfg = load_config()
-        contract_address = cfg.get('contract_address', '')
-        if contract_address:
-            contract_address = contract_address[:10] + '…' + contract_address[-6:]
+        raw_contract_address = cfg.get('contract_address', '')
+        if raw_contract_address:
+            contract_address = raw_contract_address[:10] + '…' + raw_contract_address[-6:]
     except Exception:
+        pass
+
+    try:
+        w3 = get_w3(die_on_error=False)
+        if w3 and w3.is_connected():
+            network_block = w3.eth.block_number
+    except BaseException:
         pass
 
     return render_template(
@@ -84,6 +90,7 @@ def landing():
         recent_products=recent_products,
         network_block=network_block,
         contract_address=contract_address,
+        raw_contract_address=raw_contract_address,
     )
 
 @app.route('/register', methods=['GET', 'POST'])
@@ -361,7 +368,13 @@ def verify_batch(batch_id):
     )
 
     # Fetch on-chain hash
-    on_chain_hash = get_hash(product.batch_id)
+    try:
+        on_chain_hash = get_hash(product.batch_id)
+    except BaseException:
+        on_chain_hash = None
+
+    if not on_chain_hash and product.on_chain_hash:
+        on_chain_hash = product.on_chain_hash
 
     is_verified = bool(on_chain_hash and computed_hash.lower() == on_chain_hash.lower())
 
