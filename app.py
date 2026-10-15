@@ -55,6 +55,9 @@ os.makedirs(QR_FOLDER, exist_ok=True)
 
 db.init_app(app)
 
+with app.app_context():
+    db.create_all()
+
 # In-memory rate limiting for login attempts
 FAILED_LOGINS = {}
 MAX_FAILED_ATTEMPTS = 5
@@ -89,7 +92,7 @@ def request_entity_too_large(error):
 
 @app.context_processor
 def inject_system_status():
-    """Provides honest real-time blockchain status to all templates/navbars."""
+    """Provides honest real-time blockchain status and active persona info to all templates/navbars."""
     from blockchain import get_w3
     is_online = False
     block_num = None
@@ -100,13 +103,76 @@ def inject_system_status():
             block_num = w3.eth.block_number
     except Exception:
         pass
+    role = session.get('role', None)
     return {
         'blockchain_online': is_online,
-        'blockchain_block': block_num
+        'blockchain_block': block_num,
+        'DEFAULT_PERSONAS': DEFAULT_PERSONAS,
+        'current_role': role,
+        'current_username': session.get('username', None),
+        'current_persona': DEFAULT_PERSONAS.get(role, None)
     }
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+DEFAULT_PERSONAS = {
+    'farmer': {
+        'role': 'farmer',
+        'username': 'farmer_john',
+        'full_name': 'John Evergreen',
+        'contact': '+1-509-555-0192',
+        'route': 'farmer_dashboard',
+        'title': 'Farmer / Producer',
+        'short_title': 'Farmer',
+        'icon': 'bi-tree',
+        'badge_color': '#16a34a'
+    },
+    'transporter': {
+        'role': 'transporter',
+        'username': 'transporter_dan',
+        'full_name': 'Dan Logistics Ltd',
+        'contact': '+1-206-555-0144',
+        'route': 'transporter_dashboard',
+        'title': 'Transporter / Logistics',
+        'short_title': 'Transporter',
+        'icon': 'bi-truck',
+        'badge_color': '#2563eb'
+    },
+    'retailer': {
+        'role': 'retailer',
+        'username': 'retailer_sarah',
+        'full_name': 'Whole Harvest Market',
+        'contact': '+1-206-555-0188',
+        'route': 'retailer_dashboard',
+        'title': 'Retailer / Supermarket',
+        'short_title': 'Retailer',
+        'icon': 'bi-shop',
+        'badge_color': '#9333ea'
+    },
+    'customer': {
+        'role': 'customer',
+        'username': 'customer_amy',
+        'full_name': 'Amy Chen',
+        'contact': 'amy.c@example.com',
+        'route': 'customer_dashboard',
+        'title': 'Consumer / Verify Produce',
+        'short_title': 'Consumer',
+        'icon': 'bi-person-check',
+        'badge_color': '#0891b2'
+    },
+    'admin': {
+        'role': 'admin',
+        'username': 'admin',
+        'full_name': 'Global Admin',
+        'contact': 'admin@trustharvest.org',
+        'route': 'admin_dashboard',
+        'title': 'System Administrator',
+        'short_title': 'Admin',
+        'icon': 'bi-shield-shaded',
+        'badge_color': '#ea580c'
+    },
+}
 
 def login_required(f):
     @wraps(f)
@@ -265,6 +331,59 @@ def logout():
     session.clear()
     flash('You have been securely signed out.', 'info')
     return redirect(url_for('landing'))
+
+@app.route('/switch-role/<role>')
+def switch_role(role):
+    """
+    Seamlessly switches the active dashboard and persona without credentials.
+    Supports role names, aliases (e.g. 'producer', 'logistics'), and auto-provisions
+    the persona user in the database if it doesn't already exist.
+    """
+    target_role = role.strip().lower()
+    alias_map = {
+        'producer': 'farmer',
+        'farm': 'farmer',
+        'agriculture': 'farmer',
+        'transport': 'transporter',
+        'logistics': 'transporter',
+        'supermarket': 'retailer',
+        'retail': 'retailer',
+        'store': 'retailer',
+        'consumer': 'customer',
+        'client': 'customer',
+        'buyer': 'customer',
+    }
+    target_role = alias_map.get(target_role, target_role)
+
+    if target_role not in DEFAULT_PERSONAS:
+        flash(f"Unknown dashboard type '{role}'.", 'warning')
+        return redirect(url_for('landing'))
+
+    persona = DEFAULT_PERSONAS[target_role]
+    user = User.query.filter_by(role=target_role).first()
+    if not user:
+        existing_username = User.query.filter_by(username=persona['username']).first()
+        uname = persona['username'] if not existing_username else f"{persona['username']}_{int(time.time())}"
+        user = User(
+            username=uname,
+            role=target_role,
+            full_name=persona['full_name'],
+            contact=persona['contact']
+        )
+        user.set_password(f"{target_role}12345")
+        db.session.add(user)
+        db.session.commit()
+
+    session['user_id'] = user.id
+    session['username'] = user.username
+    session['role'] = user.role
+    session.permanent = True
+    flash(f"Active Dashboard: {persona['title']} ({user.full_name or user.username})", 'success')
+
+    next_url = request.args.get('next')
+    if next_url and next_url.startswith('/'):
+        return redirect(next_url)
+    return redirect(url_for(persona['route']))
 
 @app.route('/farmer')
 @role_required('farmer')
@@ -483,12 +602,26 @@ def customer_dashboard():
 def verify_batch(batch_id):
     product = Product.query.filter_by(batch_id=batch_id).first_or_404()
 
+    simulate_tamper = request.args.get('simulate_tamper', '0') == '1'
+
+    # If simulation requested for demonstration purposes:
+    simulated_field = None
+    original_value = None
+    tampered_value = None
+    if simulate_tamper:
+        simulated_field = "Farming Method"
+        original_value = product.farming_method
+        tampered_value = "Chemically Treated (Simulated Tamper)"
+        farming_method_for_hash = tampered_value
+    else:
+        farming_method_for_hash = product.farming_method
+
     # Recompute SHA-256 hash from database fields
     computed_hash = compute_batch_hash(
         batch_id=product.batch_id,
         name=product.name,
         quantity=product.quantity,
-        farming_method=product.farming_method,
+        farming_method=farming_method_for_hash,
         packaging_date=product.packaging_date,
         farmer_id=product.farmer_id,
         image=product.image
@@ -532,8 +665,29 @@ def verify_batch(batch_id):
         is_tampered=is_tampered,
         is_rpc_offline=is_rpc_offline,
         is_not_found=is_not_found,
-        config_base_url=config_base_url
+        config_base_url=config_base_url,
+        simulate_tamper=simulate_tamper,
+        simulated_field=simulated_field,
+        original_value=original_value,
+        tampered_value=tampered_value
     )
+
+@app.route('/verify/<batch_id>/toggle-demo-tamper', methods=['POST'])
+def toggle_demo_tamper(batch_id):
+    """
+    Demonstration helper: Toggles the product farming_method in the database
+    between '100% Certified Organic' (authentic matching on-chain seal) and
+    'Chemically Treated Non-Organic' (tampered state).
+    """
+    product = Product.query.filter_by(batch_id=batch_id).first_or_404()
+    if 'Non-Organic' in product.farming_method or 'Chemically Treated' in product.farming_method or 'Tamper' in product.farming_method:
+        product.farming_method = '100% Certified Organic'
+        flash(f'Batch {batch_id} restored to authentic state: "100% Certified Organic". Live cryptographic check passes!', 'success')
+    else:
+        product.farming_method = 'Chemically Treated Non-Organic'
+        flash(f'Tamper simulated on Batch {batch_id}: Farming method altered to "Chemically Treated Non-Organic". Blockchain caught the discrepancy!', 'danger')
+    db.session.commit()
+    return redirect(url_for('verify_batch', batch_id=batch_id))
 
 @app.route('/verify/<batch_id>/feedback', methods=['POST'])
 def submit_feedback(batch_id):

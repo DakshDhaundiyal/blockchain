@@ -1,13 +1,46 @@
 {% extends "base.html" %}
 
-{% block title %}Sign In - TrustHarvest{% endblock %}
+{% block title %}Access Dashboards - TrustHarvest{% endblock %}
 
 {% block content %}
 <div class="row justify-content-center py-5">
-    <div class="col-md-5">
+    <div class="col-md-6 col-lg-5">
+        <!-- Quick Seamless Persona Switcher Card -->
+        <div class="card card-custom shadow-sm mb-4 border-success-subtle" style="background:#f0fdf4;border-radius:14px;">
+            <div class="card-body p-4 text-center">
+                <div class="d-inline-flex p-2 rounded-circle bg-success-subtle text-success mb-2">
+                    <i class="bi bi-lightning-charge-fill" style="font-size:22px;"></i>
+                </div>
+                <h5 class="fw-bold mb-1 text-success-emphasis">Instant Role Switcher</h5>
+                <p class="text-muted small mb-3">No password required. Switch directly to any stakeholder dashboard:</p>
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('switch_role', role='farmer') }}" class="btn btn-outline-success text-start d-flex align-items-center justify-content-between px-3 py-2" style="border-radius:10px;">
+                        <span><i class="bi bi-tree-fill me-2"></i><strong>Farmer / Producer</strong></span>
+                        <i class="bi bi-arrow-right"></i>
+                    </a>
+                    <a href="{{ url_for('switch_role', role='transporter') }}" class="btn btn-outline-primary text-start d-flex align-items-center justify-content-between px-3 py-2" style="border-radius:10px;">
+                        <span><i class="bi bi-truck me-2"></i><strong>Transporter / Logistics</strong></span>
+                        <i class="bi bi-arrow-right"></i>
+                    </a>
+                    <a href="{{ url_for('switch_role', role='retailer') }}" class="btn text-start d-flex align-items-center justify-content-between px-3 py-2" style="border-radius:10px;border:1px solid #9333ea;color:#9333ea;">
+                        <span><i class="bi bi-shop me-2"></i><strong>Retailer / Supermarket</strong></span>
+                        <i class="bi bi-arrow-right"></i>
+                    </a>
+                    <a href="{{ url_for('switch_role', role='customer') }}" class="btn btn-outline-info text-start d-flex align-items-center justify-content-between px-3 py-2" style="border-radius:10px;">
+                        <span><i class="bi bi-qr-code-scan me-2"></i><strong>Consumer / Customer</strong></span>
+                        <i class="bi bi-arrow-right"></i>
+                    </a>
+                    <a href="{{ url_for('switch_role', role='admin') }}" class="btn btn-outline-dark text-start d-flex align-items-center justify-content-between px-3 py-2" style="border-radius:10px;">
+                        <span><i class="bi bi-shield-shaded me-2"></i><strong>System Administrator</strong></span>
+                        <i class="bi bi-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
         <div class="card card-custom shadow">
             <div class="card-header card-header-ag text-center py-3">
-                <h4 class="mb-0 fw-bold"><i class="bi bi-box-arrow-in-right me-2"></i>Sign In</h4>
+                <h6 class="mb-0 fw-semibold text-muted"><i class="bi bi-key me-2"></i>Or sign in with custom credentials</h6>
             </div>
             <div class="card-body p-4">
                 <form method="POST" action="{{ url_for('login') }}">

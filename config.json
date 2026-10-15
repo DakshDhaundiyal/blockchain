@@ -1,6 +1,6 @@
 {
   "BASE_URL": "http://localhost:5000",
-  "contract_address": "0x0C4B16a990323C802a4681293ac221d9CF179340",
+  "contract_address": "0xe78A0F7E598Cc8b0Bb87894B0F60dD2a88d6a8Ab",
   "abi": [
     {
       "anonymous": false,

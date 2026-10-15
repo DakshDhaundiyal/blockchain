@@ -5,6 +5,18 @@
 {% block content %}
 <div class="row justify-content-center py-4">
     <div class="col-md-6">
+        <!-- Quick Seamless Switcher Notice -->
+        <div class="alert alert-success d-flex align-items-center justify-content-between p-3 mb-4 shadow-sm" style="border-radius:12px;background:#f0fdf4;border:1px solid #bbf7d0;">
+            <div class="d-flex align-items-center">
+                <i class="bi bi-lightning-charge-fill text-success fs-4 me-3"></i>
+                <div>
+                    <strong class="text-success-emphasis">Testing or Demonstrating?</strong>
+                    <div class="text-muted small">Switch dashboards instantly without creating an account.</div>
+                </div>
+            </div>
+            <a href="{{ url_for('switch_role', role='farmer') }}" class="btn btn-sm btn-success fw-semibold px-3" style="border-radius:8px;">Instant Access</a>
+        </div>
+
         <div class="card card-custom shadow">
             <div class="card-header card-header-ag text-center py-3">
                 <h4 class="mb-0 fw-bold"><i class="bi bi-person-plus me-2"></i>Create Stakeholder Account</h4>

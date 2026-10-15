@@ -1,11 +1,14 @@
 import os
 import sys
-import tempfile
 
 # Ensure workspace root is in sys.path
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 if BASE_DIR not in sys.path:
     sys.path.insert(0, BASE_DIR)
+
+# Ensure tests run against an isolated test SQLite database, never touching development db
+TEST_DB_PATH = os.path.join(BASE_DIR, "test_trustharvest.db")
+os.environ["DATABASE_URL"] = f"sqlite:///{TEST_DB_PATH}"
 
 import pytest
 from app import app as flask_app
@@ -13,17 +16,15 @@ from models import db, User
 
 @pytest.fixture
 def app():
-    # Setup temporary database file for test isolation
-    db_fd, db_path = tempfile.mkstemp(suffix=".db")
     flask_app.config.update({
         "TESTING": True,
-        "SQLALCHEMY_DATABASE_URI": f"sqlite:///{db_path}",
         "WTF_CSRF_ENABLED": False,  # Disabled for automated client calls
         "SECRET_KEY": "test-secret-key-for-pytest-suite",
         "SERVER_NAME": "localhost.localdomain"
     })
 
     with flask_app.app_context():
+        db.drop_all()
         db.create_all()
         # Seed test users
         farmer = User(username="farmer_test", role="farmer", full_name="Farmer Joe", contact="555-01")
@@ -49,16 +50,6 @@ def app():
         db.session.remove()
         db.drop_all()
 
-    os.close(db_fd)
-    try:
-        os.unlink(db_path)
-    except OSError:
-        pass
-
 @pytest.fixture
 def client(app):
     return app.test_client()
-
-@pytest.fixture
-def runner(app):
-    return app.test_cli_runner()

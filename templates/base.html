@@ -42,22 +42,16 @@
                 <li><a href="{{ url_for('customer_dashboard') }}" class="{% if request.endpoint == 'customer_dashboard' %}active{% endif %}">Verify Produce</a></li>
                 <li><a href="{{ url_for('landing') }}#how-it-works">About</a></li>
                 <li><a href="{{ url_for('landing') }}#blockchain-status">Supply Network</a></li>
-                {% if session.get('user_id') %}
-                    {% if session.get('role') == 'farmer' %}
-                    <li><a href="{{ url_for('farmer_dashboard') }}">Farmer Portal</a></li>
-                    {% elif session.get('role') == 'transporter' %}
-                    <li><a href="{{ url_for('transporter_dashboard') }}">Logistics</a></li>
-                    {% elif session.get('role') == 'retailer' %}
-                    <li><a href="{{ url_for('retailer_dashboard') }}">Retail</a></li>
-                    {% elif session.get('role') == 'admin' %}
-                    <li><a href="{{ url_for('admin_dashboard') }}">Admin</a></li>
-                    {% endif %}
-                {% endif %}
+                <!-- Direct quick switch links -->
+                <li><a href="{{ url_for('switch_role', role='farmer') }}" class="{% if current_role == 'farmer' %}active fw-semibold{% endif %}">Farmer</a></li>
+                <li><a href="{{ url_for('switch_role', role='transporter') }}" class="{% if current_role == 'transporter' %}active fw-semibold{% endif %}">Logistics</a></li>
+                <li><a href="{{ url_for('switch_role', role='retailer') }}" class="{% if current_role == 'retailer' %}active fw-semibold{% endif %}">Retail</a></li>
+                <li><a href="{{ url_for('switch_role', role='admin') }}" class="{% if current_role == 'admin' %}active fw-semibold{% endif %}">Admin</a></li>
             </ul>
 
             <!-- Actions -->
             <div class="nav-actions">
-                <div class="nav-status-badge d-none d-md-flex" title="Ethereum/Ganache RPC Node Status">
+                <div class="nav-status-badge d-none d-xl-flex" title="Ethereum/Ganache RPC Node Status">
                     {% if blockchain_online %}
                         <span class="nav-status-dot" style="background:#22c55e;"></span>
                         <div class="nav-status-text">
@@ -73,19 +67,113 @@
                     {% endif %}
                 </div>
 
+                <!-- SEAMLESS DASHBOARD SWITCHER DROPDOWN -->
+                <div class="dropdown">
+                    <button class="btn btn-dashboard-switch dropdown-toggle d-flex align-items-center" type="button" id="dashboardSwitcherDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                        {% if current_persona %}
+                            <i class="bi {{ current_persona.icon }} me-1.5" style="color:{{ current_persona.badge_color }};font-size:15px;"></i>
+                            <span class="d-none d-sm-inline me-1 text-muted" style="font-weight:500;">Role:</span>
+                            <span class="fw-bold">{{ current_persona.short_title }}</span>
+                        {% else %}
+                            <i class="bi bi-grid-fill text-success me-1.5" style="font-size:14px;"></i>
+                            <span class="fw-bold text-success">Switch Dashboard</span>
+                        {% endif %}
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end shadow-lg py-2 border-0 persona-dropdown-menu" aria-labelledby="dashboardSwitcherDropdown">
+                        <li class="dropdown-header px-3 py-2 text-uppercase fw-bold text-muted" style="font-size: 11px; letter-spacing: 0.06em;">
+                            <i class="bi bi-shuffle me-1"></i> Switch Dashboard Role
+                        </li>
+                        <li><hr class="dropdown-divider my-1"></li>
+                        
+                        <!-- Farmer / Producer -->
+                        <li>
+                            <a class="dropdown-item persona-item d-flex align-items-center py-2 px-3 {% if current_role == 'farmer' %}active-persona{% endif %}" href="{{ url_for('switch_role', role='farmer') }}">
+                                <div class="persona-icon-box bg-success-subtle text-success me-3">
+                                    <i class="bi bi-tree-fill"></i>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <div class="persona-name fw-semibold">Farmer (Producer)</div>
+                                    <div class="persona-sub text-muted">Log harvest & produce batches</div>
+                                </div>
+                                {% if current_role == 'farmer' %}
+                                    <span class="badge bg-success rounded-pill ms-2" style="font-size:10px;">Active</span>
+                                {% endif %}
+                            </a>
+                        </li>
+
+                        <!-- Transporter / Logistics -->
+                        <li>
+                            <a class="dropdown-item persona-item d-flex align-items-center py-2 px-3 {% if current_role == 'transporter' %}active-persona{% endif %}" href="{{ url_for('switch_role', role='transporter') }}">
+                                <div class="persona-icon-box bg-primary-subtle text-primary me-3">
+                                    <i class="bi bi-truck"></i>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <div class="persona-name fw-semibold">Transporter (Logistics)</div>
+                                    <div class="persona-sub text-muted">GPS tracking & cold-chain telemetry</div>
+                                </div>
+                                {% if current_role == 'transporter' %}
+                                    <span class="badge bg-primary rounded-pill ms-2" style="font-size:10px;">Active</span>
+                                {% endif %}
+                            </a>
+                        </li>
+
+                        <!-- Retailer / Supermarket -->
+                        <li>
+                            <a class="dropdown-item persona-item d-flex align-items-center py-2 px-3 {% if current_role == 'retailer' %}active-persona{% endif %}" href="{{ url_for('switch_role', role='retailer') }}">
+                                <div class="persona-icon-box me-3" style="background:#f3e8ff;color:#9333ea;">
+                                    <i class="bi bi-shop"></i>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <div class="persona-name fw-semibold">Retailer (Supermarket)</div>
+                                    <div class="persona-sub text-muted">Store acceptance & shelf monitoring</div>
+                                </div>
+                                {% if current_role == 'retailer' %}
+                                    <span class="badge rounded-pill ms-2" style="background:#9333ea;font-size:10px;">Active</span>
+                                {% endif %}
+                            </a>
+                        </li>
+
+                        <!-- Consumer / Customer -->
+                        <li>
+                            <a class="dropdown-item persona-item d-flex align-items-center py-2 px-3 {% if current_role == 'customer' %}active-persona{% endif %}" href="{{ url_for('switch_role', role='customer') }}">
+                                <div class="persona-icon-box bg-info-subtle text-info me-3">
+                                    <i class="bi bi-qr-code-scan"></i>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <div class="persona-name fw-semibold">Consumer (Customer)</div>
+                                    <div class="persona-sub text-muted">Scan QR & verify cryptographic proof</div>
+                                </div>
+                                {% if current_role == 'customer' %}
+                                    <span class="badge bg-info text-dark rounded-pill ms-2" style="font-size:10px;">Active</span>
+                                {% endif %}
+                            </a>
+                        </li>
+
+                        <!-- System Administrator -->
+                        <li>
+                            <a class="dropdown-item persona-item d-flex align-items-center py-2 px-3 {% if current_role == 'admin' %}active-persona{% endif %}" href="{{ url_for('switch_role', role='admin') }}">
+                                <div class="persona-icon-box bg-warning-subtle text-warning-emphasis me-3">
+                                    <i class="bi bi-shield-lock-fill"></i>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <div class="persona-name fw-semibold">System Administrator</div>
+                                    <div class="persona-sub text-muted">Network stats, users & contracts</div>
+                                </div>
+                                {% if current_role == 'admin' %}
+                                    <span class="badge bg-dark rounded-pill ms-2" style="font-size:10px;">Active</span>
+                                {% endif %}
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+
                 {% if session.get('user_id') %}
-                    <div class="nav-user-pill d-none d-md-flex">
-                        <span class="dot"></span>
-                        {{ session.get('username') }}
-                        <span style="color:var(--neutral-400);font-weight:400;font-size:12px;">&bull; {{ session.get('role')|capitalize }}</span>
-                    </div>
                     <form action="{{ url_for('logout') }}" method="POST" class="d-inline m-0 p-0">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                        <button type="submit" class="btn-signin-th" style="background:none;border:1px solid var(--neutral-300);cursor:pointer;">Sign out</button>
+                        <button type="submit" class="btn btn-sm btn-outline-secondary" style="border-radius:8px;font-size:12px;padding:6px 10px;" title="Reset session / Sign out">
+                            <i class="bi bi-box-arrow-right"></i>
+                        </button>
                     </form>
-                {% else %}
-                    <a href="{{ url_for('login') }}" class="btn-signin-th d-none d-sm-inline-flex">Sign in</a>
-                    <a href="{{ url_for('register') }}" class="btn-join-th">Join Network</a>
                 {% endif %}
             </div>
         </div>
