@@ -5,7 +5,7 @@ import hashlib
 from web3 import Web3
 from solcx import compile_standard, install_solc, set_solc_version
 
-GANACHE_URL = "http://127.0.0.1:7545"
+GANACHE_URL = os.environ.get("GANACHE_URL") or os.environ.get("ETH_RPC_URL") or "http://127.0.0.1:7545"
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 CONFIG_PATH = os.path.join(BASE_DIR, "config.json")
 CONTRACT_PATH = os.path.join(BASE_DIR, "contracts", "TrustHarvest.sol")
@@ -15,13 +15,13 @@ def get_w3(die_on_error=True):
         w3 = Web3(Web3.HTTPProvider(GANACHE_URL, request_kwargs={"timeout": 2}))
         if not w3.is_connected():
             if die_on_error:
-                print(f"Error: Unable to connect to Ganache at {GANACHE_URL}. Please ensure Ganache is running.", file=sys.stderr)
+                print(f"Error: Unable to connect to Ethereum/Ganache at {GANACHE_URL}. Please ensure node is running.", file=sys.stderr)
                 sys.exit(1)
             return None
         return w3
     except Exception:
         if die_on_error:
-            print(f"Error: Unable to connect to Ganache at {GANACHE_URL}. Please ensure Ganache is running.", file=sys.stderr)
+            print(f"Error: Unable to connect to Ethereum/Ganache at {GANACHE_URL}. Please ensure node is running.", file=sys.stderr)
             sys.exit(1)
         return None
 
@@ -118,17 +118,33 @@ def store_hash(batch_id, hash_val):
     deployer = w3.eth.accounts[0]
     tx_hash = contract.functions.storeHash(batch_id, hash_val).transact({"from": deployer})
     receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
+    if receipt.status != 1:
+        raise RuntimeError(f"Transaction failed or reverted on blockchain: {tx_hash.hex()}")
     return receipt.transactionHash.hex()
 
-def get_hash(batch_id):
+def fetch_on_chain_status(batch_id):
+    """
+    Safely retrieves the on-chain hash for a given batch ID.
+    Returns a dict with:
+      - 'status': 'ok' | 'not_found' | 'rpc_offline'
+      - 'hash': str or None
+      - 'error': str or None
+    """
     try:
         w3 = get_w3(die_on_error=False)
-        if not w3:
-            return None
+        if not w3 or not w3.is_connected():
+            return {"status": "rpc_offline", "hash": None, "error": "RPC node unavailable"}
         contract = get_or_deploy_contract(w3)
-        return contract.functions.getHash(batch_id).call()
-    except Exception:
-        return None
+        recorded = contract.functions.getHash(str(batch_id)).call()
+        if not recorded:
+            return {"status": "not_found", "hash": None, "error": "Batch not recorded on-chain"}
+        return {"status": "ok", "hash": recorded, "error": None}
+    except Exception as e:
+        return {"status": "rpc_offline", "hash": None, "error": str(e)}
+
+def get_hash(batch_id):
+    res = fetch_on_chain_status(batch_id)
+    return res.get("hash")
 
 def compute_batch_hash(batch_id, name, quantity, farming_method, packaging_date, farmer_id, image):
     data = {

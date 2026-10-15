@@ -9,40 +9,69 @@
     </a>
 </div>
 
-<!-- Big College Demo Status Banner -->
+<!-- Multi-State Cryptographic Status Banner -->
 <div class="card card-custom shadow mb-4 text-center overflow-hidden border-0">
-    <div class="py-4 px-3 {{ 'bg-success bg-opacity-10' if is_verified else 'bg-danger bg-opacity-10' }}">
-        {% if is_verified %}
-            <div class="d-inline-flex align-items-center badge-verified mb-2">
-                <i class="bi bi-shield-fill-check fs-2 me-2"></i>
-                <span class="fs-3 fw-bold">BLOCKCHAIN VERIFIED</span>
-            </div>
-            <p class="text-success fw-semibold mt-2 mb-0 fs-5">
-                <i class="bi bi-check-circle-fill me-1"></i> Cryptographic Integrity Confirmed: Harvest origin data matches Ethereum ledger 100%.
-            </p>
-        {% else %}
-            <div class="d-inline-flex align-items-center badge-tampered mb-2">
-                <i class="bi bi-shield-fill-x fs-2 me-2"></i>
-                <span class="fs-3 fw-bold">TAMPER DETECTED</span>
-            </div>
-            <p class="text-danger fw-semibold mt-2 mb-0 fs-5">
-                <i class="bi bi-exclamation-triangle-fill me-1"></i> Warning: Database record has been altered! Hash does not match the immutable blockchain ledger.
-            </p>
-        {% endif %}
+    {% if is_verified %}
+    <div class="py-4 px-3 bg-success bg-opacity-10 border-bottom border-success border-opacity-25">
+        <div class="d-inline-flex align-items-center badge-verified mb-2">
+            <i class="bi bi-shield-fill-check fs-2 me-2"></i>
+            <span class="fs-3 fw-bold">BLOCKCHAIN VERIFIED</span>
+        </div>
+        <p class="text-success fw-semibold mt-2 mb-0 fs-5">
+            <i class="bi bi-check-circle-fill me-1"></i> Cryptographic Integrity Confirmed: Harvest origin data matches Ethereum ledger 100%.
+        </p>
     </div>
+    {% elif is_tampered %}
+    <div class="py-4 px-3 bg-danger bg-opacity-10 border-bottom border-danger border-opacity-25">
+        <div class="d-inline-flex align-items-center badge-tampered mb-2">
+            <i class="bi bi-shield-fill-x fs-2 me-2"></i>
+            <span class="fs-3 fw-bold">TAMPER DETECTED</span>
+        </div>
+        <p class="text-danger fw-semibold mt-2 mb-0 fs-5">
+            <i class="bi bi-exclamation-triangle-fill me-1"></i> Warning: Database record does not match the immutable blockchain ledger. Produce data has been altered!
+        </p>
+    </div>
+    {% elif is_rpc_offline %}
+    <div class="py-4 px-3 bg-warning bg-opacity-10 border-bottom border-warning border-opacity-25">
+        <div class="d-inline-flex align-items-center text-warning-emphasis mb-2" style="background:#fff3cd;padding:8px 18px;border-radius:30px;border:1px solid #ffe69c;">
+            <i class="bi bi-wifi-off fs-2 me-2 text-warning"></i>
+            <span class="fs-3 fw-bold">BLOCKCHAIN RPC OFFLINE</span>
+        </div>
+        <p class="text-warning-emphasis fw-semibold mt-2 mb-0 fs-5">
+            <i class="bi bi-info-circle-fill me-1"></i> Live Ethereum node is currently unreachable. Live cryptographic consensus cannot be confirmed; showing cached database hash below with an offline caveat.
+        </p>
+    </div>
+    {% else %}
+    <div class="py-4 px-3 bg-secondary bg-opacity-10 border-bottom border-secondary border-opacity-25">
+        <div class="d-inline-flex align-items-center text-secondary mb-2" style="background:#e9ecef;padding:8px 18px;border-radius:30px;border:1px solid #ced4da;">
+            <i class="bi bi-question-diamond-fill fs-2 me-2"></i>
+            <span class="fs-3 fw-bold">UNRECORDED ON CHAIN</span>
+        </div>
+        <p class="text-secondary fw-semibold mt-2 mb-0 fs-5">
+            <i class="bi bi-exclamation-circle me-1"></i> Batch was found in local records, but no cryptographic hash has been registered on the smart contract yet.
+        </p>
+    </div>
+    {% endif %}
 
     <!-- Hash Comparison Bar -->
     <div class="bg-white p-3 border-top text-start">
         <div class="row g-2 align-items-center small">
             <div class="col-md-6">
                 <span class="fw-bold text-muted d-block"><i class="bi bi-database me-1"></i> Current Recomputed Hash (from Database):</span>
-                <div class="hash-box {{ 'text-success' if is_verified else 'text-danger fw-bold' }}">
+                <div class="hash-box {{ 'text-success' if is_verified else ('text-warning-emphasis' if is_rpc_offline else 'text-danger fw-bold') }}">
                     {{ computed_hash }}
                 </div>
             </div>
             <div class="col-md-6">
-                <span class="fw-bold text-muted d-block"><i class="bi bi-link-45deg me-1"></i> Immutable On-Chain Hash (from Smart Contract):</span>
-                <div class="hash-box text-primary">
+                <span class="fw-bold text-muted d-block">
+                    <i class="bi bi-link-45deg me-1"></i> 
+                    {% if is_rpc_offline %}
+                    Cached On-Chain Hash (Offline Node):
+                    {% else %}
+                    Immutable On-Chain Hash (from Smart Contract):
+                    {% endif %}
+                </span>
+                <div class="hash-box {{ 'text-primary' if (is_verified or is_tampered) else ('text-muted' if not on_chain_hash else 'text-warning-emphasis') }}">
                     {{ on_chain_hash or 'Not Found on Blockchain' }}
                 </div>
             </div>
@@ -229,6 +258,7 @@
             </div>
             <div class="card-body p-4">
                 <form action="{{ url_for('submit_feedback', batch_id=product.batch_id) }}" method="POST" class="mb-4 bg-light p-3 rounded">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                     <h6 class="fw-bold mb-2">Submit Verified Feedback</h6>
                     <div class="row g-3">
                         <div class="col-md-6">

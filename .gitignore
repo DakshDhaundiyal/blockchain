@@ -4,5 +4,10 @@ __pycache__/
 instance/
 *.db
 .env
+!.env.example
 .vscode/
 .idea/
+static/uploads/*
+!static/uploads/.gitkeep
+static/qr/*
+!static/qr/.gitkeep

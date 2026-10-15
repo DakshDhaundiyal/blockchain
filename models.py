@@ -1,8 +1,11 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 
 db = SQLAlchemy()
+
+def utcnow():
+    return datetime.now(timezone.utc)
 
 class User(db.Model):
     __tablename__ = 'users'
@@ -12,7 +15,7 @@ class User(db.Model):
     role = db.Column(db.String(20), nullable=False) # admin, farmer, transporter, retailer, customer
     full_name = db.Column(db.String(120), nullable=True)
     contact = db.Column(db.String(120), nullable=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=utcnow)
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -34,7 +37,7 @@ class Product(db.Model):
     qr_code = db.Column(db.String(255), nullable=True)
     on_chain_hash = db.Column(db.String(66), nullable=True)
     status = db.Column(db.String(50), default='Harvested') # Harvested, In Transit, Delivered to Retail, In Stock, Sold
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=utcnow)
 
     farmer = db.relationship('User', foreign_keys=[farmer_id], backref='farmer_products')
     farmer_data = db.relationship('FarmerData', backref='product', uselist=False, cascade='all, delete-orphan')
@@ -52,7 +55,7 @@ class FarmerData(db.Model):
     harvest_date = db.Column(db.String(50), nullable=True)
     certifications = db.Column(db.String(200), nullable=True)
     notes = db.Column(db.Text, nullable=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=utcnow)
 
 
 class TransportData(db.Model):
@@ -65,7 +68,7 @@ class TransportData(db.Model):
     temperature = db.Column(db.String(50), nullable=True)
     vehicle_number = db.Column(db.String(50), nullable=True)
     notes = db.Column(db.Text, nullable=True)
-    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    timestamp = db.Column(db.DateTime, default=utcnow)
 
     transporter = db.relationship('User', foreign_keys=[transporter_id])
 
@@ -81,7 +84,7 @@ class RetailData(db.Model):
     stock_quantity = db.Column(db.String(50), nullable=True)
     arrival_date = db.Column(db.String(50), nullable=True)
     shelf_life = db.Column(db.String(50), nullable=True)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=utcnow, onupdate=utcnow)
 
     retailer = db.relationship('User', foreign_keys=[retailer_id])
 
@@ -93,4 +96,4 @@ class Feedback(db.Model):
     customer_name = db.Column(db.String(100), nullable=True)
     rating = db.Column(db.Integer, default=5)
     comment = db.Column(db.Text, nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=utcnow)

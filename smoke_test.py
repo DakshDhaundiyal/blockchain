@@ -10,6 +10,11 @@ def run_smoke_test():
     print("TrustHarvest Comprehensive End-to-End Smoke Test")
     print("=" * 60)
 
+    # Force isolated test database so production/development database is never touched
+    app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('TEST_DATABASE_URI', 'sqlite:///test_smoke.db')
+    app.config['TESTING'] = True
+    app.config['WTF_CSRF_ENABLED'] = False
+
     # 1. Ganache Connectivity
     print("\n[Step 1] Verifying connection to Ganache (http://127.0.0.1:7545)...")
     w3 = get_w3()
@@ -20,7 +25,7 @@ def run_smoke_test():
 
     with app.app_context():
         # Clean setup for smoke test
-        print("\n[Step 2] Initializing test database & stakeholders...")
+        print("\n[Step 2] Initializing isolated test database & stakeholders...")
         db.drop_all()
         db.create_all()
 

@@ -57,12 +57,20 @@
 
             <!-- Actions -->
             <div class="nav-actions">
-                <div class="nav-status-badge d-none d-md-flex">
-                    <span class="nav-status-dot"></span>
-                    <div class="nav-status-text">
-                        <span class="nav-status-title">Ganache (Local)</span>
-                        <span class="nav-status-sub">Network Online</span>
-                    </div>
+                <div class="nav-status-badge d-none d-md-flex" title="Ethereum/Ganache RPC Node Status">
+                    {% if blockchain_online %}
+                        <span class="nav-status-dot" style="background:#22c55e;"></span>
+                        <div class="nav-status-text">
+                            <span class="nav-status-title">Ethereum (Live)</span>
+                            <span class="nav-status-sub" style="color:#16a34a;">Block #{{ blockchain_block }}</span>
+                        </div>
+                    {% else %}
+                        <span class="nav-status-dot" style="background:#eab308;animation:none;"></span>
+                        <div class="nav-status-text">
+                            <span class="nav-status-title">Ethereum Node</span>
+                            <span class="nav-status-sub" style="color:#ca8a04;">RPC Offline</span>
+                        </div>
+                    {% endif %}
                 </div>
 
                 {% if session.get('user_id') %}
@@ -71,7 +79,10 @@
                         {{ session.get('username') }}
                         <span style="color:var(--neutral-400);font-weight:400;font-size:12px;">&bull; {{ session.get('role')|capitalize }}</span>
                     </div>
-                    <a href="{{ url_for('logout') }}" class="btn-signin-th">Sign out</a>
+                    <form action="{{ url_for('logout') }}" method="POST" class="d-inline m-0 p-0">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        <button type="submit" class="btn-signin-th" style="background:none;border:1px solid var(--neutral-300);cursor:pointer;">Sign out</button>
+                    </form>
                 {% else %}
                     <a href="{{ url_for('login') }}" class="btn-signin-th d-none d-sm-inline-flex">Sign in</a>
                     <a href="{{ url_for('register') }}" class="btn-join-th">Join Network</a>

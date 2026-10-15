@@ -5,6 +5,8 @@ from app import app
 from models import db, User, Product, FarmerData, TransportData, RetailData, Feedback
 from blockchain import store_hash, compute_batch_hash, load_config
 
+from utils import generate_batch_qr
+
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 UPLOAD_FOLDER = os.path.join(BASE_DIR, 'static', 'uploads')
 QR_FOLDER = os.path.join(BASE_DIR, 'static', 'qr')
@@ -14,21 +16,8 @@ os.makedirs(QR_FOLDER, exist_ok=True)
 
 def generate_qr(batch_id):
     cfg = load_config()
-    base_url = cfg.get('BASE_URL', 'http://localhost:5000').rstrip('/')
-    verify_url = f"{base_url}/verify/{batch_id}"
-
-    qr = qrcode.QRCode(
-        version=1,
-        error_correction=qrcode.constants.ERROR_CORRECT_M,
-        box_size=8,
-        border=3,
-    )
-    qr.add_data(verify_url)
-    qr.make(fit=True)
-    img = qr.make_image(fill_color="#1b4332", back_color="white")
-    filename = f"qr_{batch_id}.png"
-    img.save(os.path.join(QR_FOLDER, filename))
-    return filename
+    base_url = cfg.get('BASE_URL', 'http://localhost:5000')
+    return generate_batch_qr(batch_id, QR_FOLDER, base_url)
 
 def seed():
     with app.app_context():

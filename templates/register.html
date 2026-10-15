@@ -11,6 +11,7 @@
             </div>
             <div class="card-body p-4">
                 <form method="POST" action="{{ url_for('register') }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Role in Supply Chain</label>
                         <select name="role" class="form-select" required>
@@ -26,29 +27,30 @@
                         <label class="form-label fw-semibold">Username</label>
                         <div class="input-group">
                             <span class="input-group-text"><i class="bi bi-person"></i></span>
-                            <input type="text" name="username" class="form-control" placeholder="Unique username" required>
+                            <input type="text" name="username" class="form-control" placeholder="Unique username (min 3 chars)" required minlength="3" maxlength="80">
                         </div>
                     </div>
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Full Name / Organization</label>
                         <div class="input-group">
                             <span class="input-group-text"><i class="bi bi-building"></i></span>
-                            <input type="text" name="full_name" class="form-control" placeholder="e.g. Green Valley Farm or John Doe" required>
+                            <input type="text" name="full_name" class="form-control" placeholder="e.g. Green Valley Farm or John Doe" required maxlength="120">
                         </div>
                     </div>
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Contact / Phone / Location</label>
                         <div class="input-group">
                             <span class="input-group-text"><i class="bi bi-geo-alt"></i></span>
-                            <input type="text" name="contact" class="form-control" placeholder="Contact number or location" required>
+                            <input type="text" name="contact" class="form-control" placeholder="Contact number or location" required maxlength="120">
                         </div>
                     </div>
                     <div class="mb-4">
                         <label class="form-label fw-semibold">Password</label>
                         <div class="input-group">
                             <span class="input-group-text"><i class="bi bi-key"></i></span>
-                            <input type="password" name="password" class="form-control" placeholder="Choose a secure password" required minlength="4">
+                            <input type="password" name="password" class="form-control" placeholder="Choose a secure password (min 8 chars)" required minlength="8">
                         </div>
+                        <div class="form-text">Minimum 8 characters required.</div>
                     </div>
                     <button type="submit" class="btn btn-ag-primary w-100 py-2 fw-bold">Complete Registration</button>
                 </form>

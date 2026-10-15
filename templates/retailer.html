@@ -19,6 +19,7 @@
             </div>
             <div class="card-body p-4">
                 <form method="POST" action="{{ url_for('add_retail_data') }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Select Harvest Batch</label>
                         <select name="product_id" class="form-select" required>

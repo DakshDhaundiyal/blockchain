@@ -1,21 +1,49 @@
 import os
 import uuid
-from datetime import datetime
+import time
+from datetime import datetime, timezone, timedelta
 from functools import wraps
 from flask import (
     Flask, render_template, request, redirect, url_for, flash, session, abort
 )
+from flask_wtf.csrf import CSRFProtect, CSRFError
 from werkzeug.utils import secure_filename
-import qrcode
-from models import db, User, Product, FarmerData, TransportData, RetailData, Feedback
+from dotenv import load_dotenv
+
+# Load local environment configuration if present
+load_dotenv()
+
+from models import db, User, Product, FarmerData, TransportData, RetailData, Feedback, utcnow
 from blockchain import (
-    store_hash, get_hash, compute_batch_hash, load_config
+    store_hash, get_hash, compute_batch_hash, load_config, fetch_on_chain_status
 )
+from utils import generate_batch_qr, validate_image_file, logger
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'trustharvest-super-secret-key-blockchain-2026'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///trustharvest.db'
+
+# Security: Move secret configuration to environment variables
+SECRET_KEY = os.environ.get('SECRET_KEY')
+if not SECRET_KEY:
+    if os.environ.get('FLASK_ENV') == 'production' or os.environ.get('PRODUCTION') == 'true':
+        raise RuntimeError("FATAL: SECRET_KEY environment variable must be set in production mode.")
+    SECRET_KEY = 'trustharvest-dev-only-secret-key-change-in-production'
+app.config['SECRET_KEY'] = SECRET_KEY
+
+# Database Configuration
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///trustharvest.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+# Security: Session Cookie Hardening
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+app.config['SESSION_COOKIE_SECURE'] = os.environ.get('SESSION_COOKIE_SECURE', 'false').lower() in ('true', '1')
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=4)
+
+# Security: Restrict maximum upload size to 5 MB
+app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024
+
+# Security: Initialize CSRF Protection
+csrf = CSRFProtect(app)
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 UPLOAD_FOLDER = os.path.join(BASE_DIR, 'static', 'uploads')
@@ -26,6 +54,56 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(QR_FOLDER, exist_ok=True)
 
 db.init_app(app)
+
+# In-memory rate limiting for login attempts
+FAILED_LOGINS = {}
+MAX_FAILED_ATTEMPTS = 5
+LOCKOUT_WINDOW_SECONDS = 300
+
+def is_login_rate_limited(username):
+    now = time.time()
+    attempts = FAILED_LOGINS.get(username, [])
+    recent_attempts = [t for t in attempts if now - t < LOCKOUT_WINDOW_SECONDS]
+    FAILED_LOGINS[username] = recent_attempts
+    return len(recent_attempts) >= MAX_FAILED_ATTEMPTS
+
+def record_failed_login(username):
+    now = time.time()
+    attempts = FAILED_LOGINS.get(username, [])
+    attempts.append(now)
+    FAILED_LOGINS[username] = attempts
+
+def clear_failed_logins(username):
+    FAILED_LOGINS.pop(username, None)
+
+@app.errorhandler(CSRFError)
+def handle_csrf_error(e):
+    logger.warning("CSRF validation failed: %s from %s", getattr(e, 'description', e), request.remote_addr)
+    flash('Security session expired or invalid form submission token. Please try again.', 'warning')
+    return redirect(request.referrer or url_for('landing'))
+
+@app.errorhandler(413)
+def request_entity_too_large(error):
+    flash('The uploaded file is too large. Maximum permitted file size is 5MB.', 'danger')
+    return redirect(request.referrer or url_for('landing'))
+
+@app.context_processor
+def inject_system_status():
+    """Provides honest real-time blockchain status to all templates/navbars."""
+    from blockchain import get_w3
+    is_online = False
+    block_num = None
+    try:
+        w3 = get_w3(die_on_error=False)
+        if w3 and w3.is_connected():
+            is_online = True
+            block_num = w3.eth.block_number
+    except Exception:
+        pass
+    return {
+        'blockchain_online': is_online,
+        'blockchain_block': block_num
+    }
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -111,6 +189,18 @@ def register():
             flash('Username and password are required.', 'danger')
             return redirect(url_for('register'))
 
+        if len(password) < 8:
+            flash('Password must be at least 8 characters long for security.', 'danger')
+            return redirect(url_for('register'))
+
+        if len(username) < 3 or len(username) > 80:
+            flash('Username must be between 3 and 80 characters.', 'danger')
+            return redirect(url_for('register'))
+
+        if len(full_name) > 120 or len(contact) > 120:
+            flash('Full name or contact details exceed maximum allowed length.', 'danger')
+            return redirect(url_for('register'))
+
         existing_user = User.query.filter_by(username=username).first()
         if existing_user:
             flash('Username already registered. Please sign in.', 'warning')
@@ -137,11 +227,22 @@ def login():
         username = request.form.get('username', '').strip()
         password = request.form.get('password', '')
 
+        if not username or not password:
+            flash('Please enter both username and password.', 'danger')
+            return render_template('login.html')
+
+        if is_login_rate_limited(username):
+            logger.warning("Rate limited login attempt for user '%s'", username)
+            flash('Too many failed attempts. For your security, this account is temporarily locked for 5 minutes.', 'danger')
+            return render_template('login.html')
+
         user = User.query.filter_by(username=username).first()
         if user and user.check_password(password):
+            clear_failed_logins(username)
             session['user_id'] = user.id
             session['username'] = user.username
             session['role'] = user.role
+            session.permanent = True
             flash(f'Welcome back, {user.username}!', 'success')
 
             if user.role == 'farmer':
@@ -155,13 +256,14 @@ def login():
             else:
                 return redirect(url_for('customer_dashboard'))
 
+        record_failed_login(username)
         flash('Invalid username or password.', 'danger')
     return render_template('login.html')
 
-@app.route('/logout')
+@app.route('/logout', methods=['GET', 'POST'])
 def logout():
     session.clear()
-    flash('You have been logged out.', 'info')
+    flash('You have been securely signed out.', 'info')
     return redirect(url_for('landing'))
 
 @app.route('/farmer')
@@ -169,7 +271,7 @@ def logout():
 def farmer_dashboard():
     farmer_id = session['user_id']
     products = Product.query.filter_by(farmer_id=farmer_id).order_by(Product.created_at.desc()).all()
-    today_str = datetime.utcnow().strftime('%Y-%m-%d')
+    today_str = datetime.now(timezone.utc).strftime('%Y-%m-%d')
     return render_template('farmer.html', products=products, today_str=today_str)
 
 @app.route('/farmer/add_product', methods=['POST'])
@@ -187,36 +289,35 @@ def add_product():
         flash('Please fill in all required product fields.', 'danger')
         return redirect(url_for('farmer_dashboard'))
 
+    if len(name) > 120 or len(quantity) > 50 or len(farming_method) > 100:
+        flash('Input field exceeds allowed character limit.', 'danger')
+        return redirect(url_for('farmer_dashboard'))
+
+    if len(farm_location) > 150 or len(certifications) > 200:
+        flash('Location or certifications details exceed character limit.', 'danger')
+        return redirect(url_for('farmer_dashboard'))
+
     # Auto-generate unique Batch ID
     batch_id = f"TH-{uuid.uuid4().hex[:8].upper()}"
 
-    # Handle image upload
+    # Handle image upload with content validation
     image_file = request.files.get('image')
     image_filename = 'default.jpg'
-    if image_file and image_file.filename and allowed_file(image_file.filename):
-        ext = image_file.filename.rsplit('.', 1)[1].lower()
+    if image_file and image_file.filename:
+        is_valid, err_msg = validate_image_file(image_file, ALLOWED_EXTENSIONS)
+        if not is_valid:
+            flash(f'Upload rejected: {err_msg}', 'danger')
+            return redirect(url_for('farmer_dashboard'))
+        ext = secure_filename(image_file.filename).rsplit('.', 1)[1].lower()
         image_filename = f"{batch_id}.{ext}"
         image_file.save(os.path.join(UPLOAD_FOLDER, image_filename))
 
-    # Generate QR Code
+    # Generate QR Code using shared utility
     cfg = load_config()
-    base_url = cfg.get('BASE_URL', 'http://localhost:5000').rstrip('/')
-    verify_url = f"{base_url}/verify/{batch_id}"
+    base_url = cfg.get('BASE_URL', 'http://localhost:5000')
+    qr_filename = generate_batch_qr(batch_id, QR_FOLDER, base_url)
 
-    qr = qrcode.QRCode(
-        version=1,
-        error_correction=qrcode.constants.ERROR_CORRECT_M,
-        box_size=8,
-        border=3,
-    )
-    qr.add_data(verify_url)
-    qr.make(fit=True)
-    qr_img = qr.make_image(fill_color="#1b4332", back_color="white")
-    qr_filename = f"qr_{batch_id}.png"
-    qr_img.save(os.path.join(QR_FOLDER, qr_filename))
-
-    # Compute SHA-256 hash of ONLY specified fields:
-    # batch_id, name, quantity, farming_method, packaging_date, farmer_id, image filename
+    # Compute SHA-256 hash of immutable harvest data
     product_hash = compute_batch_hash(
         batch_id=batch_id,
         name=name,
@@ -230,7 +331,9 @@ def add_product():
     # Store on Ethereum smart contract
     try:
         store_hash(batch_id, product_hash)
+        logger.info("Batch %s hash stored on blockchain: %s", batch_id, product_hash)
     except Exception as e:
+        logger.error("Blockchain error storing batch %s: %s", batch_id, e)
         flash(f'Blockchain error: {str(e)}', 'danger')
         return redirect(url_for('farmer_dashboard'))
 
@@ -281,6 +384,14 @@ def add_transport_data():
     vehicle_number = request.form.get('vehicle_number', '').strip()
     notes = request.form.get('notes', '').strip()
 
+    if not product_id or not status or not current_location:
+        flash('Please fill in required logistics checkpoint fields.', 'danger')
+        return redirect(url_for('transporter_dashboard'))
+
+    if len(current_location) > 150 or len(temperature) > 50 or len(vehicle_number) > 50 or len(notes) > 2000:
+        flash('Logistics field exceeds maximum character length.', 'danger')
+        return redirect(url_for('transporter_dashboard'))
+
     product = Product.query.get_or_404(product_id)
 
     transport_record = TransportData(
@@ -304,7 +415,7 @@ def add_transport_data():
 def retailer_dashboard():
     products = Product.query.order_by(Product.created_at.desc()).all()
     retail_entries = RetailData.query.filter_by(retailer_id=session['user_id']).all()
-    today_str = datetime.utcnow().strftime('%Y-%m-%d')
+    today_str = datetime.now(timezone.utc).strftime('%Y-%m-%d')
     return render_template('retailer.html', products=products, retail_entries=retail_entries, today_str=today_str)
 
 @app.route('/retailer/add', methods=['POST'])
@@ -313,10 +424,29 @@ def add_retail_data():
     product_id = request.form.get('product_id')
     store_name = request.form.get('store_name', '').strip()
     store_location = request.form.get('store_location', '').strip()
-    price = request.form.get('price')
+    price_val = request.form.get('price')
     stock_quantity = request.form.get('stock_quantity', '').strip()
     arrival_date = request.form.get('arrival_date', '').strip()
     shelf_life = request.form.get('shelf_life', '').strip()
+
+    if not product_id or not store_name or not store_location:
+        flash('Please provide required store details.', 'danger')
+        return redirect(url_for('retailer_dashboard'))
+
+    if len(store_name) > 120 or len(store_location) > 150 or len(stock_quantity) > 50 or len(shelf_life) > 50:
+        flash('Input field exceeds allowed character length.', 'danger')
+        return redirect(url_for('retailer_dashboard'))
+
+    parsed_price = 0.0
+    if price_val:
+        try:
+            parsed_price = float(price_val)
+            if parsed_price < 0:
+                flash('Price must be a positive value.', 'danger')
+                return redirect(url_for('retailer_dashboard'))
+        except ValueError:
+            flash('Invalid numeric format for retail price.', 'danger')
+            return redirect(url_for('retailer_dashboard'))
 
     product = Product.query.get_or_404(product_id)
 
@@ -327,17 +457,14 @@ def add_retail_data():
 
     retail_entry.store_name = store_name
     retail_entry.store_location = store_location
-    try:
-        retail_entry.price = float(price) if price else 0.0
-    except ValueError:
-        retail_entry.price = 0.0
+    retail_entry.price = parsed_price
     retail_entry.stock_quantity = stock_quantity
     retail_entry.arrival_date = arrival_date
     retail_entry.shelf_life = shelf_life
     product.status = 'In Stock'
     db.session.commit()
 
-    flash(f'Retail stock & price details updated for batch {product.batch_id}.', 'success')
+    flash(f'Retail stock and price details updated for batch {product.batch_id}.', 'success')
     return redirect(url_for('retailer_dashboard'))
 
 @app.route('/customer')
@@ -356,7 +483,7 @@ def customer_dashboard():
 def verify_batch(batch_id):
     product = Product.query.filter_by(batch_id=batch_id).first_or_404()
 
-    # Recompute SHA-256 hash from DB
+    # Recompute SHA-256 hash from database fields
     computed_hash = compute_batch_hash(
         batch_id=product.batch_id,
         name=product.name,
@@ -367,16 +494,30 @@ def verify_batch(batch_id):
         image=product.image
     )
 
-    # Fetch on-chain hash
-    try:
-        on_chain_hash = get_hash(product.batch_id)
-    except BaseException:
-        on_chain_hash = None
+    # Fetch on-chain status honestly
+    chain_info = fetch_on_chain_status(product.batch_id)
+    raw_chain_hash = chain_info.get("hash")
+    chain_status = chain_info.get("status")
 
-    if not on_chain_hash and product.on_chain_hash:
+    if chain_status == "ok":
+        on_chain_hash = raw_chain_hash
+        if computed_hash.lower() == on_chain_hash.lower():
+            verification_status = "verified"
+        else:
+            verification_status = "tampered"
+    elif chain_status == "not_found":
+        verification_status = "not_found"
+        on_chain_hash = None
+    else:
+        # RPC unavailable / offline node
+        verification_status = "rpc_offline"
+        # Disclose local database hash with explicit offline disclaimer
         on_chain_hash = product.on_chain_hash
 
-    is_verified = bool(on_chain_hash and computed_hash.lower() == on_chain_hash.lower())
+    is_verified = (verification_status == "verified")
+    is_tampered = (verification_status == "tampered")
+    is_rpc_offline = (verification_status == "rpc_offline")
+    is_not_found = (verification_status == "not_found")
 
     cfg = load_config()
     config_base_url = cfg.get('BASE_URL', 'http://localhost:5000')
@@ -386,7 +527,11 @@ def verify_batch(batch_id):
         product=product,
         computed_hash=computed_hash,
         on_chain_hash=on_chain_hash,
+        verification_status=verification_status,
         is_verified=is_verified,
+        is_tampered=is_tampered,
+        is_rpc_offline=is_rpc_offline,
+        is_not_found=is_not_found,
         config_base_url=config_base_url
     )
 
@@ -394,11 +539,21 @@ def verify_batch(batch_id):
 def submit_feedback(batch_id):
     product = Product.query.filter_by(batch_id=batch_id).first_or_404()
     customer_name = request.form.get('customer_name', '').strip() or 'Anonymous Customer'
-    rating = int(request.form.get('rating', 5))
-    comment = request.form.get('comment', '').strip()
+    
+    try:
+        rating = int(request.form.get('rating', 5))
+        if rating < 1 or rating > 5:
+            rating = 5
+    except (ValueError, TypeError):
+        rating = 5
 
+    comment = request.form.get('comment', '').strip()
     if not comment:
         flash('Please enter a feedback comment.', 'warning')
+        return redirect(url_for('verify_batch', batch_id=batch_id))
+
+    if len(comment) > 1000 or len(customer_name) > 100:
+        flash('Feedback text exceeds maximum permitted length.', 'danger')
         return redirect(url_for('verify_batch', batch_id=batch_id))
 
     fb = Feedback(
@@ -481,4 +636,5 @@ def delete_user(user_id):
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    debug_mode = os.environ.get('FLASK_DEBUG', 'false').lower() in ('true', '1')
+    app.run(host='0.0.0.0', port=5000, debug=debug_mode)
