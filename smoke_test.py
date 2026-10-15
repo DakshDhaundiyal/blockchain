@@ -1,5 +1,9 @@
 import os
 import sys
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+os.environ['DATABASE_URL'] = f"sqlite:///{os.path.join(BASE_DIR, 'test_smoke.db')}"
+
 from datetime import datetime
 from app import app, db
 from models import User, Product, TransportData, RetailData
