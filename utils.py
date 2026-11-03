@@ -2,6 +2,7 @@ import os
 import logging
 from io import BytesIO
 import qrcode
+from qrcode.constants import ERROR_CORRECT_M
 from PIL import Image
 
 # Configure logging
@@ -27,7 +28,7 @@ def generate_batch_qr(batch_id: str, qr_folder: str, base_url: str = "http://loc
 
     qr = qrcode.QRCode(
         version=1,
-        error_correction=qrcode.constants.ERROR_CORRECT_M,
+        error_correction=ERROR_CORRECT_M,
         box_size=8,
         border=3,
     )
@@ -37,7 +38,8 @@ def generate_batch_qr(batch_id: str, qr_folder: str, base_url: str = "http://loc
 
     qr_filename = f"qr_{batch_id}.png"
     dest_path = os.path.join(qr_folder, qr_filename)
-    qr_img.save(dest_path)
+    with open(dest_path, "wb") as f:
+        qr_img.save(f)
     logger.info("Generated QR code for batch %s -> %s", batch_id, dest_path)
     return qr_filename
 

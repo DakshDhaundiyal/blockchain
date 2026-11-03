@@ -212,8 +212,8 @@ def landing():
     raw_contract_address = ""
     try:
         cfg = load_config()
-        raw_contract_address = cfg.get('contract_address', '')
-        if raw_contract_address:
+        raw_contract_address = str(cfg.get('contract_address') or '')
+        if raw_contract_address and len(raw_contract_address) >= 16:
             contract_address = raw_contract_address[:10] + '…' + raw_contract_address[-6:]
     except Exception:
         pass
@@ -311,6 +311,10 @@ def login():
             session.permanent = True
             flash(f'Welcome back, {user.username}!', 'success')
 
+            next_url = request.args.get('next') or request.form.get('next')
+            if next_url and next_url.startswith('/') and not next_url.startswith('//'):
+                return redirect(next_url)
+
             if user.role == 'farmer':
                 return redirect(url_for('farmer_dashboard'))
             elif user.role == 'transporter':
@@ -385,6 +389,358 @@ def switch_role(role):
         return redirect(next_url)
     return redirect(url_for(persona['route']))
 
+# ═══════════════════════════════════════════════════════════════════
+# GUIDED SEQUENTIAL SUPPLY-CHAIN WORKFLOW CONTROLLER & HANDLERS
+# ═══════════════════════════════════════════════════════════════════
+
+@app.route('/workflow')
+def workflow_entry():
+    """
+    Unified controller for the guided sequential supply-chain workflow.
+    - Requires authenticated session; safely redirects to login if unauthenticated.
+    - Renders templates/workflow.html across Harvest, Transport, and Retail stages.
+    - Enforces stakeholder role gates with transparent handover screens.
+    """
+    if 'user_id' not in session:
+        flash('Please sign in with your stakeholder account to access the guided supply-chain workflow.', 'info')
+        return redirect(url_for('login', next=request.full_path if request.query_string else request.path))
+
+    user = User.query.get(session['user_id'])
+    if not user:
+        session.clear()
+        flash('Session invalid. Please log in again.', 'warning')
+        return redirect(url_for('login', next=request.path))
+
+    batch_id = request.args.get('batch_id', '').strip()
+    stage = request.args.get('stage', '').strip().lower()
+
+    product = None
+    if batch_id:
+        product = Product.query.filter_by(batch_id=batch_id).first()
+        if not product:
+            flash(f'Batch ID "{batch_id}" not found in database.', 'warning')
+            batch_id = ''
+
+    # If no batch_id specified and not an explicit request for a fresh batch,
+    # load the latest active batch from the database so the user can review / continue it
+    start_new = request.args.get('new') == '1'
+    if not product and not start_new:
+        latest = Product.query.order_by(Product.created_at.desc()).first()
+        if latest:
+            product = latest
+            batch_id = product.batch_id
+
+    # If product exists but no stage specified, deduce stage based on stakeholder role or batch progress
+    if product and not stage:
+        if user.role == 'farmer':
+            stage = 'harvest'
+        elif user.role == 'transporter':
+            stage = 'transport'
+        elif user.role == 'retailer':
+            stage = 'retail'
+        elif not product.transport_data:
+            stage = 'transport'
+        elif not product.retail_data:
+            stage = 'retail'
+        else:
+            stage = 'harvest'
+
+    # If no stage specified yet and no product, default to harvest
+    if not stage:
+        stage = 'harvest'
+
+    # Determine numeric step for stepper component
+    step_map = {
+        'harvest': 2,
+        'transport': 3,
+        'retail': 4,
+    }
+    current_step = step_map.get(stage, 2)
+
+    # Role authorization check for current stage
+    required_role = None
+    handover_needed = False
+    if stage == 'harvest':
+        required_role = 'farmer'
+        if user.role not in ('farmer', 'admin'):
+            handover_needed = True
+    elif stage == 'transport':
+        required_role = 'transporter'
+        if user.role not in ('transporter', 'admin'):
+            handover_needed = True
+    elif stage == 'retail':
+        required_role = 'retailer'
+        if user.role not in ('retailer', 'admin'):
+            handover_needed = True
+
+    # Look up registered users of the required role to assist evaluator/demonstrator
+    registered_role_users = []
+    if handover_needed and required_role:
+        registered_role_users = User.query.filter_by(role=required_role).all()
+
+    existing_batches = Product.query.order_by(Product.created_at.desc()).limit(8).all()
+    today_str = datetime.now(timezone.utc).strftime('%Y-%m-%d')
+
+    return render_template(
+        'workflow.html',
+        stage=stage,
+        current_step=current_step,
+        batch_id=batch_id,
+        product=product,
+        user=user,
+        handover_needed=handover_needed,
+        required_role=required_role,
+        registered_role_users=registered_role_users,
+        existing_batches=existing_batches,
+        today_str=today_str,
+    )
+
+
+@app.route('/workflow/harvest', methods=['POST'])
+def workflow_harvest():
+    """
+    Stage 2: Farm harvest registration and immutable blockchain stamping.
+    Validates inputs, generates unique batch ID, computes SHA-256 hash, stores on-chain,
+    and commits Product and FarmerData with two-phase failure recovery.
+    """
+    if 'user_id' not in session:
+        flash('Please sign in to register a harvest batch.', 'warning')
+        return redirect(url_for('login', next=url_for('workflow_entry', stage='harvest')))
+
+    user = User.query.get(session['user_id'])
+    if not user or user.role not in ('farmer', 'admin'):
+        flash('Access denied: Harvest registration requires Farmer authorization.', 'danger')
+        return redirect(url_for('workflow_entry', stage='harvest'))
+
+    name = request.form.get('name', '').strip()
+    quantity = request.form.get('quantity', '').strip()
+    farming_method = request.form.get('farming_method', '').strip()
+    packaging_date = request.form.get('packaging_date', '').strip()
+    farm_location = request.form.get('farm_location', '').strip()
+    certifications = request.form.get('certifications', '').strip()
+
+    if not name or not quantity or not farming_method or not packaging_date or not farm_location:
+        flash('Please fill in all required harvest fields (Produce Name, Quantity, Farming Method, Date, Farm Location).', 'danger')
+        return redirect(url_for('workflow_entry', stage='harvest'))
+
+    if len(name) > 120 or len(quantity) > 50 or len(farming_method) > 100:
+        flash('Input field exceeds allowed character limit.', 'danger')
+        return redirect(url_for('workflow_entry', stage='harvest'))
+
+    if len(farm_location) > 150 or len(certifications) > 200:
+        flash('Location or certifications details exceed character limit.', 'danger')
+        return redirect(url_for('workflow_entry', stage='harvest'))
+
+    # Auto-generate unique Batch ID
+    batch_id = f"TH-{uuid.uuid4().hex[:8].upper()}"
+
+    # Verify batch is not already recorded on-chain
+    existing_chain = fetch_on_chain_status(batch_id)
+    if existing_chain.get("status") == "ok":
+        flash(f'Batch ID collision on blockchain for {batch_id}. Please resubmit.', 'warning')
+        return redirect(url_for('workflow_entry', stage='harvest'))
+
+    # Handle image upload
+    image_file = request.files.get('image')
+    image_filename = 'default.jpg'
+    if image_file and image_file.filename:
+        is_valid, err_msg = validate_image_file(image_file, ALLOWED_EXTENSIONS)
+        if not is_valid:
+            flash(f'Upload rejected: {err_msg}', 'danger')
+            return redirect(url_for('workflow_entry', stage='harvest'))
+        ext = secure_filename(image_file.filename).rsplit('.', 1)[1].lower()
+        image_filename = f"{batch_id}.{ext}"
+        image_file.save(os.path.join(UPLOAD_FOLDER, image_filename))
+
+    # Generate QR Code
+    cfg = load_config()
+    base_url = str(cfg.get('BASE_URL') or 'http://localhost:5000')
+    qr_filename = generate_batch_qr(batch_id, QR_FOLDER, base_url)
+
+    # Compute SHA-256 hash
+    product_hash = compute_batch_hash(
+        batch_id=batch_id,
+        name=name,
+        quantity=quantity,
+        farming_method=farming_method,
+        packaging_date=packaging_date,
+        farmer_id=user.id,
+        image=image_filename
+    )
+
+    # Store on Ethereum smart contract
+    tx_hash = None
+    try:
+        tx_hash = store_hash(batch_id, product_hash)
+        logger.info("Batch %s hash stored on blockchain: %s (tx: %s)", batch_id, product_hash, tx_hash)
+    except Exception as e:
+        logger.error("Blockchain error storing batch %s: %s", batch_id, e)
+        flash(f'Blockchain error storing batch hash: {str(e)}', 'danger')
+        return redirect(url_for('workflow_entry', stage='harvest'))
+
+    # Database commit with two-phase failure recovery
+    product = Product(
+        batch_id=batch_id,
+        name=name,
+        quantity=quantity,
+        farming_method=farming_method,
+        packaging_date=packaging_date,
+        farmer_id=user.id,
+        image=image_filename,
+        qr_code=qr_filename,
+        on_chain_hash=product_hash,
+        status='Harvested'
+    )
+    db.session.add(product)
+    db.session.flush()
+
+    farmer_data = FarmerData(
+        product_id=product.id,
+        farm_name=user.username,
+        farm_location=farm_location,
+        harvest_date=packaging_date,
+        certifications=certifications,
+        notes=f"Harvested and packed by {user.username}"
+    )
+    db.session.add(farmer_data)
+
+    try:
+        db.session.commit()
+    except Exception as db_err:
+        db.session.rollback()
+        logger.error("CRITICAL DESYNC: Batch %s sealed on blockchain (tx: %s), but SQLite commit failed: %s", batch_id, tx_hash, db_err)
+        flash(
+            f'CRITICAL: Batch {batch_id} was successfully sealed on the Ethereum blockchain, but saving to local database failed ({str(db_err)}). '
+            f'Do NOT retry sealing this batch ID to prevent transaction revert. Please contact admin to re-link this record.',
+            'danger'
+        )
+        return redirect(url_for('workflow_entry', stage='harvest'))
+
+    flash(f'Stage 2 Complete: Batch {batch_id} registered and sealed on Ethereum blockchain!', 'success')
+    return redirect(url_for('workflow_entry', stage='transport', batch_id=batch_id))
+
+
+@app.route('/workflow/transport', methods=['POST'])
+def workflow_transport():
+    """
+    Stage 3: Logistics checkpoint entry.
+    Validates transporter role, records TransportData checkpoint, and updates product status.
+    Guarantees original harvest attributes and original SHA-256 seal remain untouched.
+    """
+    if 'user_id' not in session:
+        flash('Please sign in to record logistics checkpoints.', 'warning')
+        return redirect(url_for('login', next=request.referrer or url_for('workflow_entry')))
+
+    user = User.query.get(session['user_id'])
+    batch_id = request.form.get('batch_id', '').strip()
+    if not user or user.role not in ('transporter', 'admin'):
+        flash('Access denied: Logistics checkpoints require Transporter authorization.', 'danger')
+        return redirect(url_for('workflow_entry', stage='transport', batch_id=batch_id))
+
+    if not batch_id:
+        flash('Batch ID is missing from transport submission.', 'danger')
+        return redirect(url_for('workflow_entry', stage='harvest'))
+
+    product = Product.query.filter_by(batch_id=batch_id).first_or_404()
+
+    status = request.form.get('status', '').strip()
+    current_location = request.form.get('current_location', '').strip()
+    temperature = request.form.get('temperature', '').strip()
+    vehicle_number = request.form.get('vehicle_number', '').strip()
+    notes = request.form.get('notes', '').strip()
+
+    if not status or not current_location or not vehicle_number:
+        flash('Please fill in required logistics checkpoint fields (status, facility/location, vehicle ID).', 'danger')
+        return redirect(url_for('workflow_entry', stage='transport', batch_id=batch_id))
+
+    if len(current_location) > 150 or len(temperature) > 50 or len(vehicle_number) > 50 or len(notes) > 2000:
+        flash('Logistics field exceeds maximum character length.', 'danger')
+        return redirect(url_for('workflow_entry', stage='transport', batch_id=batch_id))
+
+    # Record checkpoint without modifying original harvest hash fields
+    transport_record = TransportData(
+        product_id=product.id,
+        transporter_id=user.id,
+        status=status,
+        current_location=current_location,
+        temperature=temperature,
+        vehicle_number=vehicle_number,
+        notes=notes
+    )
+    product.status = status
+    db.session.add(transport_record)
+    db.session.commit()
+
+    flash(f'Stage 3 Checkpoint: Transport status updated to "{status}" for batch {product.batch_id}.', 'success')
+    return redirect(url_for('workflow_entry', stage='retail', batch_id=product.batch_id))
+
+
+@app.route('/workflow/retail', methods=['POST'])
+def workflow_retail():
+    """
+    Stage 4: Retail listing and inventory entry.
+    Validates retailer role, saves RetailData record, and updates product status.
+    Guarantees original harvest attributes and original SHA-256 seal remain untouched.
+    """
+    if 'user_id' not in session:
+        flash('Please sign in to update retail listing.', 'warning')
+        return redirect(url_for('login', next=request.referrer or url_for('workflow_entry')))
+
+    user = User.query.get(session['user_id'])
+    batch_id = request.form.get('batch_id', '').strip()
+    if not user or user.role not in ('retailer', 'admin'):
+        flash('Access denied: Retail listings require Retailer authorization.', 'danger')
+        return redirect(url_for('workflow_entry', stage='retail', batch_id=batch_id))
+
+    if not batch_id:
+        flash('Batch ID is missing from retail submission.', 'danger')
+        return redirect(url_for('workflow_entry', stage='harvest'))
+
+    product = Product.query.filter_by(batch_id=batch_id).first_or_404()
+
+    store_name = request.form.get('store_name', '').strip()
+    store_location = request.form.get('store_location', '').strip()
+    price_val = request.form.get('price')
+    stock_quantity = request.form.get('stock_quantity', '').strip()
+    arrival_date = request.form.get('arrival_date', '').strip()
+    shelf_life = request.form.get('shelf_life', '').strip()
+
+    if not store_name or not store_location or not price_val or not stock_quantity:
+        flash('Please provide required store name, location, price, and stock quantity.', 'danger')
+        return redirect(url_for('workflow_entry', stage='retail', batch_id=batch_id))
+
+    if len(store_name) > 120 or len(store_location) > 150 or len(stock_quantity) > 50 or len(shelf_life) > 50:
+        flash('Input field exceeds allowed character length.', 'danger')
+        return redirect(url_for('workflow_entry', stage='retail', batch_id=batch_id))
+
+    parsed_price = 0.0
+    try:
+        parsed_price = float(price_val)
+        if parsed_price < 0:
+            flash('Price must be a positive value.', 'danger')
+            return redirect(url_for('workflow_entry', stage='retail', batch_id=batch_id))
+    except ValueError:
+        flash('Invalid numeric format for retail price.', 'danger')
+        return redirect(url_for('workflow_entry', stage='retail', batch_id=batch_id))
+
+    retail_entry = RetailData.query.filter_by(product_id=product.id).first()
+    if not retail_entry:
+        retail_entry = RetailData(product_id=product.id, retailer_id=user.id)
+        db.session.add(retail_entry)
+
+    retail_entry.retailer_id = user.id
+    retail_entry.store_name = store_name
+    retail_entry.store_location = store_location
+    retail_entry.price = parsed_price
+    retail_entry.stock_quantity = stock_quantity
+    retail_entry.arrival_date = arrival_date
+    retail_entry.shelf_life = shelf_life
+    product.status = 'In Stock'
+    db.session.commit()
+
+    flash(f'Stage 4 Complete: Retail listing recorded for batch {product.batch_id}. Full journey completed!', 'success')
+    return redirect(url_for('verify_batch', batch_id=product.batch_id, from_workflow=1))
+
 @app.route('/farmer')
 @role_required('farmer')
 def farmer_dashboard():
@@ -433,7 +789,7 @@ def add_product():
 
     # Generate QR Code using shared utility
     cfg = load_config()
-    base_url = cfg.get('BASE_URL', 'http://localhost:5000')
+    base_url = str(cfg.get('BASE_URL') or 'http://localhost:5000')
     qr_filename = generate_batch_qr(batch_id, QR_FOLDER, base_url)
 
     # Compute SHA-256 hash of immutable harvest data
@@ -631,45 +987,61 @@ def verify_batch(batch_id):
     chain_info = fetch_on_chain_status(product.batch_id)
     raw_chain_hash = chain_info.get("hash")
     chain_status = chain_info.get("status")
+    contract_source_addr = chain_info.get("contract_address")
+    conflict_details = chain_info.get("conflict_details")
 
     if chain_status == "ok":
         on_chain_hash = raw_chain_hash
-        if computed_hash.lower() == on_chain_hash.lower():
+        if on_chain_hash and computed_hash.lower() == str(on_chain_hash).lower():
             verification_status = "verified"
         else:
             verification_status = "tampered"
+    elif chain_status == "conflict":
+        verification_status = "conflict"
+        on_chain_hash = None
     elif chain_status == "not_found":
         verification_status = "not_found"
         on_chain_hash = None
-    else:
+    elif chain_status == "rpc_offline":
         # RPC unavailable / offline node
         verification_status = "rpc_offline"
         # Disclose local database hash with explicit offline disclaimer
         on_chain_hash = product.on_chain_hash
+    elif chain_status == "error":
+        verification_status = "error"
+        on_chain_hash = None
+    else:
+        verification_status = "error"
+        on_chain_hash = None
 
     is_verified = (verification_status == "verified")
     is_tampered = (verification_status == "tampered")
+    is_conflict = (verification_status == "conflict")
     is_rpc_offline = (verification_status == "rpc_offline")
     is_not_found = (verification_status == "not_found")
 
     cfg = load_config()
-    config_base_url = cfg.get('BASE_URL', 'http://localhost:5000')
+    config_base_url = str(cfg.get('BASE_URL') or 'http://localhost:5000')
 
     return render_template(
         'verify.html',
         product=product,
         computed_hash=computed_hash,
         on_chain_hash=on_chain_hash,
+        contract_source_addr=contract_source_addr,
         verification_status=verification_status,
         is_verified=is_verified,
         is_tampered=is_tampered,
+        is_conflict=is_conflict,
         is_rpc_offline=is_rpc_offline,
         is_not_found=is_not_found,
+        conflict_details=conflict_details,
         config_base_url=config_base_url,
         simulate_tamper=simulate_tamper,
         simulated_field=simulated_field,
         original_value=original_value,
-        tampered_value=tampered_value
+        tampered_value=tampered_value,
+        from_workflow=request.args.get('from_workflow') == '1'
     )
 
 @app.route('/verify/<batch_id>/toggle-demo-tamper', methods=['POST'])

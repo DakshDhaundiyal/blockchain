@@ -109,9 +109,14 @@
                                     </span>
                                 </td>
                                 <td>
-                                    <a href="{{ url_for('verify_batch', batch_id=p.batch_id) }}" class="btn btn-sm btn-outline-success">
-                                        <i class="bi bi-eye"></i> Verify
-                                    </a>
+                                    <div class="d-flex gap-1">
+                                        <a href="{{ url_for('workflow_entry', batch_id=p.batch_id, stage='harvest') }}" class="btn btn-sm btn-outline-primary" title="Open in Guided Workflow">
+                                            <i class="bi bi-diagram-3"></i> Workflow
+                                        </a>
+                                        <a href="{{ url_for('verify_batch', batch_id=p.batch_id) }}" class="btn btn-sm btn-outline-success">
+                                            <i class="bi bi-eye"></i> Verify
+                                        </a>
+                                    </div>
                                 </td>
                             </tr>
                             {% else %}

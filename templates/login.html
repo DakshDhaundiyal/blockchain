@@ -14,23 +14,23 @@
                 <h5 class="fw-bold mb-1 text-success-emphasis">Instant Role Switcher</h5>
                 <p class="text-muted small mb-3">No password required. Switch directly to any stakeholder dashboard:</p>
                 <div class="d-grid gap-2">
-                    <a href="{{ url_for('switch_role', role='farmer') }}" class="btn btn-outline-success text-start d-flex align-items-center justify-content-between px-3 py-2" style="border-radius:10px;">
+                    <a href="{{ url_for('switch_role', role='farmer', next=request.args.get('next')) if request.args.get('next') else url_for('switch_role', role='farmer') }}" class="btn btn-outline-success text-start d-flex align-items-center justify-content-between px-3 py-2" style="border-radius:10px;">
                         <span><i class="bi bi-tree-fill me-2"></i><strong>Farmer / Producer</strong></span>
                         <i class="bi bi-arrow-right"></i>
                     </a>
-                    <a href="{{ url_for('switch_role', role='transporter') }}" class="btn btn-outline-primary text-start d-flex align-items-center justify-content-between px-3 py-2" style="border-radius:10px;">
+                    <a href="{{ url_for('switch_role', role='transporter', next=request.args.get('next')) if request.args.get('next') else url_for('switch_role', role='transporter') }}" class="btn btn-outline-primary text-start d-flex align-items-center justify-content-between px-3 py-2" style="border-radius:10px;">
                         <span><i class="bi bi-truck me-2"></i><strong>Transporter / Logistics</strong></span>
                         <i class="bi bi-arrow-right"></i>
                     </a>
-                    <a href="{{ url_for('switch_role', role='retailer') }}" class="btn text-start d-flex align-items-center justify-content-between px-3 py-2" style="border-radius:10px;border:1px solid #9333ea;color:#9333ea;">
+                    <a href="{{ url_for('switch_role', role='retailer', next=request.args.get('next')) if request.args.get('next') else url_for('switch_role', role='retailer') }}" class="btn text-start d-flex align-items-center justify-content-between px-3 py-2" style="border-radius:10px;border:1px solid #9333ea;color:#9333ea;">
                         <span><i class="bi bi-shop me-2"></i><strong>Retailer / Supermarket</strong></span>
                         <i class="bi bi-arrow-right"></i>
                     </a>
-                    <a href="{{ url_for('switch_role', role='customer') }}" class="btn btn-outline-info text-start d-flex align-items-center justify-content-between px-3 py-2" style="border-radius:10px;">
+                    <a href="{{ url_for('switch_role', role='customer', next=request.args.get('next')) if request.args.get('next') else url_for('switch_role', role='customer') }}" class="btn btn-outline-info text-start d-flex align-items-center justify-content-between px-3 py-2" style="border-radius:10px;">
                         <span><i class="bi bi-qr-code-scan me-2"></i><strong>Consumer / Customer</strong></span>
                         <i class="bi bi-arrow-right"></i>
                     </a>
-                    <a href="{{ url_for('switch_role', role='admin') }}" class="btn btn-outline-dark text-start d-flex align-items-center justify-content-between px-3 py-2" style="border-radius:10px;">
+                    <a href="{{ url_for('switch_role', role='admin', next=request.args.get('next')) if request.args.get('next') else url_for('switch_role', role='admin') }}" class="btn btn-outline-dark text-start d-flex align-items-center justify-content-between px-3 py-2" style="border-radius:10px;">
                         <span><i class="bi bi-shield-shaded me-2"></i><strong>System Administrator</strong></span>
                         <i class="bi bi-arrow-right"></i>
                     </a>
@@ -43,8 +43,11 @@
                 <h6 class="mb-0 fw-semibold text-muted"><i class="bi bi-key me-2"></i>Or sign in with custom credentials</h6>
             </div>
             <div class="card-body p-4">
-                <form method="POST" action="{{ url_for('login') }}">
+                <form method="POST" action="{{ url_for('login', next=request.args.get('next')) if request.args.get('next') else url_for('login') }}">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    {% if request.args.get('next') %}
+                    <input type="hidden" name="next" value="{{ request.args.get('next') }}"/>
+                    {% endif %}
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Username</label>
                         <div class="input-group">

@@ -17,6 +17,9 @@ class User(db.Model):
     contact = db.Column(db.String(120), nullable=True)
     created_at = db.Column(db.DateTime, default=utcnow)
 
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
 
@@ -45,6 +48,9 @@ class Product(db.Model):
     retail_data = db.relationship('RetailData', backref='product', uselist=False, cascade='all, delete-orphan')
     feedback = db.relationship('Feedback', backref='product', cascade='all, delete-orphan', order_by='Feedback.created_at.desc()')
 
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
 
 class FarmerData(db.Model):
     __tablename__ = 'farmer_data'
@@ -56,6 +62,9 @@ class FarmerData(db.Model):
     certifications = db.Column(db.String(200), nullable=True)
     notes = db.Column(db.Text, nullable=True)
     created_at = db.Column(db.DateTime, default=utcnow)
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
 
 class TransportData(db.Model):
@@ -71,6 +80,9 @@ class TransportData(db.Model):
     timestamp = db.Column(db.DateTime, default=utcnow)
 
     transporter = db.relationship('User', foreign_keys=[transporter_id])
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
 
 class RetailData(db.Model):
@@ -88,6 +100,9 @@ class RetailData(db.Model):
 
     retailer = db.relationship('User', foreign_keys=[retailer_id])
 
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
 
 class Feedback(db.Model):
     __tablename__ = 'feedback'
@@ -97,3 +112,6 @@ class Feedback(db.Model):
     rating = db.Column(db.Integer, default=5)
     comment = db.Column(db.Text, nullable=False)
     created_at = db.Column(db.DateTime, default=utcnow)
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)

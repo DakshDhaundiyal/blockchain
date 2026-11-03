@@ -7,6 +7,7 @@ contract TrustHarvest {
     event HashStored(string batchId, string hash);
 
     function storeHash(string memory batchId, string memory hash) public {
+        require(bytes(batchHashes[batchId]).length == 0, "Batch already registered");
         batchHashes[batchId] = hash;
         emit HashStored(batchId, hash);
     }

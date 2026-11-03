@@ -39,6 +39,7 @@
             <!-- Nav links (hidden on mobile) -->
             <ul class="nav-links d-none d-lg-flex">
                 <li><a href="{{ url_for('landing') }}" class="{% if request.endpoint == 'landing' %}active{% endif %}">Home</a></li>
+                <li><a href="{{ url_for('workflow_entry') }}" class="{% if request.endpoint == 'workflow_entry' %}active fw-semibold text-success{% endif %}"><i class="bi bi-diagram-3 me-1"></i>Guided Workflow</a></li>
                 <li><a href="{{ url_for('customer_dashboard') }}" class="{% if request.endpoint == 'customer_dashboard' %}active{% endif %}">Verify Produce</a></li>
                 <li><a href="{{ url_for('landing') }}#how-it-works">About</a></li>
                 <li><a href="{{ url_for('landing') }}#blockchain-status">Supply Network</a></li>

@@ -1,13 +1,55 @@
-venv/
+# Python / Bytecode
 __pycache__/
-*.pyc
+*.py[cod]
+*$py.class
+*.so
+
+# Virtual Environments
+venv/
+env/
+ENV/
+
+# Environment Variables & Secrets
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Local Blockchain Runtime Configuration
+config.json
+!config.example.json
+
+# SQLite Databases & Dynamic Instance Storage
 instance/
 *.db
-.env
-!.env.example
-.vscode/
-.idea/
+*.sqlite
+*.sqlite3
+
+# Uploads & Generated QR Code Artifacts
 static/uploads/*
 !static/uploads/.gitkeep
+!static/uploads/default.jpg
 static/qr/*
 !static/qr/.gitkeep
+
+# IDE & Local Tooling Configuration
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+pyrightconfig.json
+models.pyi
+typings/
+
+# Excluded Backup, Recovery & Experimental One-Off Test Scripts
+blockchain_stashed_review.py
+recover_reference_batch.py
+test_duplicate_batch.py
+test_duplicate_protection.py
+test_e2e_flow.py
+
+# Pytest / Coverage Caches
+.pytest_cache/
+.coverage
+htmlcov/

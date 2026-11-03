@@ -1,0 +1,634 @@
+{% extends "base.html" %}
+
+{% block title %}Guided Supply Chain Workflow - TrustHarvest{% endblock %}
+
+{% block content %}
+<div class="container py-3">
+
+    <!-- Guided Workflow Stepper -->
+    {% include "workflow_stepper.html" %}
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- STAKEHOLDER HANDOVER SCREEN (When Role Authorization Needed)   -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    {% if handover_needed %}
+    <div class="row justify-content-center my-4">
+        <div class="col-lg-8">
+            <div class="card card-custom shadow-sm border-warning border-opacity-50" style="border-radius:14px;">
+                <div class="card-header bg-warning bg-opacity-10 py-3 d-flex align-items-center justify-content-between">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-shield-lock-fill text-warning fs-4 me-2"></i>
+                        <h5 class="fw-bold mb-0 text-dark">Stakeholder Handover Required</h5>
+                    </div>
+                    <span class="badge bg-warning text-dark px-3 py-1 fw-bold text-uppercase" style="letter-spacing:0.04em;font-size:11px;">
+                        Role Gate: {{ required_role|capitalize }}
+                    </span>
+                </div>
+                <div class="card-body p-4 text-center">
+                    <div class="mb-3">
+                        <span class="badge rounded-circle bg-light p-3 border mb-2" style="width:64px;height:64px;display:inline-flex;align-items:center;justify-content:center;">
+                            {% if required_role == 'farmer' %}
+                                <i class="bi bi-tree text-success fs-2"></i>
+                            {% elif required_role == 'transporter' %}
+                                <i class="bi bi-truck text-primary fs-2"></i>
+                            {% elif required_role == 'retailer' %}
+                                <i class="bi bi-shop text-warning-emphasis fs-2"></i>
+                            {% else %}
+                                <i class="bi bi-person-check text-info fs-2"></i>
+                            {% endif %}
+                        </span>
+                        <h4 class="fw-bold mb-1">
+                            {% if required_role == 'transporter' %}
+                                Carrier Sign-Off Required for Logistics Checkpoint
+                            {% elif required_role == 'retailer' %}
+                                Retailer Sign-Off Required for Shelf Listing
+                            {% elif required_role == 'farmer' %}
+                                Farmer Sign-Off Required for Harvest Registration
+                            {% else %}
+                                Authorization Check
+                            {% endif %}
+                        </h4>
+                        <p class="text-muted small mb-3">
+                            You are currently signed in as <strong>{{ user.username }}</strong> (Role: <span class="badge bg-light text-dark border">{{ user.role|capitalize }}</span>).<br>
+                            To maintain cryptographic authenticity and real-world separation of responsibilities, this stage must be signed by an authorized <strong>{{ required_role|capitalize }}</strong>.
+                        </p>
+                    </div>
+
+                    <!-- Locked Batch Context Card -->
+                    {% if product %}
+                    <div class="card bg-light border-0 mb-4 text-start">
+                        <div class="card-body p-3">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="text-uppercase text-muted fw-bold small" style="font-size:11px;">
+                                    <i class="bi bi-lock-fill text-success me-1"></i> Active Batch in Pipeline (Immutable)
+                                </span>
+                                <span class="badge bg-success font-monospace">{{ product.batch_id }}</span>
+                            </div>
+                            <div class="row g-2 small">
+                                <div class="col-sm-6">
+                                    <span class="text-muted">Produce:</span> <strong>{{ product.name }}</strong> ({{ product.quantity }})
+                                </div>
+                                <div class="col-sm-6">
+                                    <span class="text-muted">Packaging Date:</span> <strong>{{ product.packaging_date }}</strong>
+                                </div>
+                                <div class="col-sm-6">
+                                    <span class="text-muted">Current Status:</span> <span class="badge bg-primary">{{ product.status }}</span>
+                                </div>
+                                <div class="col-sm-6">
+                                    <span class="text-muted">On-Chain Hash:</span>
+                                    <span class="font-monospace text-muted" title="{{ product.on_chain_hash }}">{{ product.on_chain_hash[:10] }}…{{ product.on_chain_hash[-6:] if product.on_chain_hash else 'Pending' }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Explicit Handover Actions -->
+                    <div class="d-flex flex-column flex-sm-row justify-content-center gap-2 mb-3">
+                        <a href="{{ url_for('login', next=url_for('workflow_entry', stage=stage, batch_id=(product.batch_id if product else batch_id))) }}" class="btn btn-primary px-4 py-2 fw-semibold">
+                            <i class="bi bi-box-arrow-in-right me-1"></i> Sign In as {{ required_role|capitalize }}
+                        </a>
+                        <a href="{{ url_for('switch_role', role=required_role, next=url_for('workflow_entry', stage=stage, batch_id=(product.batch_id if product else batch_id))) }}" class="btn btn-outline-secondary px-4 py-2 fw-semibold">
+                            <i class="bi bi-shuffle me-1"></i> Switch Active Persona to {{ required_role|capitalize }}
+                        </a>
+                    </div>
+
+                    {% if registered_role_users %}
+                    <div class="text-muted small">
+                        Registered <strong>{{ required_role }}</strong> accounts on system:
+                        {% for u in registered_role_users %}
+                            <span class="badge bg-light text-dark border font-monospace me-1">{{ u.username }}</span>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+
+                    {% if product %}
+                    <div class="border-top pt-3 mt-3 text-start small d-flex justify-content-between align-items-center">
+                        <a href="{{ url_for('workflow_entry', stage='harvest', batch_id=product.batch_id) }}" class="text-decoration-none text-muted">
+                            <i class="bi bi-arrow-left me-1"></i> Review Harvest Details
+                        </a>
+                        <a href="{{ url_for('verify_batch', batch_id=product.batch_id) }}" class="text-decoration-none text-success">
+                            Inspect Live On-Chain Record <i class="bi bi-arrow-right ms-1"></i>
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- STAGE 2: FARM HARVEST REGISTRATION & BLOCKCHAIN SEAL           -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    {% elif stage == 'harvest' %}
+    <div class="row g-4 my-2">
+        <!-- Harvest Stage Content -->
+        <div class="col-lg-7">
+            {% if product %}
+            <!-- READ-ONLY SEALED HARVEST SUMMARY (When Reviewing Existing Batch) -->
+            <div class="card card-custom shadow-sm h-100 border-success border-opacity-50">
+                <div class="card-header bg-success bg-opacity-10 py-3 d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="mb-0 fw-bold text-success-emphasis">
+                            <i class="bi bi-patch-check-fill me-2 text-success"></i>Stage 2: Sealed Harvest Origin Details
+                        </h5>
+                        <div class="small text-muted mt-1">Immutable origin record &bull; Read-only review</div>
+                    </div>
+                    <span class="badge bg-success font-monospace px-3 py-1.5" style="font-size:12px;">
+                        <i class="bi bi-lock-fill me-1"></i> {{ product.batch_id }}
+                    </span>
+                </div>
+                <div class="card-body p-4">
+                    <div class="alert alert-success bg-success bg-opacity-10 border-success border-opacity-25 py-2.5 px-3 small mb-4 d-flex align-items-center">
+                        <i class="bi bi-shield-fill-check text-success fs-4 me-2.5 flex-shrink-0"></i>
+                        <div>
+                            <strong>Cryptographically Sealed on Ethereum:</strong> This harvest batch has already been registered and its SHA-256 fingerprint is permanently sealed on-chain. Core origin fields are locked to guarantee provenance.
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-4">
+                        {% if product.image and product.image != 'default.jpg' %}
+                        <div class="col-sm-4 text-center">
+                            <img src="{{ url_for('static', filename='uploads/' + product.image) }}" alt="{{ product.name }}" class="img-fluid rounded border shadow-sm" style="max-height: 160px; object-fit: cover;">
+                        </div>
+                        <div class="col-sm-8">
+                        {% else %}
+                        <div class="col-12">
+                        {% endif %}
+                            <div class="table-responsive">
+                                <table class="table table-sm table-borderless mb-0 small">
+                                    <tbody>
+                                        <tr>
+                                            <td class="text-muted" style="width: 140px;">Produce Name:</td>
+                                            <td class="fw-bold text-dark fs-6">{{ product.name }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="text-muted">Quantity / Weight:</td>
+                                            <td class="fw-semibold">{{ product.quantity }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="text-muted">Farming Method:</td>
+                                            <td><span class="badge bg-light text-dark border">{{ product.farming_method }}</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td class="text-muted">Packaging Date:</td>
+                                            <td class="fw-semibold">{{ product.packaging_date }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="text-muted">Farmer / Producer:</td>
+                                            <td class="fw-semibold">{{ product.farmer.full_name or product.farmer.username }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="text-muted">Farm Location:</td>
+                                            <td>{{ product.farmer_data.farm_location if product.farmer_data else 'Registered Farm' }}</td>
+                                        </tr>
+                                        {% if product.farmer_data and product.farmer_data.certifications %}
+                                        <tr>
+                                            <td class="text-muted">Certifications:</td>
+                                            <td>{{ product.farmer_data.certifications }}</td>
+                                        </tr>
+                                        {% endif %}
+                                        <tr>
+                                            <td class="text-muted">Current Status:</td>
+                                            <td><span class="badge bg-primary">{{ product.status }}</span></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- On-Chain Fingerprint Box -->
+                    <div class="p-3 bg-light rounded-3 border mb-4 small font-monospace">
+                        <div class="d-flex justify-content-between align-items-center mb-1 text-muted" style="font-size:11px;">
+                            <span><i class="bi bi-link-45deg me-1"></i> Immutable On-Chain Hash (SHA-256)</span>
+                            <span class="badge bg-success-subtle text-success border border-success-subtle">Sealed &amp; Verified</span>
+                        </div>
+                        <div class="text-break text-dark fw-semibold" style="font-size:12px;">
+                            {{ product.on_chain_hash or 'Sealed' }}
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center pt-3 border-top flex-wrap gap-2">
+                        <a href="{{ url_for('workflow_entry', stage='harvest', new=1) }}" class="btn btn-outline-secondary btn-sm">
+                            <i class="bi bi-plus-circle me-1"></i> Register a New Batch Instead
+                        </a>
+                        <div class="d-flex gap-2">
+                            <a href="{{ url_for('verify_batch', batch_id=product.batch_id) }}" class="btn btn-outline-success btn-sm">
+                                <i class="bi bi-qr-code me-1"></i> View Live Verification
+                            </a>
+                            <a href="{{ url_for('workflow_entry', stage='transport', batch_id=product.batch_id) }}" class="btn btn-primary px-3 py-1.5 fw-bold">
+                                Continue to Transport &rarr;
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {% else %}
+            <!-- Normal Harvest Registration Form (When Starting a Fresh Batch) -->
+            <div class="card card-custom shadow-sm h-100">
+                <div class="card-header card-header-ag d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0 fw-bold">
+                        <i class="bi bi-flower1 me-2 text-success"></i>Stage 2: Farm Harvest Registration & Blockchain Seal
+                    </h5>
+                    <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1">
+                        Stakeholder: Farmer
+                    </span>
+                </div>
+                <div class="card-body p-4">
+                    <form method="POST" action="{{ url_for('workflow_harvest') }}" enctype="multipart/form-data">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+
+                        <div class="alert alert-success bg-success bg-opacity-10 border-success border-opacity-25 py-2 px-3 small mb-3">
+                            <i class="bi bi-shield-check text-success me-1"></i>
+                            <strong>Cryptographic Guarantee:</strong> Upon submission, an SHA-256 digital fingerprint is computed and sealed onto the Ethereum smart contract. This hash remains immutable across all subsequent stages.
+                        </div>
+
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-7">
+                                <label class="form-label fw-semibold small">Produce Name <span class="text-danger">*</span></label>
+                                <input type="text" name="name" class="form-control" placeholder="e.g. Organic Honeycrisp Apples" required autofocus>
+                            </div>
+                            <div class="col-md-5">
+                                <label class="form-label fw-semibold small">Quantity / Weight <span class="text-danger">*</span></label>
+                                <input type="text" name="quantity" class="form-control" placeholder="e.g. 500 kg or 250 boxes" required>
+                            </div>
+                        </div>
+
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold small">Farming Method <span class="text-danger">*</span></label>
+                                <select name="farming_method" class="form-select" required>
+                                    <option value="100% Certified Organic">100% Certified Organic</option>
+                                    <option value="Hydroponic Controlled">Hydroponic Controlled</option>
+                                    <option value="Regenerative Agriculture">Regenerative Agriculture</option>
+                                    <option value="Traditional Natural">Traditional Natural</option>
+                                    <option value="Greenhouse Solar">Greenhouse Solar</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold small">Packaging Date <span class="text-danger">*</span></label>
+                                <input type="date" name="packaging_date" class="form-control" required value="{{ today_str }}">
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold small">Farm Location / Region <span class="text-danger">*</span></label>
+                            <input type="text" name="farm_location" class="form-control" placeholder="e.g. Yakima Valley, Washington" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold small">Certifications</label>
+                            <input type="text" name="certifications" class="form-control" placeholder="e.g. USDA Organic, Non-GMO Verified" value="USDA Organic Certified">
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold small">Produce Photo</label>
+                            <input type="file" name="image" class="form-control" accept="image/*">
+                            <div class="form-text small">Optional; default produce image used if omitted.</div>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center pt-2 border-top">
+                            <a href="{{ url_for('landing') }}" class="btn btn-outline-secondary">
+                                <i class="bi bi-x-circle me-1"></i> Cancel
+                            </a>
+                            <button type="submit" class="btn btn-ag-primary px-4 py-2 fw-bold">
+                                <i class="bi bi-shield-lock me-1"></i> Seal on Blockchain &amp; Continue &rarr;
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Sidebar: Reference Batch & Instructions -->
+        <div class="col-lg-5">
+            <!-- Reference Batch Card -->
+            <div class="card card-custom shadow-sm mb-4 border-success-subtle" style="background:#f0fdf4;">
+                <div class="card-header bg-transparent border-0 pb-0">
+                    <span class="badge bg-success text-white small px-2 py-1 mb-1">
+                        <i class="bi bi-check2-all me-1"></i> Golden Reference Batch
+                    </span>
+                    <h6 class="fw-bold text-success-emphasis mb-0">Inspect Complete Reference Batch</h6>
+                </div>
+                <div class="card-body p-3">
+                    <p class="small text-muted mb-2">
+                        You can inspect existing reference batch <strong>TH-927DD427</strong>, which already has complete harvest, transport, and retail records anchored on Ganache.
+                    </p>
+                    <a href="{{ url_for('workflow_entry', stage='transport', batch_id='TH-927DD427') }}" class="btn btn-sm btn-outline-success fw-semibold w-100 mb-1">
+                        <i class="bi bi-arrow-right-circle me-1"></i> Load Reference Batch (TH-927DD427)
+                    </a>
+                </div>
+            </div>
+
+            <!-- Existing Batches List -->
+            {% if existing_batches %}
+            <div class="card card-custom shadow-sm">
+                <div class="card-header card-header-ag py-2 d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0 fw-semibold small"><i class="bi bi-collection me-1"></i>Recent Batches in System</h6>
+                    <span class="badge bg-secondary small">{{ existing_batches|length }}</span>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush small">
+                        {% for b in existing_batches[:5] %}
+                        <div class="list-group-item d-flex justify-content-between align-items-center py-2 px-3">
+                            <div>
+                                <span class="font-monospace fw-bold text-success">{{ b.batch_id }}</span>
+                                <div class="text-muted smaller">{{ b.name }} &bull; Status: {{ b.status }}</div>
+                            </div>
+                            <div class="d-flex gap-1">
+                                <a href="{{ url_for('workflow_entry', batch_id=b.batch_id) }}" class="btn btn-xs btn-outline-primary py-1 px-2" style="font-size:11px;" title="Continue Workflow">
+                                    Continue <i class="bi bi-arrow-right"></i>
+                                </a>
+                                <a href="{{ url_for('verify_batch', batch_id=b.batch_id) }}" class="btn btn-xs btn-outline-secondary py-1 px-2" style="font-size:11px;" title="Verify">
+                                    <i class="bi bi-qr-code"></i>
+                                </a>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- STAGE 3: LOGISTICS & COLD-CHAIN CHECKPOINT ENTRY               -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    {% elif stage == 'transport' and product %}
+    <div class="row g-4 my-2">
+        <div class="col-lg-7">
+            <div class="card card-custom shadow-sm h-100">
+                <div class="card-header card-header-ag d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0 fw-bold">
+                        <i class="bi bi-truck me-2 text-primary"></i>Stage 3: Logistics &amp; Transport Checkpoint Entry
+                    </h5>
+                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-2 py-1">
+                        Stakeholder: Transporter
+                    </span>
+                </div>
+                <div class="card-body p-4">
+                    <!-- Locked Batch Summary Banner -->
+                    <div class="card bg-light border-0 mb-4">
+                        <div class="card-body p-3">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <div class="small fw-bold text-success">
+                                    <i class="bi bi-lock-fill me-1"></i> Active Batch (Sealed on Chain)
+                                </div>
+                                <span class="badge bg-success font-monospace">{{ product.batch_id }}</span>
+                            </div>
+                            <div class="row g-2 small">
+                                <div class="col-sm-6">
+                                    <span class="text-muted">Produce:</span> <strong>{{ product.name }}</strong> ({{ product.quantity }})
+                                </div>
+                                <div class="col-sm-6">
+                                    <span class="text-muted">Farmer:</span> <strong>{{ product.farmer.full_name or product.farmer.username }}</strong>
+                                </div>
+                                <div class="col-sm-6">
+                                    <span class="text-muted">Origin:</span> {{ product.farmer_data.farm_location if product.farmer_data else 'Registered Farm' }}
+                                </div>
+                                <div class="col-sm-6">
+                                    <span class="text-muted">Current Status:</span> <span class="badge bg-primary">{{ product.status }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <form method="POST" action="{{ url_for('workflow_transport') }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        <input type="hidden" name="batch_id" value="{{ product.batch_id }}"/>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold small">Logistics Status <span class="text-danger">*</span></label>
+                            <select name="status" class="form-select" required>
+                                <option value="Picked Up from Farm">Picked Up from Farm</option>
+                                <option value="In Transit (Cold-Storage)" selected>In Transit (Cold-Storage)</option>
+                                <option value="Cross-Dock Hub Inspected">Cross-Dock Hub Inspected</option>
+                                <option value="Customs / Ag Inspection Cleared">Customs / Ag Inspection Cleared</option>
+                                <option value="Delivered to Distribution Center">Delivered to Distribution Center</option>
+                                <option value="Delivered to Retailer">Delivered to Retailer</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold small">Current Facility / Location <span class="text-danger">*</span></label>
+                            <input type="text" name="current_location" class="form-control" placeholder="e.g. Spokane Regional Cold Hub, WA" required autofocus>
+                        </div>
+
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold small">Cold-Chain Temperature</label>
+                                <input type="text" name="temperature" class="form-control" placeholder="e.g. 3.8 °C" value="4.0 °C">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold small">Fleet / Vehicle ID <span class="text-danger">*</span></label>
+                                <input type="text" name="vehicle_number" class="form-control" placeholder="e.g. TRK-9824" required>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold small">Condition &amp; Inspection Notes</label>
+                            <textarea name="notes" class="form-control" rows="2" placeholder="Cold chain seal verified, temperature log within tolerance."></textarea>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center pt-3 border-top">
+                            <a href="{{ url_for('workflow_entry', stage='harvest', batch_id=product.batch_id) }}" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left me-1"></i> Previous: Review Harvest
+                            </a>
+                            <div class="d-flex gap-2">
+                                {% if product.transport_data|length > 0 %}
+                                <a href="{{ url_for('workflow_entry', stage='retail', batch_id=product.batch_id) }}" class="btn btn-outline-primary">
+                                    Skip to Retail <i class="bi bi-arrow-right ms-1"></i>
+                                </a>
+                                {% endif %}
+                                <button type="submit" class="btn btn-primary px-4 py-2 fw-bold">
+                                    <i class="bi bi-save me-1"></i> Record Checkpoint &amp; Continue &rarr;
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Side: Checkpoint History for this Batch -->
+        <div class="col-lg-5">
+            <div class="card card-custom shadow-sm h-100">
+                <div class="card-header card-header-ag d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0 fw-semibold"><i class="bi bi-clock-history me-1"></i>Recorded Transport Checkpoints</h6>
+                    <span class="badge bg-secondary">{{ product.transport_data|length }} Logged</span>
+                </div>
+                <div class="card-body p-3">
+                    {% if product.transport_data %}
+                        <div class="timeline p-2">
+                            {% for t in product.transport_data %}
+                            <div class="mb-3 pb-2 border-bottom">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <strong class="text-primary small">{{ t.status }}</strong>
+                                    <span class="badge bg-light text-muted border" style="font-size:10px;">{{ t.timestamp.strftime('%Y-%m-%d %H:%M') if t.timestamp else '' }}</span>
+                                </div>
+                                <div class="small text-muted"><strong>Facility:</strong> {{ t.current_location }}</div>
+                                <div class="small text-muted"><strong>Temp:</strong> {{ t.temperature or 'Amb' }} &bull; <strong>Unit:</strong> {{ t.vehicle_number or 'Fleet' }}</div>
+                                {% if t.notes %}
+                                <div class="small text-muted fst-italic mt-1">"{{ t.notes }}"</div>
+                                {% endif %}
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4 text-muted">
+                            <i class="bi bi-truck fs-1 d-block mb-2 text-secondary opacity-50"></i>
+                            <p class="small mb-0">No transport checkpoints logged yet for this batch.</p>
+                            <span class="smaller text-muted">Log the first checkpoint on the left to advance the supply chain.</span>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- STAGE 4: RETAIL LISTING & STOCK ENTRY                          -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    {% elif stage == 'retail' and product %}
+    <div class="row g-4 my-2">
+        <div class="col-lg-7">
+            <div class="card card-custom shadow-sm h-100">
+                <div class="card-header card-header-ag d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0 fw-bold">
+                        <i class="bi bi-shop me-2 text-warning-emphasis"></i>Stage 4: Retail Listing &amp; Inventory Entry
+                    </h5>
+                    <span class="badge bg-warning text-dark px-2 py-1">
+                        Stakeholder: Retailer
+                    </span>
+                </div>
+                <div class="card-body p-4">
+                    <!-- Locked Batch Summary Banner -->
+                    <div class="card bg-light border-0 mb-4">
+                        <div class="card-body p-3">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <div class="small fw-bold text-success">
+                                    <i class="bi bi-lock-fill me-1"></i> Active Batch (Sealed on Chain)
+                                </div>
+                                <span class="badge bg-success font-monospace">{{ product.batch_id }}</span>
+                            </div>
+                            <div class="row g-2 small">
+                                <div class="col-sm-6">
+                                    <span class="text-muted">Produce:</span> <strong>{{ product.name }}</strong> ({{ product.quantity }})
+                                </div>
+                                <div class="col-sm-6">
+                                    <span class="text-muted">Origin:</span> {{ product.farmer_data.farm_location if product.farmer_data else 'Farm' }}
+                                </div>
+                                <div class="col-sm-6">
+                                    <span class="text-muted">Transport Checkpoints:</span> <span class="badge bg-primary">{{ product.transport_data|length }} Recorded</span>
+                                </div>
+                                <div class="col-sm-6">
+                                    <span class="text-muted">Current Status:</span> <span class="badge bg-primary">{{ product.status }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <form method="POST" action="{{ url_for('workflow_retail') }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        <input type="hidden" name="batch_id" value="{{ product.batch_id }}"/>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold small">Store / Supermarket Name <span class="text-danger">*</span></label>
+                            <input type="text" name="store_name" class="form-control" placeholder="e.g. Whole Harvest Market" required value="{{ product.retail_data.store_name if product.retail_data else '' }}" autofocus>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold small">Store Location / Address <span class="text-danger">*</span></label>
+                            <input type="text" name="store_location" class="form-control" placeholder="e.g. 500 Market St, Seattle, WA" required value="{{ product.retail_data.store_location if product.retail_data else '' }}">
+                        </div>
+
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold small">Retail Price ($) <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <span class="input-group-text">$</span>
+                                    <input type="number" step="0.01" min="0" name="price" class="form-control" placeholder="4.99" required value="{{ product.retail_data.price if product.retail_data and product.retail_data.price else '' }}">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold small">Available Stock <span class="text-danger">*</span></label>
+                                <input type="text" name="stock_quantity" class="form-control" placeholder="e.g. 450 kg" required value="{{ product.retail_data.stock_quantity if product.retail_data else '' }}">
+                            </div>
+                        </div>
+
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold small">Arrival Date <span class="text-danger">*</span></label>
+                                <input type="date" name="arrival_date" class="form-control" required value="{{ product.retail_data.arrival_date if product.retail_data and product.retail_data.arrival_date else today_str }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold small">Estimated Shelf Life</label>
+                                <input type="text" name="shelf_life" class="form-control" placeholder="e.g. 14 Days" value="{{ product.retail_data.shelf_life if product.retail_data and product.retail_data.shelf_life else '14 Days' }}">
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center pt-3 border-top">
+                            <a href="{{ url_for('workflow_entry', stage='transport', batch_id=product.batch_id) }}" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left me-1"></i> Previous: Review Transport
+                            </a>
+                            <div class="d-flex gap-2">
+                                {% if product.retail_data %}
+                                <a href="{{ url_for('verify_batch', batch_id=product.batch_id, from_workflow=1) }}" class="btn btn-outline-success">
+                                    View Live Traceability &rarr;
+                                </a>
+                                {% endif %}
+                                <button type="submit" class="btn btn-warning text-dark px-4 py-2 fw-bold">
+                                    <i class="bi bi-check-circle-fill me-1"></i> Save Retail &amp; Finalize Tracking &rarr;
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Side: Journey Summary so far -->
+        <div class="col-lg-5">
+            <div class="card card-custom shadow-sm h-100">
+                <div class="card-header card-header-ag d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0 fw-semibold"><i class="bi bi-signpost-2 me-1"></i>Chain Journey Summary</h6>
+                    <span class="badge bg-success">Stage 3 of 4 Complete</span>
+                </div>
+                <div class="card-body p-3">
+                    <div class="p-3 bg-light rounded mb-3 small">
+                        <div class="fw-bold text-success mb-1"><i class="bi bi-flower1 me-1"></i> Farm Origin</div>
+                        <div>{{ product.name }} &bull; Packed: {{ product.packaging_date }}</div>
+                        <div class="text-muted">By {{ product.farmer.full_name or product.farmer.username }}</div>
+                    </div>
+
+                    <div class="p-3 bg-light rounded mb-3 small">
+                        <div class="fw-bold text-primary mb-1"><i class="bi bi-truck me-1"></i> Logistics Status</div>
+                        {% if product.transport_data %}
+                            <div>Latest: <strong>{{ product.transport_data[-1].status }}</strong></div>
+                            <div class="text-muted">At {{ product.transport_data[-1].current_location }} ({{ product.transport_data|length }} checkpoints)</div>
+                        {% else %}
+                            <div class="text-muted">Awaiting initial carrier pickup.</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="p-3 bg-light rounded small">
+                        <div class="fw-bold text-warning-emphasis mb-1"><i class="bi bi-shop me-1"></i> Retail Destination</div>
+                        {% if product.retail_data %}
+                            <div>{{ product.retail_data.store_name }}</div>
+                            <div class="text-success fw-bold">${{ '%.2f'|format(product.retail_data.price) if product.retail_data.price else 'N/A' }}</div>
+                        {% else %}
+                            <div class="text-muted">Fill out form on left to complete retail stocking.</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}
