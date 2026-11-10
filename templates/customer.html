@@ -3,29 +3,117 @@
 {% block title %}Customer Portal - TrustHarvest Traceability{% endblock %}
 
 {% block content %}
-<div class="row justify-content-center mb-5">
-    <div class="col-lg-8 text-center">
+<div class="row justify-content-center mb-4">
+    <div class="col-lg-9 text-center">
         <span class="badge bg-success bg-opacity-25 text-success border border-success px-3 py-2 rounded-pill fw-semibold mb-2">
-            <i class="bi bi-shield-check me-1"></i> Consumer Trust & Verification
+            <i class="bi bi-shield-check me-1" aria-hidden="true"></i> Consumer Verification Portal
         </span>
-        <h2 class="fw-bold mb-3">Trace Your Food's Journey</h2>
-        <p class="text-muted">Enter the Batch ID found on your product packaging or QR label to inspect full cryptographic verification and farm-to-table history.</p>
+        <h1 class="h2 fw-bold mb-2">Check &amp; Verify Your Food</h1>
+        <p class="text-muted mb-0">Trace where your food grew, how cold it stayed during shipping, and verify it has never been altered.</p>
 
-        <div class="card card-custom p-4 shadow-sm border-2 my-4">
-            <form action="{{ url_for('customer_dashboard') }}" method="GET">
-                <div class="input-group input-group-lg">
-                    <span class="input-group-text bg-white"><i class="bi bi-search text-success"></i></span>
-                    <input type="text" name="batch_id" class="form-control" placeholder="Enter Batch ID (e.g. TH-APPLES-001)" required value="{{ request.args.get('batch_id', '') }}">
-                    <button class="btn btn-ag-primary px-4 fw-bold" type="submit">Verify Produce</button>
+        <div class="card card-custom p-4 shadow-sm border my-4 text-start">
+            <div class="th-tablist" role="tablist" aria-label="Produce verification methods">
+                <button type="button" class="th-tab-btn" id="tab-batch-id" role="tab" aria-selected="true">
+                    <i class="bi bi-search me-1" aria-hidden="true"></i> Lookup by Batch ID
+                </button>
+                <button type="button" class="th-tab-btn" id="tab-qr-scan" role="tab" aria-selected="false">
+                    <i class="bi bi-qr-code-scan me-1" aria-hidden="true"></i> Scan or Test QR Code
+                </button>
+            </div>
+
+            <!-- Panel 1: Batch ID Lookup -->
+            <div id="panel-batch-id" role="tabpanel" aria-labelledby="tab-batch-id">
+                <form action="{{ url_for('customer_dashboard') }}" method="GET">
+                    <label for="customer-batch-input" class="form-label small fw-semibold text-muted">Enter Batch Code (printed on package label)</label>
+                    <div class="input-group input-group-lg">
+                        <span class="input-group-text bg-white" aria-hidden="true"><i class="bi bi-search text-success"></i></span>
+                        <input
+                            type="text"
+                            id="customer-batch-input"
+                            name="batch_id"
+                            class="form-control"
+                            placeholder="e.g. TH-APPLES-001"
+                            required
+                            value="{{ request.args.get('batch_id', '') }}"
+                        >
+                        <button class="btn btn-ag-primary px-4 fw-bold" type="submit">Verify Food</button>
+                    </div>
+                </form>
+
+                {% if products %}
+                <div class="d-flex align-items-center flex-wrap gap-2 mt-3 small">
+                    <span class="text-muted fw-semibold">Quick 1-click samples:</span>
+                    {% for sample in products[:3] %}
+                    <a href="{{ url_for('verify_batch', batch_id=sample.batch_id) }}" class="badge rounded-pill text-bg-light border text-decoration-none px-3 py-2 text-success fw-semibold">
+                        <i class="bi bi-arrow-right-circle me-1" aria-hidden="true"></i>{{ sample.batch_id }} ({{ sample.name }})
+                    </a>
+                    {% endfor %}
                 </div>
-            </form>
+                {% endif %}
+            </div>
+
+            <!-- Panel 2: QR Scanner (Webcam + File Upload + Demo QR Decode) -->
+            <div id="panel-qr-scan" role="tabpanel" aria-labelledby="tab-qr-scan" hidden>
+                <div class="row g-3 align-items-stretch">
+                    <div class="col-md-6 text-center">
+                        <div class="p-3 bg-light rounded border h-100 d-flex flex-column justify-content-between">
+                            <div>
+                                <div class="small fw-bold text-dark mb-2">Option A: Use Webcam</div>
+                                <div id="qr-reader" class="qr-reader-frame p-2" style="min-height: 190px;">
+                                    <div id="qr-placeholder" class="py-4 text-muted small">
+                                        <i class="bi bi-camera-video fs-1 d-block mb-2 text-success opacity-75" aria-hidden="true"></i>
+                                        Hold a QR code in front of your camera to auto-open its trace page.
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="d-flex justify-content-center gap-2 mt-3">
+                                <button type="button" id="btn-start-cam" class="btn btn-sm btn-ag-primary fw-semibold">
+                                    <i class="bi bi-camera-video me-1" aria-hidden="true"></i> Start Webcam
+                                </button>
+                                <button type="button" id="btn-stop-cam" class="btn btn-sm btn-outline-secondary fw-semibold" hidden>
+                                    <i class="bi bi-stop-circle me-1" aria-hidden="true"></i> Stop Camera
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="p-3 bg-light rounded border h-100">
+                            <div class="small fw-bold text-dark mb-1">Option B: Test Without a Camera</div>
+                            <p class="small text-muted mb-3">
+                                Presentation mode: upload any downloaded QR PNG or click the instant Demo button to run the live in-browser decoder.
+                            </p>
+
+                            <div class="mb-3">
+                                <label for="qr-file-input" class="form-label small fw-semibold">1. Upload a QR Image (.png / .jpg)</label>
+                                <input type="file" id="qr-file-input" class="form-control form-control-sm" accept="image/*">
+                            </div>
+
+                            {% if products and products[0].qr_code %}
+                            <div class="small fw-semibold mb-1">2. Or run instant 1-click QR demo:</div>
+                            <button
+                                type="button"
+                                id="btn-demo-qr-scan"
+                                class="btn btn-sm btn-outline-success w-100 fw-semibold py-2"
+                                data-qr-url="{{ url_for('static', filename='qr/' + products[0].qr_code) }}"
+                                data-batch-id="{{ products[0].batch_id }}"
+                            >
+                                <i class="bi bi-magic me-1" aria-hidden="true"></i> Demo Decode QR: {{ products[0].batch_id }}
+                            </button>
+                            {% endif %}
+
+                            <div id="qr-scan-status" class="mt-3 small" aria-live="polite"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
 
 <div class="card card-custom shadow-sm mb-4">
     <div class="card-header card-header-ag d-flex justify-content-between align-items-center">
-        <h5 class="mb-0 fw-bold"><i class="bi bi-basket me-2"></i>Available Produce Batches in Market</h5>
+        <h2 class="h5 mb-0 fw-bold"><i class="bi bi-basket me-2" aria-hidden="true"></i>Available Produce Batches</h2>
         <span class="badge bg-secondary">{{ products|length }} Available</span>
     </div>
     <div class="card-body p-0">
@@ -33,12 +121,12 @@
             <table class="table table-hover align-middle mb-0">
                 <thead class="table-light">
                     <tr>
-                        <th>Produce & Batch</th>
-                        <th>Origin & Method</th>
-                        <th>Status</th>
-                        <th>Retail Price</th>
-                        <th>QR Code</th>
-                        <th>Action</th>
+                        <th scope="col">Produce &amp; Batch</th>
+                        <th scope="col">Origin &amp; Method</th>
+                        <th scope="col">Status</th>
+                        <th scope="col">Retail Price</th>
+                        <th scope="col">QR Code</th>
+                        <th scope="col">Action</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -49,7 +137,7 @@
                             <span class="font-monospace text-success small">{{ p.batch_id }}</span>
                         </td>
                         <td>
-                            <div>{{ p.farmer_data.farm_name if p.farmer_data else p.farmer.full_name }}</div>
+                            <div>{{ p.farmer_data.farm_name if p.farmer_data else (p.farmer.full_name or p.farmer.username) }}</div>
                             <span class="badge bg-light text-dark border">{{ p.farming_method }}</span>
                         </td>
                         <td>
@@ -64,9 +152,14 @@
                         </td>
                         <td>
                             {% if p.qr_code %}
-                            <a href="{{ url_for('verify_batch', batch_id=p.batch_id) }}">
-                                <img src="{{ url_for('static', filename='qr/' + p.qr_code) }}" alt="QR" width="45" height="45" class="border rounded p-1">
-                            </a>
+                            <div class="d-flex align-items-center gap-2">
+                                <a href="{{ url_for('verify_batch', batch_id=p.batch_id) }}" title="Open verification page for {{ p.batch_id }}">
+                                    <img src="{{ url_for('static', filename='qr/' + p.qr_code) }}" alt="QR code for {{ p.batch_id }}" width="45" height="45" class="border rounded p-1">
+                                </a>
+                                <a href="{{ url_for('static', filename='qr/' + p.qr_code) }}" download="qr_{{ p.batch_id }}.png" class="btn btn-sm btn-outline-secondary py-0 px-2" title="Download QR PNG for scanner demo">
+                                    <i class="bi bi-download"></i>
+                                </a>
+                            </div>
                             {% endif %}
                         </td>
                         <td>
@@ -85,4 +178,174 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const tabs = Array.from(document.querySelectorAll('[role="tab"]'));
+    const panels = {
+        "tab-batch-id": document.getElementById("panel-batch-id"),
+        "tab-qr-scan": document.getElementById("panel-qr-scan"),
+    };
+
+    function activateTab(selectedTab) {
+        tabs.forEach((t) => {
+            const isSelected = t === selectedTab;
+            t.setAttribute("aria-selected", String(isSelected));
+            t.tabIndex = isSelected ? 0 : -1;
+            const p = panels[t.id];
+            if (p) p.hidden = !isSelected;
+        });
+        if (selectedTab.id !== "tab-qr-scan") {
+            stopWebcamScanner();
+        }
+    }
+
+    tabs.forEach((tab, idx) => {
+        tab.tabIndex = tab.getAttribute("aria-selected") === "true" ? 0 : -1;
+        tab.addEventListener("click", () => activateTab(tab));
+        tab.addEventListener("keydown", (e) => {
+            let nextIdx = null;
+            if (e.key === "ArrowRight") nextIdx = (idx + 1) % tabs.length;
+            else if (e.key === "ArrowLeft") nextIdx = (idx - 1 + tabs.length) % tabs.length;
+            else if (e.key === "Home") nextIdx = 0;
+            else if (e.key === "End") nextIdx = tabs.length - 1;
+            if (nextIdx !== null) {
+                e.preventDefault();
+                activateTab(tabs[nextIdx]);
+                tabs[nextIdx].focus();
+            }
+        });
+    });
+
+    if (window.location.hash === "#scan") {
+        const scanTab = document.getElementById("tab-qr-scan");
+        if (scanTab) activateTab(scanTab);
+    }
+
+    const statusEl = document.getElementById("qr-scan-status");
+    const placeholderEl = document.getElementById("qr-placeholder");
+    const startBtn = document.getElementById("btn-start-cam");
+    const stopBtn = document.getElementById("btn-stop-cam");
+    const fileInput = document.getElementById("qr-file-input");
+    const demoBtn = document.getElementById("btn-demo-qr-scan");
+    let html5Qr = null;
+    let cameraActive = false;
+
+    function setStatus(html, tone) {
+        if (!statusEl) return;
+        const cls = tone === "error" ? "text-danger fw-semibold" : (tone === "success" ? "text-success fw-semibold" : "text-muted");
+        statusEl.className = "mt-3 small " + cls;
+        statusEl.innerHTML = html;
+    }
+
+    function handleDecodedText(decodedText) {
+        const match = String(decodedText).match(/\/verify\/([A-Za-z0-9_-]+)/) || String(decodedText).match(/(TH-[A-Za-z0-9_-]+)/);
+        const batchId = match ? match[1] : String(decodedText).trim();
+        if (statusEl) {
+            statusEl.className = "mt-3 small text-success fw-semibold";
+            statusEl.replaceChildren();
+            const icon = document.createElement("i");
+            icon.className = "bi bi-check-circle-fill me-1";
+            const msg = document.createTextNode(" Decoded: ");
+            const code = document.createElement("code");
+            code.textContent = String(decodedText);
+            const tail = document.createTextNode(". Redirecting to verification...");
+            statusEl.append(icon, msg, code, tail);
+        }
+        stopWebcamScanner();
+        setTimeout(() => {
+            window.location.href = `/verify/${encodeURIComponent(batchId)}`;
+        }, 650);
+    }
+
+    function getScanner() {
+        if (!window.Html5Qrcode) {
+            setStatus("QR scanner library unavailable offline. Use Batch ID Lookup tab.", "error");
+            return null;
+        }
+        if (!html5Qr) {
+            html5Qr = new Html5Qrcode("qr-reader");
+        }
+        return html5Qr;
+    }
+
+    async function stopWebcamScanner() {
+        if (html5Qr && cameraActive) {
+            try {
+                await html5Qr.stop();
+            } catch (_) {}
+            cameraActive = false;
+        }
+        if (stopBtn) stopBtn.hidden = true;
+        if (startBtn) startBtn.hidden = false;
+        if (placeholderEl) placeholderEl.hidden = false;
+    }
+
+    if (startBtn) {
+        startBtn.addEventListener("click", async function () {
+            const scanner = getScanner();
+            if (!scanner) return;
+            try {
+                if (placeholderEl) placeholderEl.hidden = true;
+                setStatus("Requesting camera access...", "info");
+                await scanner.start(
+                    { facingMode: "environment" },
+                    { fps: 10, qrbox: { width: 220, height: 220 } },
+                    handleDecodedText
+                );
+                cameraActive = true;
+                startBtn.hidden = true;
+                stopBtn.hidden = false;
+                setStatus("Camera active. Hold a TrustHarvest QR code in front of your webcam.", "info");
+            } catch (err) {
+                if (placeholderEl) placeholderEl.hidden = false;
+                setStatus(`Camera access failed or unavailable (${err}). Try uploading a QR image or using the Demo Decode button.`, "error");
+            }
+        });
+    }
+
+    if (stopBtn) {
+        stopBtn.addEventListener("click", stopWebcamScanner);
+    }
+
+    if (fileInput) {
+        fileInput.addEventListener("change", async function (e) {
+            const file = e.target.files && e.target.files[0];
+            if (!file) return;
+            await stopWebcamScanner();
+            const scanner = getScanner();
+            if (!scanner) return;
+            try {
+                setStatus("Decoding uploaded QR image...", "info");
+                const decoded = await scanner.scanFile(file, false);
+                handleDecodedText(decoded);
+            } catch (err) {
+                setStatus(`Could not detect a valid QR code in that image (${err}).`, "error");
+            }
+        });
+    }
+
+    if (demoBtn) {
+        demoBtn.addEventListener("click", async function () {
+            const qrUrl = demoBtn.dataset.qrUrl;
+            await stopWebcamScanner();
+            const scanner = getScanner();
+            if (!scanner) return;
+            try {
+                setStatus("Fetching generated batch QR PNG and running real QR decoder...", "info");
+                const resp = await fetch(qrUrl);
+                const blob = await resp.blob();
+                const file = new File([blob], "demo_qr.png", { type: "image/png" });
+                const decoded = await scanner.scanFile(file, false);
+                handleDecodedText(decoded);
+            } catch (err) {
+                setStatus(`Demo QR decode failed (${err}).`, "error");
+            }
+        });
+    }
+});
+</script>
 {% endblock %}

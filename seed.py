@@ -1,10 +1,12 @@
 import os
-from datetime import datetime, timedelta
-import qrcode
+from datetime import timedelta
 from app import app
-from models import db, User, Product, FarmerData, TransportData, RetailData, Feedback
-from blockchain import store_hash, compute_batch_hash, load_config
-
+from models import db, User, Product, FarmerData, TransportData, RetailData, Feedback, utcnow
+from blockchain import (
+    store_hash_detailed, store_stage_hash,
+    compute_batch_hash, compute_transport_hash, compute_retail_hash,
+    load_config
+)
 from utils import generate_batch_qr
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -14,10 +16,12 @@ QR_FOLDER = os.path.join(BASE_DIR, 'static', 'qr')
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(QR_FOLDER, exist_ok=True)
 
+
 def generate_qr(batch_id):
     cfg = load_config()
     base_url = cfg.get('BASE_URL', 'http://localhost:5000')
     return generate_batch_qr(batch_id, QR_FOLDER, base_url)
+
 
 def seed():
     with app.app_context():
@@ -26,7 +30,6 @@ def seed():
         db.create_all()
 
         print("Seeding users...")
-        # 1 Admin, 1 Farmer, 1 Transporter, 1 Retailer, 1 Customer
         admin = User(username='admin', role='admin', full_name='Global Admin', contact='admin@trustharvest.org')
         admin.set_password('admin123')
 
@@ -45,7 +48,7 @@ def seed():
         db.session.add_all([admin, farmer, transporter, retailer, customer])
         db.session.commit()
 
-        print("Seeding sample batches & publishing hashes to Ethereum blockchain...")
+        print("Seeding sample batches & anchoring multi-stage hashes to Ethereum V2 smart contract...")
 
         # Batch 1: Organic Honeycrisp Apples
         batch1_id = "TH-APPLES-001"
@@ -65,8 +68,8 @@ def seed():
             image=batch1_img
         )
 
-        print(f"Storing Hash for {batch1_id} on-chain: {hash1}")
-        store_hash(batch1_id, hash1)
+        print(f"Storing Harvest Hash for {batch1_id} on-chain: {hash1}")
+        meta1 = store_hash_detailed(batch1_id, hash1, role="farmer")
         qr1 = generate_qr(batch1_id)
 
         p1 = Product(
@@ -79,8 +82,12 @@ def seed():
             image=batch1_img,
             qr_code=qr1,
             on_chain_hash=hash1,
+            tx_hash=meta1.get("tx_hash"),
+            block_number=meta1.get("block_number"),
+            contract_address=meta1.get("contract_address"),
+            signer_address=meta1.get("signer_address"),
             status="In Stock",
-            created_at=datetime.utcnow() - timedelta(days=5)
+            created_at=utcnow() - timedelta(days=5)
         )
         db.session.add(p1)
         db.session.flush()
@@ -95,38 +102,34 @@ def seed():
         )
         db.session.add(fd1)
 
-        t1_1 = TransportData(
-            product_id=p1.id,
-            transporter_id=transporter.id,
-            status="Picked Up from Farm",
-            current_location="Yakima Valley Depot, WA",
-            temperature="3.8 °C",
-            vehicle_number="TRK-104",
-            notes="Cold-chain temperature verified before departure.",
-            timestamp=datetime.utcnow() - timedelta(days=4)
-        )
-        t1_2 = TransportData(
-            product_id=p1.id,
-            transporter_id=transporter.id,
-            status="In Transit (Cold-Storage)",
-            current_location="Portland Cross-Dock Hub, OR",
-            temperature="4.0 °C",
-            vehicle_number="TRK-104",
-            notes="Reefer unit optimal.",
-            timestamp=datetime.utcnow() - timedelta(days=3)
-        )
-        t1_3 = TransportData(
-            product_id=p1.id,
-            transporter_id=transporter.id,
-            status="Delivered to Retailer",
-            current_location="Whole Harvest Market, Seattle, WA",
-            temperature="3.9 °C",
-            vehicle_number="TRK-104",
-            notes="Delivered in prime condition.",
-            timestamp=datetime.utcnow() - timedelta(days=2)
-        )
-        db.session.add_all([t1_1, t1_2, t1_3])
+        t1_specs = [
+            ("Picked Up from Farm", "Yakima Valley Depot, WA", "3.8 °C", "TRK-104", "Cold-chain temperature verified before departure.", 4),
+            ("In Transit (Cold-Storage)", "Portland Cross-Dock Hub, OR", "4.0 °C", "TRK-104", "Reefer unit optimal.", 3),
+            ("Delivered to Retailer", "Whole Harvest Market, Seattle, WA", "3.9 °C", "TRK-104", "Delivered in prime condition.", 2),
+        ]
+        for st, loc, temp, veh, note, days_ago in t1_specs:
+            th = compute_transport_hash(batch1_id, st, loc, temp, veh, note, transporter.id)
+            tm = store_stage_hash(batch1_id, "TRANSPORT", th, role="transporter")
+            db.session.add(TransportData(
+                product_id=p1.id,
+                transporter_id=transporter.id,
+                status=st,
+                current_location=loc,
+                temperature=temp,
+                vehicle_number=veh,
+                notes=note,
+                on_chain_hash=th,
+                tx_hash=tm.get("tx_hash"),
+                block_number=tm.get("block_number"),
+                signer_address=tm.get("signer_address"),
+                timestamp=utcnow() - timedelta(days=days_ago)
+            ))
 
+        rh1 = compute_retail_hash(
+            batch1_id, "Whole Harvest Organic Market", "500 Pine St, Seattle, WA",
+            4.99, "420 kg", "2026-10-03", "21 Days", retailer.id
+        )
+        rm1 = store_stage_hash(batch1_id, "RETAIL", rh1, role="retailer")
         rd1 = RetailData(
             product_id=p1.id,
             retailer_id=retailer.id,
@@ -135,7 +138,11 @@ def seed():
             price=4.99,
             stock_quantity="420 kg",
             arrival_date="2026-10-03",
-            shelf_life="21 Days"
+            shelf_life="21 Days",
+            on_chain_hash=rh1,
+            tx_hash=rm1.get("tx_hash"),
+            block_number=rm1.get("block_number"),
+            signer_address=rm1.get("signer_address"),
         )
         db.session.add(rd1)
 
@@ -144,7 +151,7 @@ def seed():
             customer_name="Amy Chen",
             rating=5,
             comment="Remarkable freshness and crunch! Scanned the QR right off the display carton.",
-            created_at=datetime.utcnow() - timedelta(days=1)
+            created_at=utcnow() - timedelta(days=1)
         )
         db.session.add(fb1)
 
@@ -166,8 +173,8 @@ def seed():
             image=batch2_img
         )
 
-        print(f"Storing Hash for {batch2_id} on-chain: {hash2}")
-        store_hash(batch2_id, hash2)
+        print(f"Storing Harvest Hash for {batch2_id} on-chain: {hash2}")
+        meta2 = store_hash_detailed(batch2_id, hash2, role="farmer")
         qr2 = generate_qr(batch2_id)
 
         p2 = Product(
@@ -180,8 +187,12 @@ def seed():
             image=batch2_img,
             qr_code=qr2,
             on_chain_hash=hash2,
+            tx_hash=meta2.get("tx_hash"),
+            block_number=meta2.get("block_number"),
+            contract_address=meta2.get("contract_address"),
+            signer_address=meta2.get("signer_address"),
             status="In Transit",
-            created_at=datetime.utcnow() - timedelta(days=2)
+            created_at=utcnow() - timedelta(days=2)
         )
         db.session.add(p2)
         db.session.flush()
@@ -196,39 +207,40 @@ def seed():
         )
         db.session.add(fd2)
 
-        t2_1 = TransportData(
-            product_id=p2.id,
-            transporter_id=transporter.id,
-            status="Picked Up from Farm",
-            current_location="Salinas Packing Station, CA",
-            temperature="11.8 °C",
-            vehicle_number="TRK-881",
-            notes="Ambient ventilated transport loaded.",
-            timestamp=datetime.utcnow() - timedelta(days=1)
-        )
-        t2_2 = TransportData(
-            product_id=p2.id,
-            transporter_id=transporter.id,
-            status="In Transit (Cold-Storage)",
-            current_location="Bay Area Transit Interchange, CA",
-            temperature="11.5 °C",
-            vehicle_number="TRK-881",
-            notes="En route to Northern distribution center.",
-            timestamp=datetime.utcnow() - timedelta(hours=6)
-        )
-        db.session.add_all([t2_1, t2_2])
+        t2_specs = [
+            ("Picked Up from Farm", "Salinas Packing Station, CA", "11.8 °C", "TRK-881", "Ambient ventilated transport loaded.", timedelta(days=1)),
+            ("In Transit (Cold-Storage)", "Bay Area Transit Interchange, CA", "11.5 °C", "TRK-881", "En route to Northern distribution center.", timedelta(hours=6)),
+        ]
+        for st, loc, temp, veh, note, delta in t2_specs:
+            th = compute_transport_hash(batch2_id, st, loc, temp, veh, note, transporter.id)
+            tm = store_stage_hash(batch2_id, "TRANSPORT", th, role="transporter")
+            db.session.add(TransportData(
+                product_id=p2.id,
+                transporter_id=transporter.id,
+                status=st,
+                current_location=loc,
+                temperature=temp,
+                vehicle_number=veh,
+                notes=note,
+                on_chain_hash=th,
+                tx_hash=tm.get("tx_hash"),
+                block_number=tm.get("block_number"),
+                signer_address=tm.get("signer_address"),
+                timestamp=utcnow() - delta
+            ))
 
         fb2 = Feedback(
             product_id=p2.id,
             customer_name="Local Foodie",
             rating=5,
             comment="Excited to see regenerative produce traced with cryptographic certainty!",
-            created_at=datetime.utcnow() - timedelta(hours=2)
+            created_at=utcnow() - timedelta(hours=2)
         )
         db.session.add(fb2)
 
         db.session.commit()
-        print("Database and blockchain seed complete!")
+        print("Database and TrustHarvestV2 multi-stage blockchain seed complete!")
+
 
 if __name__ == '__main__':
     seed()

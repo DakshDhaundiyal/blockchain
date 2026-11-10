@@ -40,7 +40,7 @@ def test_transporter_checkpoint_workflow(client, app):
     assert b"Transport checkpoint recorded" in res.data
 
     with app.app_context():
-        prod = Product.query.get(prod_id)
+        prod = db.session.get(Product, prod_id)
         assert prod.status == "In Transit (Cold-Storage)"
         rec = TransportData.query.filter_by(product_id=prod_id).first()
         assert rec is not None
@@ -68,7 +68,7 @@ def test_retailer_stock_workflow(client, app):
     assert b"Retail stock and price details updated" in res.data
 
     with app.app_context():
-        prod = Product.query.get(prod_id)
+        prod = db.session.get(Product, prod_id)
         assert prod.status == "In Stock"
         ret = RetailData.query.filter_by(product_id=prod_id).first()
         assert ret is not None

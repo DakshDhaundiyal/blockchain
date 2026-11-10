@@ -3,12 +3,17 @@
 {% block title %}Admin Analytics & Management - TrustHarvest{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
     <div>
-        <h2 class="fw-bold mb-1"><i class="bi bi-speedometer2 text-danger me-2"></i>Executive Supply Chain Admin</h2>
-        <p class="text-muted mb-0">Platform oversight, smart contract audit records, user management & real-time analytics.</p>
+        <h1 class="h2 fw-bold mb-1"><i class="bi bi-speedometer2 text-danger me-2" aria-hidden="true"></i>Admin Overview &amp; Supply Chain Audit</h1>
+        <p class="text-muted mb-0">Monitor platform totals, verify every food batch, and review analytics charts.</p>
     </div>
-    <span class="badge bg-danger py-2 px-3"><i class="bi bi-shield-lock me-1"></i> System Administrator</span>
+    <div class="d-flex gap-2 align-items-center">
+        <a href="{{ url_for('api_health') }}" target="_blank" class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-activity me-1" aria-hidden="true"></i> API Health
+        </a>
+        <span class="badge bg-danger py-2 px-3"><i class="bi bi-shield-lock me-1" aria-hidden="true"></i> System Administrator</span>
+    </div>
 </div>
 
 <!-- Key Performance Indicators -->
@@ -18,9 +23,9 @@
             <div class="d-flex justify-content-between align-items-center">
                 <div>
                     <span class="text-muted small fw-semibold">TOTAL USERS</span>
-                    <h3 class="fw-bold mb-0 mt-1">{{ total_users }}</h3>
+                    <div class="h3 fw-bold mb-0 mt-1">{{ total_users }}</div>
                 </div>
-                <div class="bg-primary bg-opacity-10 text-primary p-3 rounded-circle"><i class="bi bi-people fs-4"></i></div>
+                <div class="bg-primary bg-opacity-10 text-primary p-3 rounded-circle" aria-hidden="true"><i class="bi bi-people fs-4"></i></div>
             </div>
         </div>
     </div>
@@ -29,9 +34,9 @@
             <div class="d-flex justify-content-between align-items-center">
                 <div>
                     <span class="text-muted small fw-semibold">ACTIVE BATCHES</span>
-                    <h3 class="fw-bold mb-0 mt-1">{{ total_products }}</h3>
+                    <div class="h3 fw-bold mb-0 mt-1">{{ total_products }}</div>
                 </div>
-                <div class="bg-success bg-opacity-10 text-success p-3 rounded-circle"><i class="bi bi-box-seam fs-4"></i></div>
+                <div class="bg-success bg-opacity-10 text-success p-3 rounded-circle" aria-hidden="true"><i class="bi bi-box-seam fs-4"></i></div>
             </div>
         </div>
     </div>
@@ -40,9 +45,9 @@
             <div class="d-flex justify-content-between align-items-center">
                 <div>
                     <span class="text-muted small fw-semibold">TRANSIT LOGS</span>
-                    <h3 class="fw-bold mb-0 mt-1">{{ total_transports }}</h3>
+                    <div class="h3 fw-bold mb-0 mt-1">{{ total_transports }}</div>
                 </div>
-                <div class="bg-warning bg-opacity-10 text-warning p-3 rounded-circle"><i class="bi bi-truck fs-4"></i></div>
+                <div class="bg-warning bg-opacity-10 text-warning p-3 rounded-circle" aria-hidden="true"><i class="bi bi-truck fs-4"></i></div>
             </div>
         </div>
     </div>
@@ -51,9 +56,9 @@
             <div class="d-flex justify-content-between align-items-center">
                 <div>
                     <span class="text-muted small fw-semibold">CUSTOMER REVIEWS</span>
-                    <h3 class="fw-bold mb-0 mt-1">{{ total_feedback }}</h3>
+                    <div class="h3 fw-bold mb-0 mt-1">{{ total_feedback }}</div>
                 </div>
-                <div class="bg-info bg-opacity-10 text-info p-3 rounded-circle"><i class="bi bi-star-fill fs-4"></i></div>
+                <div class="bg-info bg-opacity-10 text-info p-3 rounded-circle" aria-hidden="true"><i class="bi bi-star-fill fs-4"></i></div>
             </div>
         </div>
     </div>
@@ -64,7 +69,7 @@
     <div class="col-lg-4">
         <div class="card card-custom shadow-sm h-100">
             <div class="card-header card-header-ag">
-                <h6 class="mb-0 fw-bold"><i class="bi bi-bar-chart-line me-2"></i>Batches Per Farmer</h6>
+                <h2 class="h6 mb-0 fw-bold"><i class="bi bi-bar-chart-line me-2" aria-hidden="true"></i>Batches Per Farmer</h2>
             </div>
             <div class="card-body">
                 <canvas id="farmerChart" height="220"></canvas>
@@ -74,7 +79,7 @@
     <div class="col-lg-4">
         <div class="card card-custom shadow-sm h-100">
             <div class="card-header card-header-ag">
-                <h6 class="mb-0 fw-bold"><i class="bi bi-pie-chart me-2"></i>Supply Chain Status Distribution</h6>
+                <h2 class="h6 mb-0 fw-bold"><i class="bi bi-pie-chart me-2" aria-hidden="true"></i>Supply Chain Status Distribution</h2>
             </div>
             <div class="card-body">
                 <canvas id="statusChart" height="220"></canvas>
@@ -84,7 +89,7 @@
     <div class="col-lg-4">
         <div class="card card-custom shadow-sm h-100">
             <div class="card-header card-header-ag">
-                <h6 class="mb-0 fw-bold"><i class="bi bi-star-half me-2"></i>Customer Rating Feedback</h6>
+                <h2 class="h6 mb-0 fw-bold"><i class="bi bi-star-half me-2" aria-hidden="true"></i>Customer Rating Feedback</h2>
             </div>
             <div class="card-body">
                 <canvas id="ratingChart" height="220"></canvas>
@@ -93,10 +98,138 @@
     </div>
 </div>
 
+<!-- Products and Live On-Chain Audit Table -->
+<div class="card card-custom shadow-sm mb-4">
+    <div class="card-header card-header-ag d-flex justify-content-between align-items-center">
+        <h2 class="h5 mb-0 fw-bold"><i class="bi bi-diagram-3 me-2" aria-hidden="true"></i>Produce Batches &amp; Integrity Status</h2>
+        <span class="badge bg-secondary">{{ products|length }} Batches</span>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th scope="col">Batch ID</th>
+                        <th scope="col">Produce</th>
+                        <th scope="col">Farmer</th>
+                        <th scope="col">Status</th>
+                        <th scope="col">Integrity Check</th>
+                        <th scope="col">Ledger Record</th>
+                        <th scope="col">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in products %}
+                    {% set audit_st = chain_overview.audit_map.get(p.batch_id, 'error') %}
+                    <tr>
+                        <td class="fw-bold font-monospace text-success">{{ p.batch_id }}</td>
+                        <td>{{ p.name }}</td>
+                        <td>{{ p.farmer.username }}</td>
+                        <td><span class="badge bg-info text-dark">{{ p.status }}</span></td>
+                        <td>
+                            {% if audit_st == 'verified' %}
+                                <span class="badge bg-success"><i class="bi bi-shield-check me-1" aria-hidden="true"></i>Verified</span>
+                            {% elif audit_st == 'tampered' %}
+                                <span class="badge bg-danger"><i class="bi bi-exclamation-octagon me-1" aria-hidden="true"></i>Tampered!</span>
+                            {% elif audit_st == 'rpc_offline' %}
+                                <span class="badge bg-warning text-dark">RPC Offline</span>
+                            {% elif audit_st == 'not_found' %}
+                                <span class="badge bg-secondary">Unrecorded</span>
+                            {% else %}
+                                <span class="badge bg-secondary">{{ audit_st }}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="badge bg-light text-dark border font-monospace" title="SHA-256: {{ p.on_chain_hash }}">
+                                {% if p.block_number %}Block #{{ p.block_number }}{% else %}Sealed{% endif %}
+                            </span>
+                        </td>
+                        <td>
+                            <a href="{{ url_for('verify_batch', batch_id=p.batch_id) }}" class="btn btn-sm btn-ag-primary">
+                                <i class="bi bi-shield-check me-1" aria-hidden="true"></i> Inspect
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Collapsible Technical Blockchain Inspector (Signer Wallets + EVM Event Log) -->
+<details class="th-disclosure shadow-sm mb-4">
+    <summary>
+        Technical Blockchain &amp; EVM Wallet Inspector ({{ chain_overview.events|length }} on-chain events &bull; {% if chain_overview.online %}Block #{{ chain_overview.block_number }}{% else %}RPC Offline{% endif %})
+    </summary>
+    <div class="th-disclosure-body">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 pb-3 mb-3 border-bottom">
+            <div>
+                <div class="small text-muted fw-semibold">Active Deployed Contract ({{ chain_overview.contract_version }})</div>
+                <div class="font-monospace fw-bold text-success small">{{ chain_overview.contract_address or 'Not deployed yet' }}</div>
+            </div>
+            {% if chain_overview.online %}
+            <span class="badge bg-success">Ganache Online &bull; Chain ID {{ chain_overview.chain_id }} &bull; Block #{{ chain_overview.block_number }}</span>
+            {% else %}
+            <span class="badge bg-warning text-dark">RPC Offline</span>
+            {% endif %}
+        </div>
+
+        {% if chain_overview.wallets %}
+        <div class="row g-2 mb-4">
+            {% for w in chain_overview.wallets %}
+            <div class="col-sm-6 col-lg-3">
+                <div class="p-2.5 bg-light rounded border small h-100">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <strong class="text-dark">{{ w.role }}</strong>
+                        <span class="badge bg-white text-dark border">Acct #{{ w.index }}</span>
+                    </div>
+                    <div class="font-monospace text-muted text-truncate" title="{{ w.address }}">{{ w.address }}</div>
+                    <div class="text-success fw-semibold mt-1">{{ w.balance_eth }} ETH</div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <div class="fw-semibold small text-muted mb-2">Live EVM Smart Contract Event Log</div>
+        <div class="table-responsive border rounded">
+            <table class="table table-hover align-middle mb-0 small">
+                <thead class="table-light">
+                    <tr>
+                        <th scope="col">Block #</th>
+                        <th scope="col">Event</th>
+                        <th scope="col">Stage</th>
+                        <th scope="col">Signer Wallet</th>
+                        <th scope="col">Anchored Hash</th>
+                        <th scope="col">Tx Hash</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for ev in chain_overview.events %}
+                    <tr>
+                        <td class="fw-bold font-monospace">#{{ ev.block_number }}</td>
+                        <td><span class="badge bg-success-subtle text-success border border-success-subtle">{{ ev.event }}</span></td>
+                        <td><span class="badge bg-light text-dark border">{{ ev.stage }}</span></td>
+                        <td class="font-monospace text-truncate" style="max-width:150px;" title="{{ ev.actor }}">{{ ev.actor }}</td>
+                        <td class="font-monospace text-truncate" style="max-width:160px;" title="{{ ev.hash }}">{{ ev.hash }}</td>
+                        <td class="font-monospace text-truncate" style="max-width:160px;" title="{{ ev.tx_hash }}">{{ ev.tx_hash }}</td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="6" class="text-center py-4 text-muted">No smart contract events recorded on the active deployment yet.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</details>
+
 <!-- User Management Table -->
 <div class="card card-custom shadow-sm mb-4">
     <div class="card-header card-header-ag d-flex justify-content-between align-items-center">
-        <h5 class="mb-0 fw-bold"><i class="bi bi-person-gear me-2"></i>User & Stakeholder Directory</h5>
+        <h2 class="h5 mb-0 fw-bold"><i class="bi bi-person-gear me-2" aria-hidden="true"></i>Stakeholder Accounts</h2>
         <span class="badge bg-secondary">{{ users|length }} Accounts</span>
     </div>
     <div class="card-body p-0">
@@ -104,13 +237,13 @@
             <table class="table table-hover align-middle mb-0">
                 <thead class="table-light">
                     <tr>
-                        <th>ID</th>
-                        <th>Username</th>
-                        <th>Full Name / Org</th>
-                        <th>Role</th>
-                        <th>Contact</th>
-                        <th>Created</th>
-                        <th>Actions</th>
+                        <th scope="col">ID</th>
+                        <th scope="col">Username</th>
+                        <th scope="col">Full Name / Org</th>
+                        <th scope="col">Role</th>
+                        <th scope="col">Contact</th>
+                        <th scope="col">Created</th>
+                        <th scope="col">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -138,7 +271,7 @@
                             {% if u.id != session.get('user_id') %}
                             <form action="{{ url_for('delete_user', user_id=u.id) }}" method="POST" onsubmit="return confirm('Delete this user?');" class="d-inline">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                                <button type="submit" class="btn btn-sm btn-outline-danger py-0 px-2">
+                                <button type="submit" class="btn btn-sm btn-outline-danger py-0 px-2" aria-label="Delete user {{ u.username }}">
                                     <i class="bi bi-trash"></i>
                                 </button>
                             </form>
@@ -153,56 +286,11 @@
         </div>
     </div>
 </div>
-
-<!-- Products and Traceability Monitoring Table -->
-<div class="card card-custom shadow-sm mb-4">
-    <div class="card-header card-header-ag d-flex justify-content-between align-items-center">
-        <h5 class="mb-0 fw-bold"><i class="bi bi-diagram-3 me-2"></i>All Supply Chain Products & On-Chain Audit</h5>
-        <span class="badge bg-secondary">{{ products|length }} Batches</span>
-    </div>
-    <div class="card-body p-0">
-        <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-                <thead class="table-light">
-                    <tr>
-                        <th>Batch ID</th>
-                        <th>Produce</th>
-                        <th>Farmer</th>
-                        <th>Status</th>
-                        <th>On-Chain Hash</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for p in products %}
-                    <tr>
-                        <td class="fw-bold font-monospace text-success">{{ p.batch_id }}</td>
-                        <td>{{ p.name }}</td>
-                        <td>{{ p.farmer.username }}</td>
-                        <td><span class="badge bg-info text-dark">{{ p.status }}</span></td>
-                        <td>
-                            <div class="font-monospace small text-truncate" style="max-width: 220px;" title="{{ p.on_chain_hash }}">
-                                {{ p.on_chain_hash }}
-                            </div>
-                        </td>
-                        <td>
-                            <a href="{{ url_for('verify_batch', batch_id=p.batch_id) }}" class="btn btn-sm btn-ag-primary">
-                                <i class="bi bi-shield-check me-1"></i> Verify
-                            </a>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </div>
-</div>
 {% endblock %}
 
 {% block scripts %}
 <script>
 document.addEventListener("DOMContentLoaded", function () {
-    // 1. Farmer Chart
     const farmerData = {{ farmer_chart_data | tojson }};
     new Chart(document.getElementById('farmerChart'), {
         type: 'bar',
@@ -221,7 +309,6 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     });
 
-    // 2. Status Distribution Chart
     const statusData = {{ status_chart_data | tojson }};
     new Chart(document.getElementById('statusChart'), {
         type: 'doughnut',
@@ -240,7 +327,6 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     });
 
-    // 3. Feedback Rating Chart
     const ratingData = {{ rating_chart_data | tojson }};
     new Chart(document.getElementById('ratingChart'), {
         type: 'bar',

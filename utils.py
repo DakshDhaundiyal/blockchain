@@ -1,4 +1,5 @@
 import os
+import re
 import logging
 from io import BytesIO
 import qrcode
@@ -72,3 +73,91 @@ def validate_image_file(file_storage, allowed_extensions=None) -> tuple[bool, st
         return True, ""
     except Exception as e:
         return False, f"Invalid or corrupted image file ({e})."
+
+
+def evaluate_temperature(temp_str: str | None) -> dict:
+    """
+    Parses a cold-chain temperature reading (e.g. '4.0 °C', '18.5 C') and classifies it
+    against standard perishable agricultural cold-chain thresholds.
+    Returns { 'celsius': float|None, 'status': str, 'label': str, 'badge_class': str }.
+    """
+    if not temp_str:
+        return {
+            "celsius": None,
+            "status": "unknown",
+            "label": "Ambient / Unspecified",
+            "badge_class": "bg-secondary-subtle text-secondary",
+        }
+
+    match = re.search(r"(-?\d+(?:\.\d+)?)", str(temp_str))
+    if not match:
+        return {
+            "celsius": None,
+            "status": "unknown",
+            "label": str(temp_str),
+            "badge_class": "bg-secondary-subtle text-secondary",
+        }
+
+    celsius = float(match.group(1))
+    if -2.0 <= celsius <= 8.0:
+        return {
+            "celsius": celsius,
+            "status": "optimal",
+            "label": f"{celsius:.1f} °C • Cold-Chain Optimal",
+            "badge_class": "bg-success-subtle text-success border border-success-subtle",
+        }
+    elif 8.0 < celsius <= 15.0:
+        return {
+            "celsius": celsius,
+            "status": "elevated",
+            "label": f"{celsius:.1f} °C • Cool / Ambient",
+            "badge_class": "bg-warning-subtle text-warning-emphasis border border-warning-subtle",
+        }
+    else:
+        return {
+            "celsius": celsius,
+            "status": "breach",
+            "label": f"{celsius:.1f} °C • Cold-Chain Breach",
+            "badge_class": "bg-danger-subtle text-danger border border-danger-subtle fw-semibold",
+        }
+
+
+def compute_trust_score(
+    harvest_verified: bool,
+    transport_count: int,
+    transport_verified_count: int,
+    has_retail: bool,
+    retail_verified: bool,
+    has_temp_breach: bool,
+) -> dict:
+    """
+    Computes an objective provenance & supply-chain integrity score (0-100)
+    derived strictly from live cryptographic checks and cold-chain telemetry.
+    """
+    score = 0
+    if harvest_verified:
+        score += 50
+    if transport_count > 0:
+        if transport_verified_count == transport_count:
+            score += 25
+        elif transport_verified_count > 0:
+            score += int(25 * (transport_verified_count / transport_count))
+    if has_retail and retail_verified:
+        score += 25
+    elif has_retail:
+        score += 10  # Recorded in DB only
+
+    if has_temp_breach and score > 0:
+        score = max(0, score - 15)
+
+    if score >= 90:
+        tier = ("Excellent", "success")
+    elif score >= 65:
+        tier = ("Good", "primary")
+    elif score >= 40:
+        tier = ("Partial", "warning")
+    else:
+        tier = ("Unverified / Alert", "danger")
+
+    return {"score": score, "tier": tier[0], "color": tier[1]}
+

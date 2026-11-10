@@ -1,8 +1,7 @@
 {% extends "base.html" %}
 {% block title %}TrustHarvest – Blockchain Food Traceability{% endblock %}
 
-{% block content %}
-
+{% block main_inner %}
 <!-- ══════════════════════════ HERO SECTION ══════════════════ -->
 <section class="hero-section">
   <!-- Decorative Watermark (Left side) -->
@@ -41,8 +40,9 @@
 
         <!-- Search / Verification Input Bar -->
         <form action="{{ url_for('customer_dashboard') }}" method="GET" class="hero-search-form">
+          <label for="batch-id-input" class="visually-hidden">Enter Batch ID to verify</label>
           <div class="hero-verify-bar">
-            <i class="bi bi-qr-code-scan hero-verify-icon"></i>
+            <i class="bi bi-qr-code-scan hero-verify-icon" aria-hidden="true"></i>
             <input
               type="text"
               name="batch_id"
@@ -52,10 +52,24 @@
               spellcheck="false"
             >
             <button type="submit" class="hero-verify-btn">
-              Verify Batch <i class="bi bi-arrow-right"></i>
+              Check Food <i class="bi bi-arrow-right" aria-hidden="true"></i>
             </button>
           </div>
         </form>
+
+        <!-- Quick Try Sample Pills (No memorization required) -->
+        <div class="d-flex align-items-center flex-wrap gap-2 mb-3 small">
+          <span class="text-muted fw-medium">Try a sample:</span>
+          <a href="{{ url_for('verify_batch', batch_id='TH-APPLES-001') }}" class="badge rounded-pill text-bg-light border text-decoration-none px-3 py-2 text-success fw-semibold">
+            <i class="bi bi-patch-check me-1"></i> TH-APPLES-001 (Apples)
+          </a>
+          <a href="{{ url_for('verify_batch', batch_id='TH-TOMATO-002') }}" class="badge rounded-pill text-bg-light border text-decoration-none px-3 py-2 text-primary fw-semibold">
+            <i class="bi bi-truck me-1"></i> TH-TOMATO-002 (Tomatoes)
+          </a>
+          <a href="{{ url_for('customer_dashboard') }}#scan" class="badge rounded-pill text-bg-light border text-decoration-none px-3 py-2 text-dark fw-semibold">
+            <i class="bi bi-qr-code-scan me-1"></i> Scan QR / Demo
+          </a>
+        </div>
 
         <!-- Trust Indicators -->
         <div class="hero-trust-row">
@@ -83,8 +97,8 @@
       <div class="col-lg-5">
         <div class="farm-table-card">
           <div class="ft-header">
-            <h3 class="ft-title">From Farm to Table</h3>
-            <p class="ft-subtitle">A transparent journey, recorded on blockchain.</p>
+            <h2 class="ft-title">From Farm to Table</h2>
+            <p class="ft-subtitle">Every stage checked &amp; locked on blockchain. Use <strong>Switch Role</strong> in the top bar to try each step.</p>
           </div>
 
           <div class="ft-timeline">
@@ -93,7 +107,7 @@
             <div class="ft-step">
               <div class="ft-node-col">
                 <div class="ft-step-index idx-green">01</div>
-                <div class="ft-step-icon icon-green"><i class="bi bi-flower1"></i></div>
+                <div class="ft-step-icon icon-green" aria-hidden="true"><i class="bi bi-flower1"></i></div>
                 <div class="ft-vertical-line"></div>
               </div>
               <div class="ft-thumb">
@@ -101,11 +115,11 @@
               </div>
               <div class="ft-body">
                 <div class="ft-step-label">FARM</div>
-                <div class="ft-step-desc">Product registered with details (quantity, method, packaging etc.)</div>
-                <div class="ft-step-time">Oct 12, 2026 &bull; 10:24 AM</div>
+                <div class="ft-step-desc">Farmer logs crop details, harvest method, and prints QR label.</div>
+                <div class="ft-step-time">Step 1 &bull; Origin Sealed</div>
               </div>
               <div class="ft-status">
-                <span class="badge-pill-verified"><i class="bi bi-check-circle-fill"></i> Verified</span>
+                <span class="badge-pill-verified"><i class="bi bi-check-circle-fill" aria-hidden="true"></i> Verified</span>
               </div>
             </div>
 
@@ -113,7 +127,7 @@
             <div class="ft-step">
               <div class="ft-node-col">
                 <div class="ft-step-index idx-blue">02</div>
-                <div class="ft-step-icon icon-blue"><i class="bi bi-truck"></i></div>
+                <div class="ft-step-icon icon-blue" aria-hidden="true"><i class="bi bi-truck"></i></div>
                 <div class="ft-vertical-line"></div>
               </div>
               <div class="ft-thumb">
@@ -121,11 +135,11 @@
               </div>
               <div class="ft-body">
                 <div class="ft-step-label">TRANSPORT</div>
-                <div class="ft-step-desc">Location and status updated with live tracking information.</div>
-                <div class="ft-step-time">Oct 14, 2026 &bull; 03:15 PM</div>
+                <div class="ft-step-desc">Carrier records route checkpoints and cold-chain temperature.</div>
+                <div class="ft-step-time">Step 2 &bull; Transit Tracked</div>
               </div>
               <div class="ft-status">
-                <span class="badge-pill-transit"><span class="dot-transit"></span> In Transit</span>
+                <span class="badge-pill-transit"><span class="dot-transit" aria-hidden="true"></span> In Transit</span>
               </div>
             </div>
 
@@ -133,7 +147,7 @@
             <div class="ft-step">
               <div class="ft-node-col">
                 <div class="ft-step-index idx-orange">03</div>
-                <div class="ft-step-icon icon-orange"><i class="bi bi-shop"></i></div>
+                <div class="ft-step-icon icon-orange" aria-hidden="true"><i class="bi bi-shop"></i></div>
                 <div class="ft-vertical-line"></div>
               </div>
               <div class="ft-thumb">
@@ -141,11 +155,11 @@
               </div>
               <div class="ft-body">
                 <div class="ft-step-label">RETAIL</div>
-                <div class="ft-step-desc">Stock received and price recorded by retailer.</div>
-                <div class="ft-step-time">Oct 16, 2026 &bull; 11:20 AM</div>
+                <div class="ft-step-desc">Store confirms stock arrival, shelf life, and retail price.</div>
+                <div class="ft-step-time">Step 3 &bull; Store Ready</div>
               </div>
               <div class="ft-status">
-                <span class="badge-pill-verified"><i class="bi bi-check-circle-fill"></i> Verified</span>
+                <span class="badge-pill-verified"><i class="bi bi-check-circle-fill" aria-hidden="true"></i> Verified</span>
               </div>
             </div>
 
@@ -153,14 +167,14 @@
             <div class="ft-step">
               <div class="ft-node-col">
                 <div class="ft-step-index idx-grey">04</div>
-                <div class="ft-step-icon icon-grey"><i class="bi bi-person"></i></div>
+                <div class="ft-step-icon icon-grey" aria-hidden="true"><i class="bi bi-person"></i></div>
               </div>
               <div class="ft-thumb ft-thumb-consumer">
                 <img src="{{ url_for('static', filename='img/consumer.jpg') }}" alt="Consumer smartphone scan" loading="lazy">
               </div>
               <div class="ft-body">
                 <div class="ft-step-label">CONSUMER</div>
-                <div class="ft-step-desc">Scan QR to verify full journey and product authenticity.</div>
+                <div class="ft-step-desc">Scan QR code or enter Batch ID to verify authenticity instantly.</div>
               </div>
               <div class="ft-status">
                 <span class="badge-pill-ready">Ready to Verify</span>
@@ -181,22 +195,22 @@
     <div class="metric-segment">
       <div class="metric-val">{{ product_count }}</div>
       <div class="metric-caption">REGISTERED BATCHES</div>
-      <div class="metric-trend text-success"><i class="bi bi-arrow-up-right"></i> +12% this week</div>
+      <div class="metric-trend text-success"><i class="bi bi-shield-check"></i> Tracked end-to-end</div>
     </div>
     <div class="metric-segment">
       <div class="metric-val">{{ user_count }}</div>
       <div class="metric-caption">STAKEHOLDERS</div>
-      <div class="metric-meta"><i class="bi bi-people-fill"></i> 4 roles active</div>
+      <div class="metric-meta"><i class="bi bi-people-fill"></i> Farmers, Transit, Stores</div>
     </div>
     <div class="metric-segment">
       <div class="metric-val">{{ transport_count }}</div>
       <div class="metric-caption">TRANSIT CHECKPOINTS</div>
-      <div class="metric-meta text-success"><i class="bi bi-check-circle-fill"></i> 100% verified</div>
+      <div class="metric-meta text-success"><i class="bi bi-thermometer-half"></i> Temperature logged</div>
     </div>
     <div class="metric-segment">
       <div class="metric-val">{{ feedback_count }}</div>
       <div class="metric-caption">CONSUMER REVIEWS</div>
-      <div class="metric-meta text-warning"><i class="bi bi-star-fill"></i> 4.8 / 5 average</div>
+      <div class="metric-meta text-warning"><i class="bi bi-star-fill"></i> Verified buyer ratings</div>
     </div>
   </div>
 </div>
@@ -270,8 +284,13 @@
     <!-- Network -->
     <div class="net-info-col">
       <div class="net-col-label">Network</div>
-      <div class="net-col-val"><span class="dot-live-green"></span> Ganache (Local)</div>
-      <div class="net-col-sub"><span class="dot-sub-green">●</span> Online</div>
+      {% if network_block is not none %}
+        <div class="net-col-val"><span class="dot-live-green"></span> Ganache (Local)</div>
+        <div class="net-col-sub"><span class="dot-sub-green">●</span> Online</div>
+      {% else %}
+        <div class="net-col-val"><span class="dot-live-amber"></span> Ganache (Local)</div>
+        <div class="net-col-sub" style="color:#b45309;"><span>●</span> Standby / Offline</div>
+      {% endif %}
     </div>
 
     <div class="net-v-divider"></div>
@@ -311,8 +330,8 @@
     <div class="net-info-col">
       <div class="net-col-label">Latest Block</div>
       <div class="net-col-val mono">
-        #{{ network_block if network_block is not none else '6' }}
-        <span class="block-time">2s ago</span>
+        #{{ network_block if network_block is not none else '—' }}
+        <span class="block-time">{{ 'Live' if network_block is not none else 'Offline' }}</span>
       </div>
     </div>
 
@@ -329,7 +348,7 @@
     <!-- Smart Contract -->
     <div class="net-info-col">
       <div class="net-col-label">Smart Contract</div>
-      <div class="net-col-val mono">Solidity 0.8.19</div>
+      <div class="net-col-val mono">TrustHarvest{{ contract_version or 'V2' }} &bull; Solidity 0.8.19</div>
     </div>
   </div>
 </div>
@@ -341,7 +360,7 @@
       <div class="ledger-title-group">
         <div class="ledger-icon-box"><i class="bi bi-file-earmark-text"></i></div>
         <div>
-          <h3 class="ledger-heading">Live Traceability Ledger</h3>
+          <h2 class="ledger-heading">Live Traceability Ledger</h2>
           <p class="ledger-subheading">Recent harvest batches from the blockchain network</p>
         </div>
       </div>
@@ -360,13 +379,13 @@
       <table class="custom-ledger-table">
         <thead>
           <tr>
-            <th>BATCH ID</th>
-            <th>PRODUCT</th>
-            <th>FARMING METHOD</th>
-            <th>QUANTITY</th>
-            <th>STATUS</th>
-            <th>BLOCKCHAIN</th>
-            <th>ACTION</th>
+            <th scope="col">BATCH ID</th>
+            <th scope="col">PRODUCT</th>
+            <th scope="col">FARMING METHOD</th>
+            <th scope="col">QUANTITY</th>
+            <th scope="col">STATUS</th>
+            <th scope="col">BLOCKCHAIN</th>
+            <th scope="col">ACTION</th>
           </tr>
         </thead>
         <tbody>

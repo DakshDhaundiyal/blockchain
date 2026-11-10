@@ -119,9 +119,10 @@ def run_smoke_test():
         t_record = TransportData.query.filter_by(product_id=product_id).first()
         assert t_record is not None, "Transport checkpoint was not recorded!"
         assert t_record.status == 'In Transit (Cold-Storage)'
-        p_check = Product.query.get(product_id)
+        assert t_record.tx_hash is not None, "Transport stage should anchor tx_hash on TrustHarvestV2!"
+        p_check = db.session.get(Product, product_id)
         assert p_check.status == 'In Transit (Cold-Storage)'
-        print(f" Transport checkpoint verified: {t_record.status} at {t_record.current_location}")
+        print(f" Transport checkpoint verified: {t_record.status} at {t_record.current_location} (Block #{t_record.block_number})")
 
     # 5. Retailer updates stock & price
     print("\n[Step 5] Retailer logs stock arrival and sets pricing...")
@@ -146,23 +147,33 @@ def run_smoke_test():
         r_record = RetailData.query.filter_by(product_id=product_id).first()
         assert r_record is not None, "Retail data was not recorded!"
         assert r_record.price == 3.49
-        print(f" Retail record verified: ${r_record.price}/unit at {r_record.store_name}")
+        assert r_record.tx_hash is not None, "Retail stage should anchor tx_hash on TrustHarvestV2!"
+        print(f" Retail record verified: ${r_record.price}/unit at {r_record.store_name} (Block #{r_record.block_number})")
 
-    # 6. Verify shows "BLOCKCHAIN VERIFIED"
-    print("\n[Step 6] Customer accesses /verify/<batch_id> (Clean Authentic State)...")
+    # 6. Verify shows "BLOCKCHAIN VERIFIED" + JSON API Check
+    print("\n[Step 6] Customer accesses /verify/<batch_id> & /api/verify/<batch_id> (Clean Authentic State)...")
     resp = client.get(f'/verify/{batch_id}')
     assert resp.status_code == 200
     html_content = resp.data.decode('utf-8')
     assert 'BLOCKCHAIN VERIFIED' in html_content, "Expected BLOCKCHAIN VERIFIED badge!"
+    assert 'Integrity Score: 100/100' in html_content, "Expected full multi-stage Integrity Score: 100/100!"
     assert 'Stage 1: Farm Harvest & Stamping' in html_content
     assert 'Stage 2: Transport' in html_content
     assert 'Stage 3: Retail Stock & Distribution' in html_content
-    print(" Authentic Verification succeeded! 'BLOCKCHAIN VERIFIED' badge confirmed.")
+
+    api_resp = client.get(f'/api/verify/{batch_id}')
+    assert api_resp.status_code == 200
+    api_data = api_resp.get_json()
+    assert api_data['verification_status'] == 'verified'
+    assert api_data['trust_score']['score'] == 100
+    assert api_data['transport_checkpoints'][0]['verification'] == 'verified'
+    assert api_data['retail']['verification'] == 'verified'
+    print(" Authentic Verification & JSON Proof API succeeded!")
 
     # 7. Tamper with one DB field and verify it shows "TAMPER DETECTED"
     print("\n[Step 7] Tampering with one database field (changing farming_method to fake data)...")
     with app.app_context():
-        p_to_tamper = Product.query.get(product_id)
+        p_to_tamper = db.session.get(Product, product_id)
         original_method = p_to_tamper.farming_method
         p_to_tamper.farming_method = "Chemically Treated Non-Organic"
         db.session.commit()

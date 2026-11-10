@@ -9,36 +9,59 @@ Each agricultural batch is cryptographically hashed at harvest, anchored immutab
 ## Technology Stack
 
 * **Backend Framework:** Python 3.11+, Flask 3.x, Werkzeug
-* **Persistence & ORM:** Flask-SQLAlchemy 3.x (SQLite default, PostgreSQL compatible)
+* **Persistence & ORM:** Flask-SQLAlchemy 3.x / SQLAlchemy 2.0 (SQLite default, PostgreSQL compatible)
 * **Smart Contracts & Blockchain:**
-  * Solidity `^0.8.19` (`contracts/TrustHarvest.sol`)
-  * Web3.py `6.15+` for JSON-RPC communication
-  * Ganache (Ethereum local node running at `http://127.0.0.1:7545`)
-  * `py-solc-x` for automated contract compilation
-* **Security & Form Handling:** Flask-WTF (CSRF protection), scrypt password hashing, session hardening (HttpOnly, SameSite, configurable Secure flag)
-* **Frontend:** Jinja2 templates, Bootstrap 5, Bootstrap Icons, responsive custom CSS
+  * Solidity `^0.8.19` ([`contracts/TrustHarvestV2.sol`](contracts/TrustHarvestV2.sol) — multi-stage provenance active by default)
+  * Web3.py `6.15+` for JSON-RPC communication & contract event log indexing
+  * Ganache (Ethereum local node running at `http://127.0.0.1:7545`, Chain ID `1337`)
+  * `py-solc-x` for automated compilation & historical-to-V2 migration
+* **Security & Form Handling:** Flask-WTF (CSRF protection), scrypt password hashing, session hardening (`HttpOnly`, `SameSite`, configurable `Secure`), login rate limiting
+* **Frontend:** Jinja2 templates, Bootstrap 5, Bootstrap Icons, Chart.js 4, `html5-qrcode@2.3.8` (live webcam & QR image file scanner), `@media print` certificate styling
 * **QR & Imaging:** `qrcode[pil]`, Pillow (PIL)
 
 ---
 
 ## Main Features
 
-1. **Immutable Food Provenance:** Batch creation computes a canonical SHA-256 hash anchored onto the Ethereum blockchain. Any alteration to product specifications immediately triggers a cryptographic tamper alert.
-2. **End-to-End Multi-Stage Workflow:** Role-based checkpoints for **Farmers**, **Transporters**, **Retailers**, and **Consumers**.
-3. **Interactive Stepper & Visual Timeline:** Live status indicators and interactive timeline tracking batches from harvest through cold-chain transit to grocery shelves.
-4. **Public Verification & QR Code Support:** Each batch generates a scannable QR code directing consumers to a public verification page displaying provenance and blockchain verification status.
-5. **Honest Fault-Tolerant Blockchain Layer:** Distinguishes between verified authenticity, data tampering, missing on-chain records, and offline RPC nodes (graceful degradation without app crashes).
-6. **Administrative Insights & Analytics:** Dedicated Admin dashboard summarizing total batches, users, stages, and farmer distribution charts.
+1. **Multi-Stage Immutable Provenance (`TrustHarvestV2.sol`):** Anchors harvest batch attributes one-time via `storeHash(batchId, hash)` AND records append-only custody checkpoints (`TRANSPORT`, `RETAIL`) via `addStageHash(batchId, stage, dataHash)` signed by dedicated stakeholder Ganache accounts.
+2. **Cryptographic Transaction Receipts & Signer Attribution:** Persists and displays `tx_hash`, `block_number`, `contract_address`, and stakeholder `signer_address` (`accounts[1]` Farmer, `accounts[2]` Transporter, `accounts[3]` Retailer) across dashboards and public verification pages.
+3. **Webcam, Image-Upload & 1-Click Demo QR Scanner (`/customer`):** Consumers can verify via Batch ID lookup, live webcam QR scan (`Html5Qrcode`), QR PNG image upload, or a 1-click **"Demo Decode QR"** button for camera-free live presentations.
+4. **Cold-Chain Telemetry & Provenance Integrity Score (0–100):** Parses cold-chain temperature sensors (`Optimal` -2 to 8 °C, `Cool/Ambient` 8 to 15 °C, `Cold-Chain Breach` >15 °C or <-2 °C) and computes an objective Integrity Score from live cryptographic checks + telemetry.
+5. **Interactive Harvest & Cold-Chain Tamper Simulator:** One-click simulation buttons on `/verify/<batch_id>` demonstrate SHA-256 avalanche mismatch detection for both origin metadata and cold-chain logistics checkpoints.
+6. **Live Admin EVM Explorer & Integrity Audit (`/admin`):** Displays real-time Ganache signer wallet balances, live smart contract events (`HashStored`, `StageAnchored`), and per-batch live DB-vs-Chain verification status.
+7. **Public JSON Verification API & Printable Certificates:** Machine-readable REST endpoints (`/api/health`, `/api/verify/<batch_id>`) plus a print-clean certificate stylesheet.
+8. **Honest Fault-Tolerant Blockchain Layer:** Cleanly separates `BLOCKCHAIN VERIFIED`, `TAMPER DETECTED`, `LEDGER CONFLICT`, `UNRECORDED ON CHAIN`, and `BLOCKCHAIN RPC OFFLINE`.
 
 ---
 
 ## Supply Chain Workflow
 
+```mermaid
+flowchart LR
+    F["Farmer<br/>Ganache Acct #1<br/>storeHash(batchId, sha256)"] -->|"SHA-256 + QR PNG"| T["Transporter<br/>Ganache Acct #2<br/>addStageHash(TRANSPORT)"]
+    T -->|"Cold-Chain & GPS Telemetry"| R["Retailer<br/>Ganache Acct #3<br/>addStageHash(RETAIL)"]
+    R -->|"Store & Shelf Price"| C["Consumer<br/>/customer or /verify/TH-...<br/>Webcam QR / Batch ID / JSON API"]
 ```
-[ Farmer ]                [ Transporter ]             [ Retailer ]              [ Consumer ]
- Harvest & Register  ───►  Cold-Chain Transit   ───►   Stock & Supermarket  ───►  Scan QR Code &
- Batch SHA-256 Hash        Log Temp & Vehicle         Price & Shelf-Life         Verify Provenance
- Anchored On-Chain         Checkpoints                Inventory Tracking         Against Blockchain
+
+```mermaid
+sequenceDiagram
+    participant C as Consumer / Auditor
+    participant Flask as Flask Backend
+    participant DB as SQLite Database
+    participant EVM as Ganache (TrustHarvestV2)
+
+    C->>Flask: GET /verify/<batch_id> or Scan QR
+    Flask->>DB: Load Product, TransportData, RetailData
+    Flask->>Flask: Recompute SHA-256 hashes (Harvest, Transport, Retail)
+    Flask->>EVM: Call getRecord(batchId) & getStageRecord(batchId, i)
+    EVM-->>Flask: On-chain hashes, signer addresses & block timestamps
+    alt Harvest & Stage Hashes Match
+        Flask-->>C: BLOCKCHAIN VERIFIED + Integrity Score + Printable Proof
+    else Any Hash Mismatch
+        Flask-->>C: TAMPER DETECTED (identifies exact altered stage)
+    else Node Unreachable
+        Flask-->>C: BLOCKCHAIN RPC OFFLINE (never fakes verification)
+    end
 ```
 
 ### 1. Farmer / Producer
@@ -77,10 +100,10 @@ Each agricultural batch is cryptographically hashed at harvest, anchored immutab
 ```
 blockchain/
 ├── contracts/
-│   ├── TrustHarvest.sol          # Active Solidity 0.8.19 smart contract
-│   └── TrustHarvestV2.sol        # Proposed V2 smart contract with access control
+│   ├── TrustHarvest.sol          # Legacy V1 contract (historical compatibility)
+│   └── TrustHarvestV2.sol        # Active V2 multi-stage Solidity 0.8.19 contract
 ├── static/
-│   ├── css/style.css             # Agricultural green identity & responsive theme
+│   ├── css/style.css             # Agricultural green identity, tabs & @media print styles
 │   ├── img/                      # Static branding and role imagery
 │   ├── qr/                       # Generated batch QR codes (.gitkeep preserved)
 │   └── uploads/                  # Uploaded produce images (default.jpg fallback)
@@ -89,21 +112,22 @@ blockchain/
 │   ├── landing.html              # Public landing page with timeline preview
 │   ├── login.html                # Secure authentication form
 │   ├── register.html             # User registration form
-│   ├── farmer.html               # Farmer produce management
-│   ├── transporter.html          # Logistics tracking dashboard
-│   ├── retailer.html             # Supermarket inventory dashboard
-│   ├── customer.html             # Consumer batch lookup portal
-│   ├── admin.html                # Admin statistics and charts
-│   ├── verify.html               # Public batch verification & tamper demo
+│   ├── farmer.html               # Farmer produce management & QR download
+│   ├── transporter.html          # Cold-chain logistics tracking & telemetry badges
+│   ├── retailer.html             # Supermarket inventory & V2 on-chain receipts
+│   ├── customer.html             # Tabbed consumer lookup + webcam/file/demo QR scanner
+│   ├── admin.html                # Executive KPIs, signer wallets, EVM event log & charts
+│   ├── verify.html               # Multi-stage verification, Trust Score & printable certificate
 │   ├── workflow.html             # Multi-stage supply chain stepper
 │   └── workflow_stepper.html     # Reusable workflow progress bar partial
 ├── tests/
-│   ├── conftest.py               # Isolated in-memory SQLite fixtures
+│   ├── conftest.py               # Isolated test SQLite fixtures
 │   ├── test_auth.py              # Authentication & password hashing tests
-│   ├── test_blockchain_hashing.py# Hash computation & consistency tests
-│   ├── test_contract_proposal.py # Contract logic & verification tests
+│   ├── test_blockchain_hashing.py# Hash computation & honest offline checks
+│   ├── test_contract_proposal.py # TrustHarvestV2 Solidity compilation tests
 │   ├── test_role_switcher.py     # Role authorization & persona switcher tests
 │   ├── test_security_uploads.py  # File upload validation & CSRF tests
+│   ├── test_v2_and_api.py        # Multi-stage V2, telemetry, API & live Ganache tests
 │   └── test_workflow.py          # Complete multi-stage workflow tests
 ├── app.py                        # Core Flask application & routing
 ├── blockchain.py                 # Web3.py wrapper, compilation & deployment logic
@@ -188,77 +212,63 @@ Copy `config.example.json` to `config.json`:
 
 1. **Start Ganache:**
    * Open the **Ganache GUI** and click **Quickstart (Ethereum)**.
-   * Or run Ganache CLI:
+   * Or run Ganache CLI v7+:
      ```bash
-     ganache --port 7545 --chainId 1337
+     npx ganache -p 7545 -h 127.0.0.1 --chain.chainId 1337 --chain.networkId 1337
      ```
    * Ensure the RPC server is listening at `http://127.0.0.1:7545`.
 
 2. **Automatic Contract Deployment:**
-   * TrustHarvest automatically manages contract deployment. When you add your first product or trigger blockchain initialization, `blockchain.py` detects whether bytecode exists at `config.json`'s configured address.
-   * If empty or unconfigured, it automatically compiles `contracts/TrustHarvest.sol` (using `solc 0.8.19`), deploys the contract using Ganache Account 0, and writes the newly deployed address to `config.json`.
+   * TrustHarvest automatically manages V2 deployment and backwards compatibility. When a batch or transaction is initiated, `blockchain.py` checks bytecode and V2 ABI support (`getStageCount`) at `config.json`'s active address.
+   * Any prior V1 contract address is preserved in `historical_contract_addresses`, while `contracts/TrustHarvestV2.sol` is compiled (`solc 0.8.19`), deployed using Ganache Account 0, and recorded into `config.json`.
 
 ---
 
 ## Running the Application
 
-1. **(Optional) Seed Demo Accounts and Stages:**
+1. **Seed Demo Accounts and Multi-Stage Batches:**
    ```bash
    python seed.py
    ```
-   *Default Demo Accounts (Password: `password123`):*
-   * **Farmer:** `farmer_demo17`
-   * **Transporter:** `transporter_dan`
-   * **Retailer:** `retailer_sarah`
-   * **Customer:** `customer_amy`
-   * **Admin:** `admin`
+   *Seeded Demo Accounts:*
+   * **Farmer (`farmer_john`):** `farmer123` (Ganache Signer Account #1)
+   * **Transporter (`transporter_dan`):** `transit123` (Ganache Signer Account #2)
+   * **Retailer (`retailer_sarah`):** `retail123` (Ganache Signer Account #3)
+   * **Customer (`customer_amy`):** `customer123`
+   * **Admin (`admin`):** `admin123` (Ganache Signer Account #0)
 
 2. **Start the Flask Development Server:**
    ```bash
    python app.py
    ```
 
-3. **Access the Application:**
-   * Open your browser and navigate to: **`http://localhost:5000`**
-   * The top navbar features a live **Blockchain Status Pill** showing whether Ganache is online and displaying current block height.
-   * In development mode, use the **Persona Switcher** in the top navbar to instantly test different roles without repeatedly logging in and out.
+3. **Access & Demonstrate the Application:**
+   * Open **`http://localhost:5000`** in your browser.
+   * Use the **Role Switcher** in the navbar for passwordless live demo switching between Farmer, Transporter, Retailer, Customer, and Admin.
+   * **Showcasing QR Verification Without a Physical Label:**
+     1. Visit `/customer` and open the **Camera / Image QR Scanner** tab.
+     2. Click **Demo Decode QR** to fetch and run `Html5Qrcode` across a real generated batch QR PNG, **or** click **Download QR PNG** on any batch and upload the image file.
+     3. Optionally click **Start Webcam** to scan a batch QR code shown on a phone or secondary screen.
 
 ---
 
-## How Blockchain Verification Works
+## How Multi-Stage Verification Works
 
 ### 1. Canonical Hash Calculation
-When a farmer registers a batch, `compute_batch_hash()` canonicalizes product attributes into a JSON payload with sorted keys:
-```python
-payload = json.dumps({
-    "batch_id": batch_id,
-    "farmer_id": farmer_id,
-    "farming_method": farming_method,
-    "image": image_filename,
-    "name": name,
-    "packaging_date": packaging_date,
-    "quantity": quantity
-}, sort_keys=True)
-return hashlib.sha256(payload.encode("utf-8")).hexdigest()
-```
+At Harvest (`compute_batch_hash`), Transport (`compute_transport_hash`), and Retail (`compute_retail_hash`), database fields are normalized into sorted-key JSON and hashed with SHA-256.
 
-### 2. On-Chain Smart Contract Anchoring
-The computed hash is sent to the Ethereum contract:
+### 2. On-Chain Smart Contract Anchoring (`TrustHarvestV2`)
 ```solidity
-function storeHash(string memory batchId, string memory hash) public {
-    require(bytes(batchHashes[batchId]).length == 0, "Batch already registered");
-    batchHashes[batchId] = hash;
-    emit HashStored(batchId, hash);
-}
+function storeHash(string memory batchId, string memory hash) public;
+function addStageHash(string memory batchId, string memory stage, string memory dataHash) public;
 ```
-* **Immutability Protection:** The contract enforces that a hash for a given batch ID can only be written once. Any attempt to overwrite an existing batch reverts.
+* **Immutability Protection:** `storeHash` reverts with `AlreadyRegistered(batchId)` if called twice for the same batch ID; `addStageHash` records append-only `TRANSPORT` and `RETAIL` hashes signed by dedicated stakeholder wallets.
 
-### 3. Public Verification & Tamper Detection
-When a user scans the QR code or navigates to `/verify/<batch_id>`:
-1. The app recomputes the SHA-256 hash from the current database attributes.
-2. The app calls `getHash(batchId)` on the deployed contract via Web3.py.
-3. If the computed hash matches the blockchain hash, authenticity is guaranteed.
-4. If an unauthorized actor altered any record in the database (e.g. changing farming method or harvest date), the hash mismatch triggers an immediate **Tamper Warning**.
+### 3. Public Verification, API & Tamper Detection
+* **Web Certificate (`/verify/<batch_id>`):** Recomputes harvest, transport, and retail hashes against `getRecord` and `getStageRecord`, displays transaction receipts and cold-chain status badges (`-2 °C .. 8 °C` Optimal, `8 .. 15 °C` Cool/Ambient, `> 15 °C` Breach), and includes **Simulate Harvest Tamper** / **Simulate Cold-Chain Tamper** demo toggles + **Print Certificate**.
+* **JSON API:**
+  * `GET /api/health` — Live Ganache status, block height, contract metadata, and database counts.
+  * `GET /api/verify/<batch_id>` — Full JSON provenance proof, Integrity Trust Score, and per-stage cryptographic verification results.
 
 ---
 

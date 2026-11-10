@@ -3,34 +3,40 @@
 {% block title %}Farmer Portal - TrustHarvest{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
     <div>
-        <h2 class="fw-bold mb-1"><i class="bi bi-flower1 text-success me-2"></i>Farmer Management Portal</h2>
-        <p class="text-muted mb-0">Register fresh harvest batches, timestamp on Ethereum, and generate tamper-proof QR codes.</p>
+        <span class="badge bg-success-subtle text-success border border-success-subtle mb-1">Step 1 of 3 &bull; Farm Origin</span>
+        <h1 class="h2 fw-bold mb-1"><i class="bi bi-flower1 text-success me-2" aria-hidden="true"></i>Farmer Management Portal</h1>
+        <p class="text-muted mb-0">Register fresh produce harvests, lock records onto the blockchain, and download QR stickers.</p>
     </div>
-    <span class="badge bg-success py-2 px-3"><i class="bi bi-person-badge me-1"></i> Farmer: {{ session.get('username') }}</span>
+    <div class="d-flex align-items-center gap-2">
+        <a href="{{ url_for('workflow_entry', stage='harvest') }}" class="btn btn-sm btn-outline-success fw-semibold">
+            <i class="bi bi-diagram-3 me-1" aria-hidden="true"></i> Guided Workflow Mode
+        </a>
+        <span class="badge bg-success py-2 px-3"><i class="bi bi-person-badge me-1" aria-hidden="true"></i> Farmer: {{ session.get('username') }}</span>
+    </div>
 </div>
 
 <div class="row g-4">
     <div class="col-lg-5">
         <div class="card card-custom shadow-sm h-100">
             <div class="card-header card-header-ag">
-                <h5 class="mb-0 fw-bold"><i class="bi bi-plus-circle me-2"></i>Register New Harvest Batch</h5>
+                <h2 class="h5 mb-0 fw-bold"><i class="bi bi-plus-circle me-2" aria-hidden="true"></i>Register New Harvest Batch</h2>
             </div>
             <div class="card-body p-4">
                 <form method="POST" action="{{ url_for('add_product') }}" enctype="multipart/form-data">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                     <div class="mb-3">
-                        <label class="form-label fw-semibold">Product Name</label>
-                        <input type="text" name="name" class="form-control" placeholder="e.g. Organic Honeycrisp Apples" required>
+                        <label for="farmer-name" class="form-label fw-semibold">Product Name</label>
+                        <input id="farmer-name" type="text" name="name" class="form-control" placeholder="e.g. Organic Honeycrisp Apples" required>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label fw-semibold">Quantity / Weight</label>
-                        <input type="text" name="quantity" class="form-control" placeholder="e.g. 500 kg or 250 boxes" required>
+                        <label for="farmer-qty" class="form-label fw-semibold">Quantity / Weight</label>
+                        <input id="farmer-qty" type="text" name="quantity" class="form-control" placeholder="e.g. 500 kg or 250 boxes" required>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label fw-semibold">Farming Method</label>
-                        <select name="farming_method" class="form-select" required>
+                        <label for="farmer-method" class="form-label fw-semibold">Farming Method</label>
+                        <select id="farmer-method" name="farming_method" class="form-select" required>
                             <option value="100% Certified Organic">100% Certified Organic</option>
                             <option value="Hydroponic Controlled">Hydroponic Controlled</option>
                             <option value="Regenerative Agriculture">Regenerative Agriculture</option>
@@ -39,24 +45,24 @@
                         </select>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label fw-semibold">Packaging Date</label>
-                        <input type="date" name="packaging_date" class="form-control" required value="{{ today_str }}">
+                        <label for="farmer-date" class="form-label fw-semibold">Packaging Date</label>
+                        <input id="farmer-date" type="date" name="packaging_date" class="form-control" required value="{{ today_str }}">
                     </div>
                     <div class="mb-3">
-                        <label class="form-label fw-semibold">Farm Location / Region</label>
-                        <input type="text" name="farm_location" class="form-control" placeholder="e.g. Yakima Valley, Washington" required>
+                        <label for="farmer-location" class="form-label fw-semibold">Farm Location / Region</label>
+                        <input id="farmer-location" type="text" name="farm_location" class="form-control" placeholder="e.g. Yakima Valley, Washington" required>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label fw-semibold">Certifications</label>
-                        <input type="text" name="certifications" class="form-control" placeholder="e.g. USDA Organic, Non-GMO Verified" value="USDA Organic Certified">
+                        <label for="farmer-certs" class="form-label fw-semibold">Certifications</label>
+                        <input id="farmer-certs" type="text" name="certifications" class="form-control" placeholder="e.g. USDA Organic, Non-GMO Verified" value="USDA Organic Certified">
                     </div>
                     <div class="mb-4">
-                        <label class="form-label fw-semibold">Product Photo</label>
-                        <input type="file" name="image" class="form-control" accept="image/*">
+                        <label for="farmer-image" class="form-label fw-semibold">Product Photo</label>
+                        <input id="farmer-image" type="file" name="image" class="form-control" accept="image/*">
                         <div class="form-text">Optional photo; default produce visual used if omitted.</div>
                     </div>
                     <button type="submit" class="btn btn-ag-primary w-100 py-2 fw-bold">
-                        <i class="bi bi-shield-lock me-1"></i> Seal & Store on Blockchain
+                        <i class="bi bi-shield-lock me-1"></i> Seal &amp; Store on Blockchain
                     </button>
                 </form>
             </div>
@@ -66,7 +72,7 @@
     <div class="col-lg-7">
         <div class="card card-custom shadow-sm h-100">
             <div class="card-header card-header-ag d-flex justify-content-between align-items-center">
-                <h5 class="mb-0 fw-bold"><i class="bi bi-collection me-2"></i>My Registered Harvest Batches</h5>
+                <h2 class="h5 mb-0 fw-bold"><i class="bi bi-collection me-2" aria-hidden="true"></i>My Harvest Batches</h2>
                 <span class="badge bg-secondary">{{ products|length }} Total</span>
             </div>
             <div class="card-body p-0">
@@ -74,11 +80,11 @@
                     <table class="table table-hover align-middle mb-0">
                         <thead class="table-light">
                             <tr>
-                                <th>Batch ID & Produce</th>
-                                <th>Quantity & Method</th>
-                                <th>QR Code</th>
-                                <th>Blockchain Hash</th>
-                                <th>Actions</th>
+                                <th scope="col">Batch &amp; Produce</th>
+                                <th scope="col">Quantity &amp; Method</th>
+                                <th scope="col">QR Code</th>
+                                <th scope="col">Chain Seal</th>
+                                <th scope="col">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -95,17 +101,19 @@
                                 </td>
                                 <td>
                                     {% if p.qr_code %}
-                                    <a href="{{ url_for('static', filename='qr/' + p.qr_code) }}" target="_blank">
-                                        <img src="{{ url_for('static', filename='qr/' + p.qr_code) }}" alt="QR" width="55" height="55" class="border rounded shadow-sm p-1">
-                                    </a>
+                                    <div class="d-flex align-items-center gap-1">
+                                        <a href="{{ url_for('static', filename='qr/' + p.qr_code) }}" target="_blank" title="Open QR image for {{ p.batch_id }}">
+                                            <img src="{{ url_for('static', filename='qr/' + p.qr_code) }}" alt="QR code for {{ p.batch_id }}" width="46" height="46" class="border rounded shadow-sm p-1">
+                                        </a>
+                                        <a href="{{ url_for('static', filename='qr/' + p.qr_code) }}" download="qr_{{ p.batch_id }}.png" class="btn btn-sm btn-outline-secondary py-0 px-1" title="Download QR PNG for scanner demo" aria-label="Download QR PNG for {{ p.batch_id }}">
+                                            <i class="bi bi-download" aria-hidden="true"></i>
+                                        </a>
+                                    </div>
                                     {% endif %}
                                 </td>
                                 <td>
-                                    <div class="font-monospace small text-truncate" style="max-width: 140px;" title="{{ p.on_chain_hash }}">
-                                        {{ p.on_chain_hash }}
-                                    </div>
-                                    <span class="badge bg-success-subtle text-success border border-success-subtle">
-                                        <i class="bi bi-check2-circle"></i> On-Chain
+                                    <span class="badge bg-success-subtle text-success border border-success-subtle" title="SHA-256: {{ p.on_chain_hash }}">
+                                        <i class="bi bi-check2-circle me-1" aria-hidden="true"></i>On-Chain{% if p.block_number %} &bull; #{{ p.block_number }}{% endif %}
                                     </span>
                                 </td>
                                 <td>

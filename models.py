@@ -1,5 +1,6 @@
 from datetime import datetime, timezone
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import text
 from werkzeug.security import generate_password_hash, check_password_hash
 
 db = SQLAlchemy()
@@ -39,6 +40,10 @@ class Product(db.Model):
     image = db.Column(db.String(255), nullable=False)
     qr_code = db.Column(db.String(255), nullable=True)
     on_chain_hash = db.Column(db.String(66), nullable=True)
+    tx_hash = db.Column(db.String(80), nullable=True)
+    block_number = db.Column(db.Integer, nullable=True)
+    contract_address = db.Column(db.String(64), nullable=True)
+    signer_address = db.Column(db.String(64), nullable=True)
     status = db.Column(db.String(50), default='Harvested') # Harvested, In Transit, Delivered to Retail, In Stock, Sold
     created_at = db.Column(db.DateTime, default=utcnow)
 
@@ -77,6 +82,10 @@ class TransportData(db.Model):
     temperature = db.Column(db.String(50), nullable=True)
     vehicle_number = db.Column(db.String(50), nullable=True)
     notes = db.Column(db.Text, nullable=True)
+    on_chain_hash = db.Column(db.String(66), nullable=True)
+    tx_hash = db.Column(db.String(80), nullable=True)
+    block_number = db.Column(db.Integer, nullable=True)
+    signer_address = db.Column(db.String(64), nullable=True)
     timestamp = db.Column(db.DateTime, default=utcnow)
 
     transporter = db.relationship('User', foreign_keys=[transporter_id])
@@ -96,6 +105,10 @@ class RetailData(db.Model):
     stock_quantity = db.Column(db.String(50), nullable=True)
     arrival_date = db.Column(db.String(50), nullable=True)
     shelf_life = db.Column(db.String(50), nullable=True)
+    on_chain_hash = db.Column(db.String(66), nullable=True)
+    tx_hash = db.Column(db.String(80), nullable=True)
+    block_number = db.Column(db.Integer, nullable=True)
+    signer_address = db.Column(db.String(64), nullable=True)
     updated_at = db.Column(db.DateTime, default=utcnow, onupdate=utcnow)
 
     retailer = db.relationship('User', foreign_keys=[retailer_id])
@@ -115,3 +128,42 @@ class Feedback(db.Model):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+
+
+def ensure_schema_columns():
+    """
+    Idempotent SQLite schema upgrader: adds newly introduced blockchain receipt columns
+    to existing tables without wiping existing user/product records.
+    """
+    engine = db.engine
+    if engine.dialect.name != 'sqlite':
+        return
+
+    expected_columns = {
+        'products': [
+            ('tx_hash', 'VARCHAR(80)'),
+            ('block_number', 'INTEGER'),
+            ('contract_address', 'VARCHAR(64)'),
+            ('signer_address', 'VARCHAR(64)'),
+        ],
+        'transport_data': [
+            ('on_chain_hash', 'VARCHAR(66)'),
+            ('tx_hash', 'VARCHAR(80)'),
+            ('block_number', 'INTEGER'),
+            ('signer_address', 'VARCHAR(64)'),
+        ],
+        'retail_data': [
+            ('on_chain_hash', 'VARCHAR(66)'),
+            ('tx_hash', 'VARCHAR(80)'),
+            ('block_number', 'INTEGER'),
+            ('signer_address', 'VARCHAR(64)'),
+        ],
+    }
+
+    with engine.begin() as conn:
+        for table_name, cols in expected_columns.items():
+            rows = conn.execute(text(f"PRAGMA table_info({table_name})")).fetchall()
+            existing_names = {row[1] for row in rows}
+            for col_name, col_type in cols:
+                if col_name not in existing_names:
+                    conn.execute(text(f"ALTER TABLE {table_name} ADD COLUMN {col_name} {col_type}"))
