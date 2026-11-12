@@ -167,9 +167,22 @@ def test_api_health_and_verify_json_endpoints(client, app):
 
 
 def test_demo_tamper_toggle_routes(client, app, monkeypatch):
+    from datetime import datetime, timezone
+    from models import StageSnapshot
+    import json
+
     with app.app_context():
         farmer = User.query.filter_by(username="farmer_test").first()
         transporter = User.query.filter_by(username="transporter_test").first()
+        h_hash = compute_batch_hash(
+            batch_id="TH-TAMPER-UI",
+            name="Organic Kale",
+            quantity="60 kg",
+            farming_method="100% Certified Organic",
+            packaging_date="2026-10-21",
+            farmer_id=farmer.id,
+            image="default.jpg",
+        )
         prod = Product(
             batch_id="TH-TAMPER-UI",
             name="Organic Kale",
@@ -179,20 +192,80 @@ def test_demo_tamper_toggle_routes(client, app, monkeypatch):
             farmer_id=farmer.id,
             image="default.jpg",
             qr_code="qr_TH-TAMPER-UI.png",
-            on_chain_hash="f" * 64,
+            on_chain_hash=h_hash,
+            contract_version="V2",
             status="In Transit",
         )
         db.session.add(prod)
         db.session.flush()
-        db.session.add(TransportData(
+        t_hash = compute_transport_hash(
+            batch_id="TH-TAMPER-UI",
+            status="In Transit",
+            current_location="Test Depot",
+            temperature="4.0 °C",
+            vehicle_number="TRK-100",
+            notes="",
+            transporter_id=transporter.id,
+        )
+        t_row = TransportData(
             product_id=prod.id,
             transporter_id=transporter.id,
             status="In Transit",
             current_location="Test Depot",
-            temperature="3.8 °C",
+            temperature="4.0 °C",
             vehicle_number="TRK-100",
+            notes="",
+            on_chain_hash=t_hash,
+        )
+        db.session.add(t_row)
+        db.session.flush()
+        db.session.add(StageSnapshot(
+            product_id=prod.id,
+            stage="HARVEST",
+            original_hash=h_hash,
+            snapshot_json=json.dumps({
+                "batch_id": "TH-TAMPER-UI",
+                "farmer_id": farmer.id,
+                "farming_method": "100% Certified Organic",
+                "image": "default.jpg",
+                "name": "Organic Kale",
+                "packaging_date": "2026-10-21",
+                "quantity": "60 kg",
+            }, sort_keys=True),
+        ))
+        db.session.add(StageSnapshot(
+            product_id=prod.id,
+            stage="TRANSPORT",
+            transport_id=t_row.id,
+            original_hash=t_hash,
+            snapshot_json=json.dumps({
+                "batch_id": "TH-TAMPER-UI",
+                "current_location": "Test Depot",
+                "notes": "",
+                "stage": "TRANSPORT",
+                "status": "In Transit",
+                "temperature": "4.0 °C",
+                "transporter_id": transporter.id,
+                "vehicle_number": "TRK-100",
+            }, sort_keys=True),
         ))
         db.session.commit()
+
+    monkeypatch.setattr("app.inspect_batch_on_chain", lambda *a, **kw: {
+        "status": "ok",
+        "hash": h_hash,
+        "contract_address": "0x1111111111111111111111111111111111111111",
+        "contract_version": "V2",
+        "registered_by": "0xFarmer",
+        "timestamp": datetime.now(timezone.utc),
+        "stages": [
+            {"index": 0, "stage": "TRANSPORT", "hash": t_hash, "recorded_by": "0xTransporter", "timestamp": datetime.now(timezone.utc)},
+        ],
+        "truncated": False,
+        "expected_signers": None,
+        "conflict_details": None,
+        "error": None,
+    })
 
     # Hidden behind 404 when DEMO_MODE is off
     assert client.post("/verify/TH-TAMPER-UI/toggle-demo-tamper").status_code == 404
@@ -200,29 +273,30 @@ def test_demo_tamper_toggle_routes(client, app, monkeypatch):
 
     monkeypatch.setenv("DEMO_MODE", "true")
 
-    # Toggle harvest tamper on and off
+    # Toggle harvest tamper on and restore cleanly using validated StageSnapshot (even from a fresh session)
     r1 = client.post("/verify/TH-TAMPER-UI/toggle-demo-tamper", follow_redirects=True)
     assert r1.status_code == 200
     with app.app_context():
         assert Product.query.filter_by(batch_id="TH-TAMPER-UI").first().farming_method == "Chemically Treated Non-Organic"
 
-    r2 = client.post("/verify/TH-TAMPER-UI/toggle-demo-tamper", follow_redirects=True)
+    fresh_client = app.test_client()
+    r2 = fresh_client.post("/verify/TH-TAMPER-UI/toggle-demo-tamper", follow_redirects=True)
     assert r2.status_code == 200
     with app.app_context():
         assert Product.query.filter_by(batch_id="TH-TAMPER-UI").first().farming_method == "100% Certified Organic"
 
-    # Toggle transport tamper on and off
+    # Toggle transport tamper on and restore cleanly using validated StageSnapshot (even without session cookie)
     r3 = client.post("/verify/TH-TAMPER-UI/toggle-transport-tamper", follow_redirects=True)
     assert r3.status_code == 200
     with app.app_context():
         t_rec = TransportData.query.first()
         assert "Tampered" in t_rec.temperature
 
-    r4 = client.post("/verify/TH-TAMPER-UI/toggle-transport-tamper", follow_redirects=True)
+    r4 = fresh_client.post("/verify/TH-TAMPER-UI/toggle-transport-tamper", follow_redirects=True)
     assert r4.status_code == 200
     with app.app_context():
         t_rec = TransportData.query.first()
-        assert t_rec.temperature == "3.8 °C"
+        assert t_rec.temperature == "4.0 °C"
 
 
 def test_ensure_schema_columns_idempotent(app):

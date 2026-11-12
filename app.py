@@ -1,4 +1,5 @@
 import os
+import json
 import uuid
 import time
 from datetime import datetime, timezone, timedelta
@@ -15,8 +16,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from models import (
-    db, User, Product, FarmerData, TransportData, RetailData, Feedback,
-    utcnow, ensure_schema_columns
+    db, User, Product, FarmerData, TransportData, RetailData,
+    StageSnapshot, utcnow, ensure_schema_columns
 )
 from blockchain import (
     store_hash, store_hash_detailed, store_stage_hash, get_hash,
@@ -259,7 +260,6 @@ def landing():
     product_count = Product.query.count()
     user_count = User.query.count()
     transport_count = TransportData.query.count()
-    feedback_count = Feedback.query.count()
     recent_products = Product.query.order_by(Product.created_at.desc()).limit(8).all()
 
     return render_template(
@@ -267,7 +267,6 @@ def landing():
         product_count=product_count,
         user_count=user_count,
         transport_count=transport_count,
-        feedback_count=feedback_count,
         recent_products=recent_products,
     )
 
@@ -426,6 +425,273 @@ def switch_role(role):
 
 
 # ═══════════════════════════════════════════════════════════════════
+# STAGE SNAPSHOTS & FIELD DIFF HELPERS
+# ═══════════════════════════════════════════════════════════════════
+
+_STAGE_DIFF_FIELDS = {
+    "HARVEST": [
+        ("name", "Produce Name"),
+        ("quantity", "Quantity"),
+        ("farming_method", "Farming Method"),
+        ("packaging_date", "Packaging Date"),
+        ("image", "Product Image"),
+        ("farmer_id", "Farmer ID"),
+    ],
+    "TRANSPORT": [
+        ("status", "Shipment Status"),
+        ("current_location", "Location"),
+        ("temperature", "Temperature"),
+        ("vehicle_number", "Vehicle Number"),
+        ("notes", "Notes"),
+        ("transporter_id", "Transporter ID"),
+    ],
+    "RETAIL": [
+        ("store_name", "Store Name"),
+        ("store_location", "Store Location"),
+        ("price", "Retail Price"),
+        ("stock_quantity", "Stock Quantity"),
+        ("arrival_date", "Arrival Date"),
+        ("shelf_life", "Shelf Life"),
+        ("retailer_id", "Retailer ID"),
+    ],
+}
+
+
+def _sorted_transports(product):
+    return sorted(
+        list(product.transport_data or []),
+        key=lambda t: (
+            t.timestamp.replace(tzinfo=timezone.utc) if (t.timestamp and t.timestamp.tzinfo is None) else (t.timestamp or utcnow()),
+            t.id or 0,
+        ),
+    )
+
+
+def _format_proof_timestamp(dt_val, fallback_str=None):
+    if dt_val is not None:
+        if dt_val.tzinfo is None:
+            dt_utc = dt_val.replace(tzinfo=timezone.utc)
+        else:
+            dt_utc = dt_val.astimezone(timezone.utc)
+        return dt_utc.strftime("%Y-%m-%d %H:%M UTC")
+    if fallback_str:
+        return str(fallback_str)
+    return "Timestamp unavailable"
+
+
+def _build_harvest_snapshot_payload(product):
+    return {
+        "batch_id": str(product.batch_id),
+        "farmer_id": int(product.farmer_id),
+        "farming_method": str(product.farming_method),
+        "image": str(product.image),
+        "name": str(product.name),
+        "packaging_date": str(product.packaging_date),
+        "quantity": str(product.quantity),
+    }
+
+
+def _build_transport_snapshot_payload(product, transport_record):
+    return {
+        "batch_id": str(product.batch_id),
+        "current_location": str(transport_record.current_location or ""),
+        "notes": str(transport_record.notes or ""),
+        "stage": "TRANSPORT",
+        "status": str(transport_record.status or ""),
+        "temperature": str(transport_record.temperature or ""),
+        "transporter_id": int(transport_record.transporter_id),
+        "vehicle_number": str(transport_record.vehicle_number or ""),
+    }
+
+
+def _build_retail_snapshot_payload(product, retail_record):
+    norm_price = f"{float(retail_record.price):.2f}" if retail_record.price is not None else "0.00"
+    return {
+        "arrival_date": str(retail_record.arrival_date or ""),
+        "batch_id": str(product.batch_id),
+        "price": norm_price,
+        "retailer_id": int(retail_record.retailer_id),
+        "shelf_life": str(retail_record.shelf_life or ""),
+        "stage": "RETAIL",
+        "stock_quantity": str(retail_record.stock_quantity or ""),
+        "store_location": str(retail_record.store_location or ""),
+        "store_name": str(retail_record.store_name or ""),
+    }
+
+
+def _compute_hash_from_snapshot(stage, payload_dict):
+    if not isinstance(payload_dict, dict):
+        return None
+    try:
+        if stage == "HARVEST":
+            return compute_batch_hash(
+                batch_id=payload_dict["batch_id"],
+                name=payload_dict["name"],
+                quantity=payload_dict["quantity"],
+                farming_method=payload_dict["farming_method"],
+                packaging_date=payload_dict["packaging_date"],
+                farmer_id=payload_dict["farmer_id"],
+                image=payload_dict["image"],
+            )
+        if stage == "TRANSPORT":
+            return compute_transport_hash(
+                batch_id=payload_dict["batch_id"],
+                status=payload_dict.get("status", ""),
+                current_location=payload_dict.get("current_location", ""),
+                temperature=payload_dict.get("temperature", ""),
+                vehicle_number=payload_dict.get("vehicle_number", ""),
+                notes=payload_dict.get("notes", ""),
+                transporter_id=payload_dict["transporter_id"],
+            )
+        if stage == "RETAIL":
+            return compute_retail_hash(
+                batch_id=payload_dict["batch_id"],
+                store_name=payload_dict.get("store_name", ""),
+                store_location=payload_dict.get("store_location", ""),
+                price=payload_dict.get("price", "0.00"),
+                stock_quantity=payload_dict.get("stock_quantity", ""),
+                arrival_date=payload_dict.get("arrival_date", ""),
+                shelf_life=payload_dict.get("shelf_life", ""),
+                retailer_id=payload_dict["retailer_id"],
+            )
+    except (KeyError, TypeError, ValueError):
+        return None
+    return None
+
+
+def _save_stage_snapshot_once(product_id, stage, payload_dict, original_hash, transport_id=None):
+    """
+    Persists the original hashed stage payload strictly once at initial anchoring.
+    Never overwrites existing immutable snapshots.
+    """
+    if stage == "HARVEST":
+        existing = StageSnapshot.query.filter_by(product_id=product_id, stage="HARVEST").first()
+        if existing:
+            return existing
+    elif stage == "TRANSPORT":
+        existing = StageSnapshot.query.filter_by(
+            product_id=product_id,
+            stage="TRANSPORT",
+            transport_id=transport_id,
+        ).first()
+        if existing:
+            return existing
+    elif stage == "RETAIL":
+        existing = StageSnapshot.query.filter_by(
+            product_id=product_id,
+            stage="RETAIL",
+            original_hash=str(original_hash),
+        ).first()
+        if existing:
+            return existing
+
+    snap = StageSnapshot(
+        product_id=product_id,
+        stage=stage,
+        transport_id=transport_id,
+        original_hash=str(original_hash),
+        snapshot_json=json.dumps(payload_dict, sort_keys=True),
+    )
+    db.session.add(snap)
+    return snap
+
+
+def _load_validated_snapshot(product, stage, original_blockchain_hash, transport_record=None):
+    """
+    Loads the stored StageSnapshot and validates it by recomputing the stage SHA-256 hash
+    and requiring it to match the actual blockchain hash.
+    Returns (snapshot_dict | None, snapshot_available: bool, snapshot_valid: bool, note: str | None).
+    """
+    if not original_blockchain_hash:
+        return None, False, False, "Blockchain record hash is unavailable to validate the original snapshot."
+
+    target_hash_low = str(original_blockchain_hash).strip().lower()
+    if stage == "HARVEST":
+        candidates = (
+            StageSnapshot.query.filter_by(product_id=product.id, stage="HARVEST")
+            .order_by(StageSnapshot.id.asc())
+            .all()
+        )
+    elif stage == "TRANSPORT":
+        if not transport_record or not transport_record.id:
+            candidates = []
+        else:
+            candidates = (
+                StageSnapshot.query.filter_by(
+                    product_id=product.id,
+                    stage="TRANSPORT",
+                    transport_id=transport_record.id,
+                )
+                .order_by(StageSnapshot.id.asc())
+                .all()
+            )
+    elif stage == "RETAIL":
+        all_retail_snaps = (
+            StageSnapshot.query.filter_by(product_id=product.id, stage="RETAIL")
+            .order_by(StageSnapshot.id.desc())
+            .all()
+        )
+        exact = [s for s in all_retail_snaps if (s.original_hash or "").strip().lower() == target_hash_low]
+        candidates = exact if exact else all_retail_snaps
+    else:
+        candidates = []
+
+    if not candidates:
+        return (
+            None,
+            False,
+            False,
+            "Original field values snapshot is not available for this historical record.",
+        )
+
+    snap = candidates[0]
+    try:
+        parsed = json.loads(snap.snapshot_json)
+    except (TypeError, ValueError):
+        return (
+            None,
+            True,
+            False,
+            "Stored original snapshot could not be parsed and failed cryptographic validation.",
+        )
+
+    recomputed = _compute_hash_from_snapshot(stage, parsed)
+    if not recomputed or recomputed.lower() != target_hash_low:
+        return (
+            None,
+            True,
+            False,
+            "Stored original snapshot did not match the blockchain hash and was rejected.",
+        )
+
+    return parsed, True, True, None
+
+
+def _compute_changed_fields(stage, validated_snapshot_dict, current_payload_dict):
+    """Compares every hashed field between the validated original snapshot and current database row."""
+    if not validated_snapshot_dict or not current_payload_dict:
+        return []
+    diffs = []
+    for field_key, label in _STAGE_DIFF_FIELDS.get(stage, []):
+        orig_raw = validated_snapshot_dict.get(field_key, "")
+        curr_raw = current_payload_dict.get(field_key, "")
+        orig_str = "" if orig_raw is None else str(orig_raw)
+        curr_str = "" if curr_raw is None else str(curr_raw)
+        if orig_str != curr_str:
+            is_demo_marker = (" (Tampered)" in curr_str) or ("(Simulated Tamper)" in curr_str)
+            clean_mod = curr_str.replace(" (Tampered)", "").replace(" (Simulated Tamper)", "")
+            diffs.append({
+                "field": field_key,
+                "label": label,
+                "original": orig_str,
+                "modified": curr_str,
+                "clean_modified": clean_mod,
+                "is_demo_marker": is_demo_marker,
+            })
+    return diffs
+
+
+# ═══════════════════════════════════════════════════════════════════
 # SHARED SUPPLY-CHAIN SERVICE HELPERS (USED BY DASHBOARDS & WORKFLOW)
 # ═══════════════════════════════════════════════════════════════════
 
@@ -522,6 +788,13 @@ def _register_harvest_batch(user, form_data, image_file):
     )
     db.session.add(farmer_data)
 
+    _save_stage_snapshot_once(
+        product.id,
+        "HARVEST",
+        _build_harvest_snapshot_payload(product),
+        product_hash,
+    )
+
     try:
         db.session.commit()
     except Exception as db_err:
@@ -571,6 +844,7 @@ def _record_transport_checkpoint(user, product, form_data):
         contract_address=product.contract_address,
     )
 
+    is_anchored = (anchor_result.get("status") == "anchored")
     transport_record = TransportData(
         product_id=product.id,
         transporter_id=user.id,
@@ -579,14 +853,30 @@ def _record_transport_checkpoint(user, product, form_data):
         temperature=temperature,
         vehicle_number=vehicle_number,
         notes=notes,
-        on_chain_hash=stage_hash,
-        tx_hash=anchor_result.get("tx_hash") if anchor_result.get("status") == "anchored" else None,
-        block_number=anchor_result.get("block_number") if anchor_result.get("status") == "anchored" else None,
-        signer_address=anchor_result.get("signer_address") if anchor_result.get("status") == "anchored" else None,
+        on_chain_hash=stage_hash if is_anchored else None,
+        tx_hash=anchor_result.get("tx_hash") if is_anchored else None,
+        block_number=anchor_result.get("block_number") if is_anchored else None,
+        signer_address=anchor_result.get("signer_address") if is_anchored else None,
     )
     product.status = status
     db.session.add(transport_record)
-    db.session.commit()
+    db.session.flush()
+
+    if is_anchored:
+        _save_stage_snapshot_once(
+            product.id,
+            "TRANSPORT",
+            _build_transport_snapshot_payload(product, transport_record),
+            stage_hash,
+            transport_id=transport_record.id,
+        )
+
+    try:
+        db.session.commit()
+    except Exception as db_err:
+        db.session.rollback()
+        logger.error("Failed saving transport checkpoint for batch %s: %s", product.batch_id, db_err)
+        return None, anchor_result, f'Unable to save transport checkpoint to database ({str(db_err)}).'
 
     return transport_record, anchor_result, None
 
@@ -641,6 +931,7 @@ def _record_retail_listing(user, product, form_data, require_price_stock=False):
         contract_address=product.contract_address,
     )
 
+    is_anchored = (anchor_result.get("status") == "anchored")
     retail_entry = RetailData.query.filter_by(product_id=product.id).first()
     if not retail_entry:
         retail_entry = RetailData(product_id=product.id, retailer_id=user.id)
@@ -653,14 +944,29 @@ def _record_retail_listing(user, product, form_data, require_price_stock=False):
     retail_entry.stock_quantity = stock_quantity
     retail_entry.arrival_date = arrival_date
     retail_entry.shelf_life = shelf_life
-    retail_entry.on_chain_hash = retail_hash
-    if anchor_result.get("status") == "anchored":
+    retail_entry.on_chain_hash = retail_hash if is_anchored else None
+    if is_anchored:
         retail_entry.tx_hash = anchor_result.get("tx_hash")
         retail_entry.block_number = anchor_result.get("block_number")
         retail_entry.signer_address = anchor_result.get("signer_address")
 
     product.status = 'In Stock'
-    db.session.commit()
+    db.session.flush()
+
+    if is_anchored:
+        _save_stage_snapshot_once(
+            product.id,
+            "RETAIL",
+            _build_retail_snapshot_payload(product, retail_entry),
+            retail_hash,
+        )
+
+    try:
+        db.session.commit()
+    except Exception as db_err:
+        db.session.rollback()
+        logger.error("Failed saving retail listing for batch %s: %s", product.batch_id, db_err)
+        return None, anchor_result, f'Unable to save retail listing to database ({str(db_err)}).'
 
     return retail_entry, anchor_result, None
 
@@ -973,13 +1279,9 @@ def _build_verification_context(product, simulate_tamper=False):
     expected_signers = chain.get("expected_signers")
     v2_stages = chain.get("stages") or []
 
-    db_transports = sorted(
-        list(product.transport_data or []),
-        key=lambda t: (
-            t.timestamp.replace(tzinfo=timezone.utc) if (t.timestamp and t.timestamp.tzinfo is None) else (t.timestamp or utcnow()),
-            t.id or 0,
-        ),
-    )
+    db_transports = _sorted_transports(product)
+    transport_chain_stages = [s for s in v2_stages if s["stage"] == "TRANSPORT"]
+    retail_chain_stages = [s for s in v2_stages if s["stage"] == "RETAIL"]
 
     transport_verifications = []
     has_temp_breach = False
@@ -992,10 +1294,17 @@ def _build_verification_context(product, simulate_tamper=False):
     tampered_stage_names = []
     cannot_verify_reasons = []
 
+    h_changed_fields = []
+    h_snap_avail = False
+    h_snap_valid = False
+    h_snap_note = None
+    h_orig_hash_for_proof = on_chain_hash if chain_status == "ok" else None
+
     if chain_status == "rpc_offline":
         harvest_status = "rpc_offline"
-        cannot_verify_reasons.append("The verification network is unreachable right now.")
-        for t in db_transports:
+        harvest_explanation = "The verification network is unreachable right now."
+        cannot_verify_reasons.append(harvest_explanation)
+        for idx, t in enumerate(db_transports):
             t_computed = compute_transport_hash(
                 batch_id=product.batch_id,
                 status=t.status,
@@ -1011,11 +1320,22 @@ def _build_verification_context(product, simulate_tamper=False):
             transport_verifications.append({
                 "record": t,
                 "computed_hash": t_computed,
-                "on_chain_hash": t.on_chain_hash,
+                "on_chain_hash": None,
                 "status": "rpc_offline",
                 "temp_eval": temp_eval,
                 "recorded_by": t.signer_address,
                 "on_chain_timestamp": None,
+                "stage": "TRANSPORT",
+                "checkpoint_number": idx + 1,
+                "original_hash": None,
+                "recomputed_hash": t_computed,
+                "stage_status": "cannot_verify",
+                "hashes_match": False,
+                "snapshot_available": False,
+                "snapshot_valid": False,
+                "snapshot_note": None,
+                "changed_fields": [],
+                "explanation": "Blockchain network is offline; original on-chain hash could not be fetched.",
             })
         if product.retail_data:
             r = product.retail_data
@@ -1032,20 +1352,35 @@ def _build_verification_context(product, simulate_tamper=False):
             retail_verification = {
                 "record": r,
                 "computed_hash": r_computed,
-                "on_chain_hash": r.on_chain_hash,
+                "on_chain_hash": None,
                 "status": "rpc_offline",
                 "recorded_by": r.signer_address,
                 "on_chain_timestamp": None,
+                "stage": "RETAIL",
+                "stage_number": 3,
+                "title": "Retailer / Store",
+                "original_hash": None,
+                "recomputed_hash": r_computed,
+                "stage_status": "cannot_verify",
+                "hashes_match": False,
+                "snapshot_available": False,
+                "snapshot_valid": False,
+                "snapshot_note": None,
+                "changed_fields": [],
+                "explanation": "Blockchain network is offline; original on-chain hash could not be fetched.",
             }
     elif chain_status == "not_found":
         harvest_status = "not_found"
-        cannot_verify_reasons.append("This batch has not been recorded on the blockchain yet.")
+        harvest_explanation = "This batch has not been recorded on the blockchain yet."
+        cannot_verify_reasons.append(harvest_explanation)
     elif chain_status == "conflict":
         harvest_status = "conflict"
-        cannot_verify_reasons.append("Conflicting records were found on the blockchain for this batch.")
+        harvest_explanation = "Conflicting records were found on the blockchain for this batch."
+        cannot_verify_reasons.append(harvest_explanation)
     elif chain_status == "error":
         harvest_status = "error"
-        cannot_verify_reasons.append("Unable to read the blockchain record cleanly right now.")
+        harvest_explanation = "Unable to read the blockchain record cleanly right now."
+        cannot_verify_reasons.append(harvest_explanation)
     else:
         # chain_status == "ok" -> Harvest record exists on-chain
         if chain.get("truncated"):
@@ -1057,16 +1392,40 @@ def _build_verification_context(product, simulate_tamper=False):
             allowed_farmers = (expected_signers or {}).get("farmer") or set()
             if resolved_version == "V2" and allowed_farmers and reg_by and reg_by not in allowed_farmers:
                 harvest_status = "conflict"
-                cannot_verify_reasons.append("The farm harvest record on-chain was signed by an unexpected account.")
+                harvest_explanation = "The farm harvest record on-chain was signed by an unexpected account."
+                cannot_verify_reasons.append(harvest_explanation)
             else:
                 harvest_status = "verified"
+                harvest_explanation = "Recomputed SHA-256 hash matches the immutable farm harvest hash on-chain."
         else:
             harvest_status = "tampered"
+            harvest_explanation = "Farm harvest data in the database no longer produces the sealed blockchain hash."
             tampered_stage_names.append("Farm harvest")
+            if simulate_tamper:
+                h_snap_avail = True
+                h_snap_valid = True
+                h_changed_fields = [{
+                    "field": "farming_method",
+                    "label": "Farming Method",
+                    "original": str(original_value or ""),
+                    "modified": str(tampered_value or ""),
+                    "clean_modified": str(tampered_value or "").replace(" (Simulated Tamper)", ""),
+                    "is_demo_marker": True,
+                }]
+            else:
+                h_snap_dict, h_snap_avail, h_snap_valid, h_snap_note = _load_validated_snapshot(
+                    product,
+                    "HARVEST",
+                    on_chain_hash,
+                )
+                if h_snap_valid and h_snap_dict:
+                    h_changed_fields = _compute_changed_fields(
+                        "HARVEST",
+                        h_snap_dict,
+                        _build_harvest_snapshot_payload(product),
+                    )
 
         # Validate stage history (V2 vs V1)
-        transport_chain_stages = [s for s in v2_stages if s["stage"] == "TRANSPORT"]
-        retail_chain_stages = [s for s in v2_stages if s["stage"] == "RETAIL"]
         unknown_stages = [s for s in v2_stages if s["stage"] not in ("TRANSPORT", "RETAIL")]
         if unknown_stages:
             cannot_verify_reasons.append("An unrecognized stage entry exists on the blockchain for this batch.")
@@ -1103,41 +1462,70 @@ def _build_verification_context(product, simulate_tamper=False):
             if temp_eval.get("status") == "breach":
                 has_temp_breach = True
 
+            t_changed_fields = []
+            t_snap_avail = False
+            t_snap_valid = False
+            t_snap_note = None
+            t_explanation = ""
+
             if resolved_version == "V1":
                 t_status = "unrecorded"
                 c_hash = None
                 recorded_by = t.signer_address
                 on_chain_ts = None
+                t_explanation = f"Transport checkpoint #{idx + 1} was recorded on a V1 contract without stage anchoring."
                 cannot_verify_reasons.append(f"Transport checkpoint #{idx + 1} exists locally but was recorded on a V1 contract without stage anchoring.")
             elif len(transport_chain_stages) == 0:
                 t_status = "unrecorded"
                 c_hash = None
                 recorded_by = t.signer_address
                 on_chain_ts = None
-                cannot_verify_reasons.append(f"Transport checkpoint #{idx + 1} has not been recorded on the blockchain yet.")
+                t_explanation = f"Transport checkpoint #{idx + 1} has not been recorded on the blockchain yet."
+                cannot_verify_reasons.append(t_explanation)
             elif idx < len(transport_chain_stages):
                 chain_stage = transport_chain_stages[idx]
                 c_hash = chain_stage["hash"]
                 rec_by = (chain_stage.get("recorded_by") or "").lower()
                 if allowed_transporters and rec_by and rec_by not in allowed_transporters:
                     t_status = "conflict"
+                    t_explanation = f"Transport checkpoint #{idx + 1} on-chain was signed by an unexpected account."
                 elif c_hash.lower() == t_computed:
                     t_status = "verified"
                     transport_verified_count += 1
+                    t_explanation = "Recomputed SHA-256 hash matches the sealed transport checkpoint hash on-chain."
                 else:
                     # Distinguish genuine mismatch/order tampering vs unanchored earlier DB row shifting indices
                     if len(transport_chain_stages) < len(db_transports) and c_hash.lower() in db_transport_hashes:
                         if t_computed not in onchain_transport_hashes and not t.tx_hash:
                             t_status = "unrecorded"
-                            cannot_verify_reasons.append(f"Transport checkpoint #{idx + 1} has not been recorded on the blockchain yet.")
+                            c_hash = None
+                            t_explanation = f"Transport checkpoint #{idx + 1} has not been recorded on the blockchain yet."
+                            cannot_verify_reasons.append(t_explanation)
                         else:
                             t_status = "tampered"
                             transport_tampered = True
                             tampered_stage_names.append(f"Transport checkpoint #{idx + 1}")
+                            t_explanation = "Database telemetry no longer matches the immutable transport hash on-chain."
                     else:
                         t_status = "tampered"
                         transport_tampered = True
                         tampered_stage_names.append(f"Transport checkpoint #{idx + 1}")
+                        t_explanation = "Database telemetry no longer matches the immutable transport hash on-chain."
+
+                    if t_status == "tampered":
+                        t_snap_dict, t_snap_avail, t_snap_valid, t_snap_note = _load_validated_snapshot(
+                            product,
+                            "TRANSPORT",
+                            c_hash,
+                            transport_record=t,
+                        )
+                        if t_snap_valid and t_snap_dict:
+                            t_changed_fields = _compute_changed_fields(
+                                "TRANSPORT",
+                                t_snap_dict,
+                                _build_transport_snapshot_payload(product, t),
+                            )
+
                 recorded_by = chain_stage["recorded_by"]
                 on_chain_ts = chain_stage["timestamp"]
             else:
@@ -1146,8 +1534,13 @@ def _build_verification_context(product, simulate_tamper=False):
                 c_hash = None
                 recorded_by = t.signer_address
                 on_chain_ts = None
-                cannot_verify_reasons.append(f"Transport checkpoint #{idx + 1} has not been recorded on the blockchain yet.")
+                t_explanation = f"Transport checkpoint #{idx + 1} has not been recorded on the blockchain yet."
+                cannot_verify_reasons.append(t_explanation)
 
+            tv_stage_status = (
+                "verified" if t_status == "verified"
+                else ("tampered" if t_status == "tampered" else "cannot_verify")
+            )
             transport_verifications.append({
                 "record": t,
                 "computed_hash": t_computed,
@@ -1156,6 +1549,17 @@ def _build_verification_context(product, simulate_tamper=False):
                 "temp_eval": temp_eval,
                 "recorded_by": recorded_by,
                 "on_chain_timestamp": on_chain_ts,
+                "stage": "TRANSPORT",
+                "checkpoint_number": idx + 1,
+                "original_hash": c_hash,
+                "recomputed_hash": t_computed,
+                "stage_status": tv_stage_status,
+                "hashes_match": (tv_stage_status == "verified"),
+                "snapshot_available": t_snap_avail,
+                "snapshot_valid": t_snap_valid,
+                "snapshot_note": t_snap_note,
+                "changed_fields": t_changed_fields,
+                "explanation": t_explanation,
             })
 
         # Retail stage check
@@ -1178,28 +1582,53 @@ def _build_verification_context(product, simulate_tamper=False):
                 shelf_life=r.shelf_life,
                 retailer_id=r.retailer_id,
             )
+            r_changed_fields = []
+            r_snap_avail = False
+            r_snap_valid = False
+            r_snap_note = None
+            r_explanation = ""
+
             if resolved_version == "V1" or not retail_chain_stages:
                 r_status = "unrecorded"
                 rc_hash = None
                 r_recorded_by = r.signer_address
                 r_ts = None
-                cannot_verify_reasons.append("Store details exist locally but have not been recorded on the blockchain yet.")
+                r_explanation = "Store details exist locally but have not been recorded on the blockchain yet."
+                cannot_verify_reasons.append(r_explanation)
             else:
                 latest_retail_chain = retail_chain_stages[-1]
                 rc_hash = latest_retail_chain["hash"]
                 rec_by = (latest_retail_chain.get("recorded_by") or "").lower()
                 if allowed_retailers and rec_by and rec_by not in allowed_retailers:
                     r_status = "conflict"
+                    r_explanation = "The store record on-chain was signed by an unexpected account."
                 elif rc_hash.lower() == r_computed.lower():
                     r_status = "verified"
                     retail_verified = True
+                    r_explanation = "Recomputed SHA-256 hash matches the immutable retail hash on-chain."
                 else:
                     r_status = "tampered"
                     retail_tampered = True
                     tampered_stage_names.append("Retail store listing")
+                    r_explanation = "Retail store data in the database no longer matches the immutable hash on-chain."
+                    r_snap_dict, r_snap_avail, r_snap_valid, r_snap_note = _load_validated_snapshot(
+                        product,
+                        "RETAIL",
+                        rc_hash,
+                    )
+                    if r_snap_valid and r_snap_dict:
+                        r_changed_fields = _compute_changed_fields(
+                            "RETAIL",
+                            r_snap_dict,
+                            _build_retail_snapshot_payload(product, r),
+                        )
                 r_recorded_by = latest_retail_chain["recorded_by"]
                 r_ts = latest_retail_chain["timestamp"]
 
+            r_stage_status = (
+                "verified" if r_status == "verified"
+                else ("tampered" if r_status == "tampered" else "cannot_verify")
+            )
             retail_verification = {
                 "record": r,
                 "computed_hash": r_computed,
@@ -1207,13 +1636,25 @@ def _build_verification_context(product, simulate_tamper=False):
                 "status": r_status,
                 "recorded_by": r_recorded_by,
                 "on_chain_timestamp": r_ts,
+                "stage": "RETAIL",
+                "stage_number": 3,
+                "title": "Retailer / Store",
+                "original_hash": rc_hash,
+                "recomputed_hash": r_computed,
+                "stage_status": r_stage_status,
+                "hashes_match": (r_stage_status == "verified"),
+                "snapshot_available": r_snap_avail,
+                "snapshot_valid": r_snap_valid,
+                "snapshot_note": r_snap_note,
+                "changed_fields": r_changed_fields,
+                "explanation": r_explanation,
             }
         elif resolved_version == "V2" and retail_chain_stages:
             cannot_verify_reasons.append("A store record exists on the blockchain that is missing from local records.")
 
-    # Populate offline/not_found unrecorded stage previews when not already built above
+    # Populate not_found/conflict/error unrecorded stage previews when not already built above
     if chain_status in ("not_found", "conflict", "error"):
-        for t in db_transports:
+        for idx, t in enumerate(db_transports):
             t_computed = compute_transport_hash(
                 batch_id=product.batch_id,
                 status=t.status,
@@ -1234,6 +1675,17 @@ def _build_verification_context(product, simulate_tamper=False):
                 "temp_eval": temp_eval,
                 "recorded_by": t.signer_address,
                 "on_chain_timestamp": None,
+                "stage": "TRANSPORT",
+                "checkpoint_number": idx + 1,
+                "original_hash": None,
+                "recomputed_hash": t_computed,
+                "stage_status": "cannot_verify",
+                "hashes_match": False,
+                "snapshot_available": False,
+                "snapshot_valid": False,
+                "snapshot_note": None,
+                "changed_fields": [],
+                "explanation": "Batch harvest record is unavailable on-chain, so this checkpoint cannot be verified.",
             })
         if product.retail_data:
             r = product.retail_data
@@ -1254,7 +1706,128 @@ def _build_verification_context(product, simulate_tamper=False):
                 "status": "unrecorded",
                 "recorded_by": r.signer_address,
                 "on_chain_timestamp": None,
+                "stage": "RETAIL",
+                "stage_number": 3,
+                "title": "Retailer / Store",
+                "original_hash": None,
+                "recomputed_hash": r_computed,
+                "stage_status": "cannot_verify",
+                "hashes_match": False,
+                "snapshot_available": False,
+                "snapshot_valid": False,
+                "snapshot_note": None,
+                "changed_fields": [],
+                "explanation": "Batch harvest record is unavailable on-chain, so retail data cannot be verified.",
             }
+
+    harvest_stage_status = (
+        "verified" if harvest_status == "verified"
+        else ("tampered" if harvest_status == "tampered" else "cannot_verify")
+    )
+    harvest_recorded_when = _format_proof_timestamp(
+        chain.get("timestamp") or product.created_at,
+        product.packaging_date or None,
+    )
+    harvest_verification = {
+        "stage": "HARVEST",
+        "stage_number": 1,
+        "title": "Farmer / Harvest",
+        "status": harvest_stage_status,
+        "raw_status": harvest_status,
+        "original_hash": h_orig_hash_for_proof,
+        "recomputed_hash": computed_hash,
+        "hashes_match": (harvest_stage_status == "verified"),
+        "snapshot_available": h_snap_avail,
+        "snapshot_valid": h_snap_valid,
+        "snapshot_note": h_snap_note,
+        "changed_fields": h_changed_fields,
+        "explanation": harvest_explanation,
+        "recorded_when": harvest_recorded_when,
+    }
+
+    tamper_incidents = []
+    if harvest_stage_status == "tampered":
+        farm_where = (
+            product.farmer_data.farm_location
+            if (product.farmer_data and product.farmer_data.farm_location)
+            else "Registered Farm"
+        )
+        tamper_incidents.append({
+            "stage_key": "HARVEST",
+            "stage_label": "Stage 1 — Farm Harvest",
+            "status_label": "Farm Origin & Registration",
+            "where": farm_where,
+            "when": harvest_recorded_when,
+            "changed_fields": h_changed_fields,
+            "snapshot_note": h_snap_note,
+            "anchor_id": "journey-stage-harvest",
+        })
+
+    for tv in transport_verifications:
+        t_rec = tv["record"]
+        tv_when = _format_proof_timestamp(tv.get("on_chain_timestamp") or t_rec.timestamp)
+        tv["recorded_when"] = tv_when
+        if tv["stage_status"] == "tampered":
+            t_loc = t_rec.current_location or "Transit location unavailable"
+            t_where = f"{t_loc} (Vehicle {t_rec.vehicle_number})" if t_rec.vehicle_number else t_loc
+            tamper_incidents.append({
+                "stage_key": "TRANSPORT",
+                "stage_label": f"Stage 2 — Transport (Checkpoint #{tv['checkpoint_number']})",
+                "status_label": t_rec.status,
+                "where": t_where,
+                "when": tv_when,
+                "changed_fields": tv["changed_fields"],
+                "snapshot_note": tv["snapshot_note"],
+                "anchor_id": f"journey-stage-transport-{tv['checkpoint_number']}",
+            })
+
+    if retail_verification:
+        r_rec = retail_verification["record"]
+        r_when = _format_proof_timestamp(
+            retail_verification.get("on_chain_timestamp") or r_rec.updated_at,
+            r_rec.arrival_date or None,
+        )
+        retail_verification["recorded_when"] = r_when
+        if retail_verification["stage_status"] == "tampered":
+            if r_rec.store_name and r_rec.store_location:
+                r_where = f"{r_rec.store_name} ({r_rec.store_location})"
+            else:
+                r_where = r_rec.store_location or r_rec.store_name or "Retail Store"
+            tamper_incidents.append({
+                "stage_key": "RETAIL",
+                "stage_label": "Stage 3 — Retail Store",
+                "status_label": "Store Listing & Pricing",
+                "where": r_where,
+                "when": r_when,
+                "changed_fields": retail_verification["changed_fields"],
+                "snapshot_note": retail_verification["snapshot_note"],
+                "anchor_id": "journey-stage-retail",
+            })
+
+    extra_transport_on_chain = (
+        chain_status == "ok" and resolved_version == "V2" and len(transport_chain_stages) > len(db_transports)
+    )
+    if transport_verifications:
+        if any(tv["stage_status"] == "tampered" for tv in transport_verifications):
+            transport_stage_status = "tampered"
+        elif any(tv["stage_status"] == "cannot_verify" for tv in transport_verifications) or extra_transport_on_chain:
+            transport_stage_status = "cannot_verify"
+        else:
+            transport_stage_status = "verified"
+    elif extra_transport_on_chain:
+        transport_stage_status = "cannot_verify"
+    else:
+        transport_stage_status = "pending"
+
+    extra_retail_on_chain = (
+        chain_status == "ok" and resolved_version == "V2" and (product.retail_data is None) and bool(retail_chain_stages)
+    )
+    if retail_verification:
+        retail_stage_status = retail_verification["stage_status"]
+    elif extra_retail_on_chain:
+        retail_stage_status = "cannot_verify"
+    else:
+        retail_stage_status = "pending"
 
     any_stage_tampered = (harvest_status == "tampered") or transport_tampered or retail_tampered
     has_pending_stages = (len(db_transports) == 0) or (product.retail_data is None)
@@ -1275,6 +1848,49 @@ def _build_verification_context(product, simulate_tamper=False):
             result_reason = "All recorded details so far match the blockchain. Remaining journey steps are still pending."
         else:
             result_reason = "All farm, transport, and store details match the blockchain ledger."
+
+    # Build plain, dynamic stage-wise summary for Technical Blockchain Proof banner
+    def _stage_word(st):
+        if st == "verified":
+            return "Verified"
+        if st == "tampered":
+            return "Tampered"
+        if st == "pending":
+            return "Pending"
+        return "Unable to verify"
+
+    tampered_cp_nums = [str(tv["checkpoint_number"]) for tv in transport_verifications if tv["stage_status"] == "tampered"]
+    if transport_stage_status == "tampered" and tampered_cp_nums:
+        t_word = f"Tampered (Checkpoint #{', #'.join(tampered_cp_nums)})"
+    elif transport_stage_status == "verified" and len(transport_verifications) > 1:
+        t_word = f"Verified ({len(transport_verifications)} checkpoints)"
+    else:
+        t_word = _stage_word(transport_stage_status)
+
+    stage_summary_detail = (
+        f"Farmer: {_stage_word(harvest_stage_status)} | "
+        f"Transporter: {t_word} | "
+        f"Retailer: {_stage_word(retail_stage_status)}"
+    )
+    if verification_status == "tampered":
+        proof_overall_heading = "OVERALL RESULT: TAMPERING DETECTED"
+    elif verification_status == "cannot_verify":
+        proof_overall_heading = "OVERALL RESULT: UNABLE TO VERIFY ALL STAGES"
+    elif has_pending_stages:
+        proof_overall_heading = "OVERALL RESULT: RECORDED STAGES VERIFIED (JOURNEY IN PROGRESS)"
+    else:
+        proof_overall_heading = "OVERALL RESULT: ALL RECORDED STAGES VERIFIED"
+
+    stage_proof_summary = {
+        "result_key": verification_status,
+        "heading": proof_overall_heading,
+        "detail": stage_summary_detail,
+        "harvest_status": harvest_stage_status,
+        "transport_status": transport_stage_status,
+        "retail_status": retail_stage_status,
+        "extra_transport_on_chain": extra_transport_on_chain,
+        "extra_retail_on_chain": extra_retail_on_chain,
+    }
 
     trust_score = compute_trust_score(
         harvest_verified=(harvest_status == "verified"),
@@ -1307,6 +1923,11 @@ def _build_verification_context(product, simulate_tamper=False):
         "result_label": result_label,
         "result_reason": result_reason,
         "harvest_status": harvest_status,
+        "harvest_verification": harvest_verification,
+        "transport_stage_status": transport_stage_status,
+        "retail_stage_status": retail_stage_status,
+        "stage_proof_summary": stage_proof_summary,
+        "tamper_incidents": tamper_incidents,
         "is_verified": (verification_status == "verified"),
         "is_tampered": (verification_status == "tampered"),
         "is_cannot_verify": (verification_status == "cannot_verify"),
@@ -1358,45 +1979,39 @@ def verify_batch(batch_id):
 def toggle_demo_tamper(batch_id):
     """
     Demo-only helper: Toggles the product farming_method in the database
-    to a tampered value and cleanly restores its exact authentic value.
+    to a tampered value and restores strictly from a blockchain-validated StageSnapshot.
     Returns 404 when DEMO_MODE is off.
     """
     if not is_demo_mode():
         abort(404)
     product = Product.query.filter_by(batch_id=batch_id).first_or_404()
-    session_key = f'orig_farming_method_{batch_id}'
     if 'Non-Organic' in product.farming_method or 'Chemically Treated' in product.farming_method or 'Tamper' in product.farming_method:
-        restored = session.pop(session_key, None)
-        if not restored:
-            candidates = [
-                '100% Certified Organic',
-                'Regenerative Agriculture',
-                'Hydroponic Controlled',
-                'Traditional Natural',
-                'Greenhouse Solar',
-            ]
-            restored = candidates[0]
-            if product.on_chain_hash:
-                for cand in candidates:
-                    cand_hash = compute_batch_hash(
-                        batch_id=product.batch_id,
-                        name=product.name,
-                        quantity=product.quantity,
-                        farming_method=cand,
-                        packaging_date=product.packaging_date,
-                        farmer_id=product.farmer_id,
-                        image=product.image,
-                    )
-                    if cand_hash.lower() == product.on_chain_hash.lower():
-                        restored = cand
-                        break
+        chain = inspect_batch_on_chain(
+            product.batch_id,
+            recorded_contract_address=product.contract_address,
+            recorded_contract_version=product.contract_version,
+        )
+        on_chain_h = chain.get("hash") if chain.get("status") == "ok" else None
+        snap_dict, snap_avail, snap_valid, snap_note = _load_validated_snapshot(
+            product,
+            "HARVEST",
+            on_chain_h,
+        )
+        if not snap_valid or not snap_dict or "farming_method" not in snap_dict:
+            flash(
+                snap_note or "Cannot restore harvest record: no validated original blockchain snapshot is available.",
+                'warning',
+            )
+            return redirect(url_for('verify_batch', batch_id=batch_id))
+
+        restored = str(snap_dict["farming_method"])
         product.farming_method = restored
+        db.session.commit()
         flash(f'Batch {batch_id} restored to authentic state: "{restored}". Live cryptographic check passes!', 'success')
     else:
-        session[session_key] = product.farming_method
         product.farming_method = 'Chemically Treated Non-Organic'
+        db.session.commit()
         flash(f'Tamper simulated on Batch {batch_id}: Farming method altered to "Chemically Treated Non-Organic". Blockchain caught the discrepancy!', 'danger')
-    db.session.commit()
     return redirect(url_for('verify_batch', batch_id=batch_id))
 
 
@@ -1404,60 +2019,52 @@ def toggle_demo_tamper(batch_id):
 def toggle_transport_tamper(batch_id):
     """
     Demo-only helper: Simulates cold-chain temperature falsification on the latest
-    transport checkpoint and restores its original value. Returns 404 when DEMO_MODE is off.
+    transport checkpoint and restores strictly from a blockchain-validated StageSnapshot.
+    Returns 404 when DEMO_MODE is off.
     """
     if not is_demo_mode():
         abort(404)
     product = Product.query.filter_by(batch_id=batch_id).first_or_404()
-    if not product.transport_data:
+    sorted_t = _sorted_transports(product)
+    if not sorted_t:
         flash('No transport checkpoints exist on this batch yet.', 'warning')
         return redirect(url_for('verify_batch', batch_id=batch_id))
 
-    latest_t = product.transport_data[-1]
-    session_key = f'orig_temp_{batch_id}'
+    latest_idx = len(sorted_t) - 1
+    latest_t = sorted_t[latest_idx]
     if latest_t.temperature and 'Tampered' in latest_t.temperature:
-        restored = session.pop(session_key, '3.8 °C')
+        chain = inspect_batch_on_chain(
+            product.batch_id,
+            recorded_contract_address=product.contract_address,
+            recorded_contract_version=product.contract_version,
+        )
+        t_chain_hash = None
+        if chain.get("status") == "ok":
+            t_stages = [s for s in (chain.get("stages") or []) if s.get("stage") == "TRANSPORT"]
+            if latest_idx < len(t_stages):
+                t_chain_hash = t_stages[latest_idx].get("hash")
+
+        snap_dict, snap_avail, snap_valid, snap_note = _load_validated_snapshot(
+            product,
+            "TRANSPORT",
+            t_chain_hash,
+            transport_record=latest_t,
+        )
+        if not snap_valid or not snap_dict or "temperature" not in snap_dict:
+            flash(
+                snap_note or "Cannot restore transport checkpoint: no validated original blockchain snapshot is available.",
+                'warning',
+            )
+            return redirect(url_for('verify_batch', batch_id=batch_id))
+
+        restored = str(snap_dict["temperature"])
         latest_t.temperature = restored
+        db.session.commit()
         flash(f'Transport checkpoint for {batch_id} restored to "{restored}". Stage 2 cryptographic proof passes!', 'success')
     else:
-        session[session_key] = latest_t.temperature or '3.8 °C'
         latest_t.temperature = '24.5 °C (Tampered)'
+        db.session.commit()
         flash(f'Cold-chain tamper simulated on {batch_id}: Temperature altered in SQLite. Stage 2 on-chain hash mismatch caught!', 'danger')
-    db.session.commit()
-    return redirect(url_for('verify_batch', batch_id=batch_id))
-
-
-@app.route('/verify/<batch_id>/feedback', methods=['POST'])
-def submit_feedback(batch_id):
-    product = Product.query.filter_by(batch_id=batch_id).first_or_404()
-    customer_name = request.form.get('customer_name', '').strip() or 'Anonymous Customer'
-
-    try:
-        rating = int(request.form.get('rating', 5))
-        if rating < 1 or rating > 5:
-            rating = 5
-    except (ValueError, TypeError):
-        rating = 5
-
-    comment = request.form.get('comment', '').strip()
-    if not comment:
-        flash('Please enter a feedback comment.', 'warning')
-        return redirect(url_for('verify_batch', batch_id=batch_id))
-
-    if len(comment) > 1000 or len(customer_name) > 100:
-        flash('Feedback text exceeds maximum permitted length.', 'danger')
-        return redirect(url_for('verify_batch', batch_id=batch_id))
-
-    fb = Feedback(
-        product_id=product.id,
-        customer_name=customer_name,
-        rating=rating,
-        comment=comment
-    )
-    db.session.add(fb)
-    db.session.commit()
-
-    flash('Feedback submitted successfully! Thank you for rating.', 'success')
     return redirect(url_for('verify_batch', batch_id=batch_id))
 
 
@@ -1568,7 +2175,6 @@ def admin_dashboard():
     total_users = User.query.count()
     total_products = Product.query.count()
     total_transports = TransportData.query.count()
-    total_feedback = Feedback.query.count()
 
     users = User.query.order_by(User.id.asc()).all()
     products = Product.query.order_by(Product.created_at.desc()).all()
@@ -1593,11 +2199,6 @@ def admin_dashboard():
         'counts': list(status_dict.values()) or [0]
     }
 
-    rating_counts = [0, 0, 0, 0, 0]
-    for fb in Feedback.query.all():
-        if 1 <= fb.rating <= 5:
-            rating_counts[fb.rating - 1] += 1
-
     batch_verifications = {}
     outcome_counts = {"verified": 0, "tampered": 0, "cannot_verify": 0}
     for p in products:
@@ -1618,12 +2219,10 @@ def admin_dashboard():
         total_users=total_users,
         total_products=total_products,
         total_transports=total_transports,
-        total_feedback=total_feedback,
         users=users,
         products=products,
         farmer_chart_data=farmer_chart_data,
         status_chart_data=status_chart_data,
-        rating_chart_data=rating_counts,
         batch_verifications=batch_verifications,
         outcome_counts=outcome_counts,
         chain_overview=chain_overview,

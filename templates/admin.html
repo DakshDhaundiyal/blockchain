@@ -58,7 +58,7 @@
 
 <!-- Chart.js Analytics Section -->
 <div class="row g-4 mb-4">
-    <div class="col-lg-4">
+    <div class="col-lg-6">
         <div class="card card-custom shadow-sm h-100">
             <div class="card-header card-header-ag">
                 <h2 class="h6 mb-0 fw-bold"><i class="bi bi-bar-chart-line me-2" aria-hidden="true"></i>Batches Per Farmer</h2>
@@ -68,23 +68,13 @@
             </div>
         </div>
     </div>
-    <div class="col-lg-4">
+    <div class="col-lg-6">
         <div class="card card-custom shadow-sm h-100">
             <div class="card-header card-header-ag">
                 <h2 class="h6 mb-0 fw-bold"><i class="bi bi-pie-chart me-2" aria-hidden="true"></i>Supply Chain Stage Distribution</h2>
             </div>
             <div class="card-body">
                 <canvas id="statusChart" height="220"></canvas>
-            </div>
-        </div>
-    </div>
-    <div class="col-lg-4">
-        <div class="card card-custom shadow-sm h-100">
-            <div class="card-header card-header-ag">
-                <h2 class="h6 mb-0 fw-bold"><i class="bi bi-star-half me-2" aria-hidden="true"></i>Customer Ratings ({{ total_feedback }})</h2>
-            </div>
-            <div class="card-body">
-                <canvas id="ratingChart" height="220"></canvas>
             </div>
         </div>
     </div>
@@ -317,24 +307,6 @@ document.addEventListener("DOMContentLoaded", function () {
             plugins: {
                 legend: { position: 'bottom' }
             }
-        }
-    });
-
-    const ratingData = {{ rating_chart_data | tojson }};
-    new Chart(document.getElementById('ratingChart'), {
-        type: 'bar',
-        data: {
-            labels: ['1 Star', '2 Stars', '3 Stars', '4 Stars', '5 Stars'],
-            datasets: [{
-                label: 'Feedback Count',
-                data: ratingData,
-                backgroundColor: '#8d5b4c'
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: { legend: { display: false } },
-            scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
         }
     });
 });

@@ -57,7 +57,7 @@ class Product(db.Model):
         order_by='(TransportData.timestamp.asc(), TransportData.id.asc())'
     )
     retail_data = db.relationship('RetailData', backref='product', uselist=False, cascade='all, delete-orphan')
-    feedback = db.relationship('Feedback', backref='product', cascade='all, delete-orphan', order_by='Feedback.created_at.desc()')
+    stage_snapshots = db.relationship('StageSnapshot', backref='product', cascade='all, delete-orphan', order_by='StageSnapshot.id.asc()')
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -123,14 +123,26 @@ class RetailData(db.Model):
         super().__init__(**kwargs)
 
 
-class Feedback(db.Model):
-    __tablename__ = 'feedback'
+class StageSnapshot(db.Model):
+    """
+    Immutable initial snapshot of stage fields captured strictly at initial blockchain
+    anchoring. Never modified by tamper simulators; always re-validated by recomputing
+    the SHA-256 hash against the actual blockchain record before displaying diffs or restoring.
+    """
+    __tablename__ = 'stage_snapshots'
     id = db.Column(db.Integer, primary_key=True)
-    product_id = db.Column(db.Integer, db.ForeignKey('products.id'), nullable=False)
-    customer_name = db.Column(db.String(100), nullable=True)
-    rating = db.Column(db.Integer, default=5)
-    comment = db.Column(db.Text, nullable=False)
+    product_id = db.Column(db.Integer, db.ForeignKey('products.id'), nullable=False, index=True)
+    stage = db.Column(db.String(20), nullable=False, index=True)  # HARVEST, TRANSPORT, RETAIL
+    transport_id = db.Column(db.Integer, db.ForeignKey('transport_data.id'), nullable=True, index=True)
+    original_hash = db.Column(db.String(66), nullable=False, index=True)
+    snapshot_json = db.Column(db.Text, nullable=False)
     created_at = db.Column(db.DateTime, default=utcnow)
+
+    transport_record = db.relationship(
+        'TransportData',
+        foreign_keys=[transport_id],
+        backref=db.backref('snapshots', cascade='all, delete-orphan'),
+    )
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

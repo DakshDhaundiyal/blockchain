@@ -2,8 +2,12 @@ import argparse
 import os
 import sys
 from datetime import timedelta
-from app import app, is_demo_mode
-from models import db, User, Product, FarmerData, TransportData, RetailData, Feedback, utcnow
+from app import (
+    app, is_demo_mode,
+    _build_harvest_snapshot_payload, _build_transport_snapshot_payload,
+    _build_retail_snapshot_payload, _save_stage_snapshot_once,
+)
+from models import db, User, Product, FarmerData, TransportData, RetailData, utcnow
 from blockchain import (
     store_hash_detailed, store_stage_hash,
     compute_batch_hash, compute_transport_hash, compute_retail_hash,
@@ -78,6 +82,7 @@ def seed():
         )
         db.session.add(p1)
         db.session.flush()
+        _save_stage_snapshot_once(p1.id, "HARVEST", _build_harvest_snapshot_payload(p1), hash1)
 
         fd1 = FarmerData(
             product_id=p1.id,
@@ -97,7 +102,7 @@ def seed():
         for st, loc, temp, veh, note, days_ago in t1_specs:
             th = compute_transport_hash(batch1_id, st, loc, temp, veh, note, transporter.id)
             tm = store_stage_hash(batch1_id, "TRANSPORT", th, role="transporter")
-            db.session.add(TransportData(
+            t_rec = TransportData(
                 product_id=p1.id,
                 transporter_id=transporter.id,
                 status=st,
@@ -110,7 +115,11 @@ def seed():
                 block_number=tm.get("block_number"),
                 signer_address=tm.get("signer_address"),
                 timestamp=utcnow() - timedelta(days=days_ago)
-            ))
+            )
+            db.session.add(t_rec)
+            db.session.flush()
+            if tm.get("status") == "anchored":
+                _save_stage_snapshot_once(p1.id, "TRANSPORT", _build_transport_snapshot_payload(p1, t_rec), th, transport_id=t_rec.id)
 
         rh1 = compute_retail_hash(
             batch1_id, "Whole Harvest Organic Market", "500 Pine St, Seattle, WA",
@@ -132,15 +141,9 @@ def seed():
             signer_address=rm1.get("signer_address"),
         )
         db.session.add(rd1)
-
-        fb1 = Feedback(
-            product_id=p1.id,
-            customer_name="Amy Chen",
-            rating=5,
-            comment="Remarkable freshness and crunch! Scanned the QR right off the display carton.",
-            created_at=utcnow() - timedelta(days=1)
-        )
-        db.session.add(fb1)
+        db.session.flush()
+        if rm1.get("status") == "anchored":
+            _save_stage_snapshot_once(p1.id, "RETAIL", _build_retail_snapshot_payload(p1, rd1), rh1)
 
         # Batch 2: Heirloom Vine Tomatoes
         batch2_id = "TH-TOMATO-002"
@@ -183,6 +186,7 @@ def seed():
         )
         db.session.add(p2)
         db.session.flush()
+        _save_stage_snapshot_once(p2.id, "HARVEST", _build_harvest_snapshot_payload(p2), hash2)
 
         fd2 = FarmerData(
             product_id=p2.id,
@@ -201,7 +205,7 @@ def seed():
         for st, loc, temp, veh, note, delta in t2_specs:
             th = compute_transport_hash(batch2_id, st, loc, temp, veh, note, transporter.id)
             tm = store_stage_hash(batch2_id, "TRANSPORT", th, role="transporter")
-            db.session.add(TransportData(
+            t2_rec = TransportData(
                 product_id=p2.id,
                 transporter_id=transporter.id,
                 status=st,
@@ -214,16 +218,11 @@ def seed():
                 block_number=tm.get("block_number"),
                 signer_address=tm.get("signer_address"),
                 timestamp=utcnow() - delta
-            ))
-
-        fb2 = Feedback(
-            product_id=p2.id,
-            customer_name="Local Foodie",
-            rating=5,
-            comment="Excited to see regenerative produce traced with cryptographic certainty!",
-            created_at=utcnow() - timedelta(hours=2)
-        )
-        db.session.add(fb2)
+            )
+            db.session.add(t2_rec)
+            db.session.flush()
+            if tm.get("status") == "anchored":
+                _save_stage_snapshot_once(p2.id, "TRANSPORT", _build_transport_snapshot_payload(p2, t2_rec), th, transport_id=t2_rec.id)
 
         db.session.commit()
         print("Database and TrustHarvestV2 multi-stage blockchain seed complete!")

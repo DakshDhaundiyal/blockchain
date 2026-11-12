@@ -1,5 +1,5 @@
 import pytest
-from models import db, User, Product, TransportData, RetailData, Feedback
+from models import db, User, Product, TransportData, RetailData
 
 def create_sample_product(app):
     with app.app_context():
@@ -94,25 +94,16 @@ def test_retailer_negative_price_rejected(client, app):
     }, follow_redirects=True)
     assert b"Price must be a positive value" in res.data
 
-def test_customer_lookup_and_feedback(client, app):
-    prod_id = create_sample_product(app)
+def test_customer_lookup_redirects_to_verify(client, app):
+    create_sample_product(app)
 
     # Customer search by batch ID
     res = client.get("/customer?batch_id=TH-WORKFLOW-01")
     assert res.status_code == 302
     assert "/verify/TH-WORKFLOW-01" in res.headers["Location"]
 
-    # Customer submits feedback
-    res = client.post("/verify/TH-WORKFLOW-01/feedback", data={
-        "customer_name": "Alice Buyer",
-        "rating": "5",
-        "comment": "Crisp, flavorful and verified fresh!"
-    }, follow_redirects=True)
-    assert res.status_code == 200
-    assert b"Feedback submitted successfully" in res.data
-
-    with app.app_context():
-        fb = Feedback.query.filter_by(product_id=prod_id).first()
-        assert fb is not None
-        assert fb.rating == 5
-        assert fb.comment == "Crisp, flavorful and verified fresh!"
+    # Feedback card/route is no longer present
+    verify_res = client.get("/verify/TH-WORKFLOW-01")
+    assert verify_res.status_code == 200
+    assert b"Customer Reviews &amp; Feedback" not in verify_res.data
+    assert client.post("/verify/TH-WORKFLOW-01/feedback", data={"comment": "test"}).status_code == 404

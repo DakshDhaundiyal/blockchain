@@ -93,7 +93,7 @@ def test_public_verify_hides_wallets_contracts_and_tx_hashes(client, app, monkey
     assert fake_contract not in html
     assert fake_signer not in html
     assert "987654" not in html
-    assert "Technical details" in html
+    assert "Technical Blockchain Proof" in html
     assert "TH-PRIV-001" in html
 
 
