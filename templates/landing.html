@@ -27,7 +27,7 @@
       <!-- LEFT COLUMN: Headline & Verification Action -->
       <div class="col-lg-7">
         <div class="hero-eyebrow">
-          BLOCKCHAIN-VERIFIED FOOD SUPPLY CHAIN
+          FARM-TO-TABLE FOOD AUTHENTICITY CHECK
         </div>
 
         <h1 class="hero-headline">
@@ -35,7 +35,7 @@
         </h1>
 
         <p class="hero-sub">
-          Verify the complete journey of every product from farm to table using blockchain-backed records.
+          Scan any package QR code or enter a Batch ID to see which farm grew it, whether it stayed cold on the truck, and confirm no labels were tampered with.
         </p>
 
         <!-- Search / Verification Input Bar -->
@@ -76,15 +76,15 @@
         <div class="hero-trust-row">
           <span class="trust-badge-item">
             <i class="bi bi-shield-check"></i>
-            Digital Fingerprints
+            Verified Farm Origin
           </span>
           <span class="trust-badge-item">
-            <i class="bi bi-check2-circle text-success"></i>
-            End-to-End History
+            <i class="bi bi-snow2 text-success"></i>
+            Cold-Storage Checked
           </span>
           <span class="trust-badge-item">
             <i class="bi bi-lock-fill"></i>
-            Tamper-Evident Records
+            Tamper-Proof Records
           </span>
         </div>
       </div>
@@ -214,50 +214,50 @@
 
 <!-- ══════════════════════ HOW IT WORKS ══════════════════════ -->
 <div class="container hiw-section-wrap" id="how-it-works">
-  <h2 class="hiw-heading">How TrustHarvest Works</h2>
-  <p class="hiw-subheading">From the farm to your table, every step is recorded, verified, and immutable.</p>
+  <h2 class="hiw-heading">How TrustHarvest Protects Your Food</h2>
+  <p class="hiw-subheading">Three simple checks follow every harvest from soil to store so you know what is really in your basket.</p>
 
   <div class="hiw-horizontal-row">
 
     <!-- Step 1 -->
     <div class="hiw-flow-step">
-      <div class="hiw-circle-icon"><i class="bi bi-flower1"></i></div>
+      <div class="hiw-circle-icon"><i class="bi bi-flower1" aria-hidden="true"></i></div>
       <div class="hiw-step-content">
-        <div class="hiw-step-tag">01 &nbsp;FARM</div>
-        <div class="hiw-step-text">Register product details and generate QR.</div>
+        <div class="hiw-step-tag">01 &nbsp;AT THE FARM</div>
+        <div class="hiw-step-text">Farmer logs harvest details, method, and prints a package QR label.</div>
       </div>
     </div>
 
-    <div class="hiw-flow-arrow d-none d-lg-flex"><i class="bi bi-arrow-right"></i></div>
+    <div class="hiw-flow-arrow d-none d-lg-flex"><i class="bi bi-arrow-right" aria-hidden="true"></i></div>
 
     <!-- Step 2 -->
     <div class="hiw-flow-step">
-      <div class="hiw-circle-icon"><i class="bi bi-box"></i></div>
+      <div class="hiw-circle-icon"><i class="bi bi-lock" aria-hidden="true"></i></div>
       <div class="hiw-step-content">
-        <div class="hiw-step-tag">02 &nbsp;BLOCKCHAIN</div>
-        <div class="hiw-step-text">Store SHA-256 hash on Ethereum smart contract.</div>
+        <div class="hiw-step-tag">02 &nbsp;DIGITAL SEAL</div>
+        <div class="hiw-step-text">Each update locks an unchangeable digital seal nobody can secretly alter.</div>
       </div>
     </div>
 
-    <div class="hiw-flow-arrow d-none d-lg-flex"><i class="bi bi-arrow-right"></i></div>
+    <div class="hiw-flow-arrow d-none d-lg-flex"><i class="bi bi-arrow-right" aria-hidden="true"></i></div>
 
     <!-- Step 3 -->
     <div class="hiw-flow-step">
-      <div class="hiw-circle-icon"><i class="bi bi-truck"></i></div>
+      <div class="hiw-circle-icon"><i class="bi bi-truck" aria-hidden="true"></i></div>
       <div class="hiw-step-content">
-        <div class="hiw-step-tag">03 &nbsp;SUPPLY CHAIN</div>
-        <div class="hiw-step-text">Transport and retailer updates are recorded.</div>
+        <div class="hiw-step-tag">03 &nbsp;COLD TRANSIT &amp; STORE</div>
+        <div class="hiw-step-text">Drivers log cold-storage temperatures and stores confirm shelf arrival.</div>
       </div>
     </div>
 
-    <div class="hiw-flow-arrow d-none d-lg-flex"><i class="bi bi-arrow-right"></i></div>
+    <div class="hiw-flow-arrow d-none d-lg-flex"><i class="bi bi-arrow-right" aria-hidden="true"></i></div>
 
     <!-- Step 4 -->
     <div class="hiw-flow-step">
-      <div class="hiw-circle-icon"><i class="bi bi-person"></i></div>
+      <div class="hiw-circle-icon"><i class="bi bi-qr-code-scan" aria-hidden="true"></i></div>
       <div class="hiw-step-content">
-        <div class="hiw-step-tag">04 &nbsp;CONSUMER</div>
-        <div class="hiw-step-text">Scan QR and verify full journey.</div>
+        <div class="hiw-step-tag">04 &nbsp;YOU SCAN &amp; CHECK</div>
+        <div class="hiw-step-text">Scan in seconds to verify safety, freshness, and spot any tampering.</div>
       </div>
     </div>
 
@@ -271,8 +271,8 @@
       <div class="ledger-title-group">
         <div class="ledger-icon-box"><i class="bi bi-file-earmark-text"></i></div>
         <div>
-          <h2 class="ledger-heading">Recent Food Batches</h2>
-          <p class="ledger-subheading">Select any batch to view its Farm &rarr; Transport &rarr; Shop history</p>
+          <h2 class="ledger-heading">Recent Tracked Foods</h2>
+          <p class="ledger-subheading">Click any food below to check its Farm &rarr; Cold Storage &rarr; Store journey</p>
         </div>
       </div>
       <div class="ledger-top-actions">
@@ -331,7 +331,7 @@
             </td>
             <td class="td-action">
               <a href="{{ url_for('verify_batch', batch_id=p.batch_id) }}" class="btn-table-trace">
-                Check Batch <i class="bi bi-arrow-right"></i>
+                View Food Story <i class="bi bi-arrow-right" aria-hidden="true"></i>
               </a>
             </td>
           </tr>

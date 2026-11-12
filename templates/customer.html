@@ -6,25 +6,25 @@
 <div class="row justify-content-center mb-4">
     <div class="col-lg-9 text-center">
         <span class="badge bg-success bg-opacity-25 text-success border border-success px-3 py-2 rounded-pill fw-semibold mb-2">
-            <i class="bi bi-shield-check me-1" aria-hidden="true"></i> Consumer Verification Portal
+            <i class="bi bi-shield-check me-1" aria-hidden="true"></i> Food Authenticity Check
         </span>
-        <h1 class="h2 fw-bold mb-2">Check &amp; Verify Your Food</h1>
-        <p class="text-muted mb-0">Trace where your food grew, how cold it stayed during shipping, and verify it has never been altered.</p>
+        <h1 class="h2 fw-bold mb-2">Check Where Your Food Came From</h1>
+        <p class="text-muted mb-0">See which farm grew it, whether it stayed cold on the truck, and make sure nobody altered the label.</p>
 
         <div class="card card-custom p-4 shadow-sm border my-4 text-start">
             <div class="th-tablist" role="tablist" aria-label="Produce verification methods">
                 <button type="button" class="th-tab-btn" id="tab-batch-id" role="tab" aria-selected="true">
-                    <i class="bi bi-search me-1" aria-hidden="true"></i> Lookup by Batch ID
+                    <i class="bi bi-search me-1" aria-hidden="true"></i> Type Batch Code
                 </button>
                 <button type="button" class="th-tab-btn" id="tab-qr-scan" role="tab" aria-selected="false">
-                    <i class="bi bi-qr-code-scan me-1" aria-hidden="true"></i> Scan or Test QR Code
+                    <i class="bi bi-qr-code-scan me-1" aria-hidden="true"></i> Scan Package QR
                 </button>
             </div>
 
             <!-- Panel 1: Batch ID Lookup -->
             <div id="panel-batch-id" role="tabpanel" aria-labelledby="tab-batch-id">
                 <form action="{{ url_for('customer_dashboard') }}" method="GET">
-                    <label for="customer-batch-input" class="form-label small fw-semibold text-muted">Enter Batch Code (printed on package label)</label>
+                    <label for="customer-batch-input" class="form-label small fw-semibold text-muted">Enter the code printed on the produce sticker or crate</label>
                     <div class="input-group input-group-lg">
                         <span class="input-group-text bg-white" aria-hidden="true"><i class="bi bi-search text-success"></i></span>
                         <input
@@ -36,16 +36,16 @@
                             required
                             value="{{ request.args.get('batch_id', '') }}"
                         >
-                        <button class="btn btn-ag-primary px-4 fw-bold" type="submit">Verify Food</button>
+                        <button class="btn btn-ag-primary px-4 fw-bold" type="submit">Check Food</button>
                     </div>
                 </form>
 
                 {% if products %}
                 <div class="d-flex align-items-center flex-wrap gap-2 mt-3 small">
-                    <span class="text-muted fw-semibold">Quick 1-click samples:</span>
+                    <span class="text-muted fw-semibold">Try a sample product:</span>
                     {% for sample in products[:3] %}
                     <a href="{{ url_for('verify_batch', batch_id=sample.batch_id) }}" class="badge rounded-pill text-bg-light border text-decoration-none px-3 py-2 text-success fw-semibold">
-                        <i class="bi bi-arrow-right-circle me-1" aria-hidden="true"></i>{{ sample.batch_id }} ({{ sample.name }})
+                        <i class="bi bi-arrow-right-circle me-1" aria-hidden="true"></i>{{ sample.name }} ({{ sample.batch_id }})
                     </a>
                     {% endfor %}
                 </div>
@@ -111,85 +111,80 @@
     </div>
 </div>
 
-<div class="card card-custom shadow-sm mb-4">
-    <div class="card-header card-header-ag d-flex justify-content-between align-items-center">
-        <h2 class="h5 mb-0 fw-bold"><i class="bi bi-basket me-2" aria-hidden="true"></i>Produce Verification Directory</h2>
-        <span class="badge bg-secondary">{{ products|length }} Available</span>
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+    <div>
+        <h2 class="h4 fw-bold mb-0"><i class="bi bi-basket text-success me-2" aria-hidden="true"></i>Browse Tracked Foods</h2>
+        <p class="text-muted small mb-0">Tap any item below to see its complete farm-to-shelf history.</p>
     </div>
-    <div class="card-body p-0">
-        <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-                <thead class="table-light">
-                    <tr>
-                        <th scope="col">Crop &amp; Batch</th>
-                        <th scope="col">Origin &amp; Dates</th>
-                        <th scope="col">Verification Result</th>
-                        <th scope="col">Retail Price</th>
-                        <th scope="col">QR Code</th>
-                        <th scope="col">Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for p in products %}
-                    {% set vst = (batch_statuses.get(p.batch_id) if batch_statuses is defined else none) %}
-                    <tr>
-                        <td>
-                            <div class="fw-bold">{{ p.name }}</div>
-                            <span class="font-monospace text-success small">{{ p.batch_id }}</span>
-                            <div class="text-muted smaller">{{ p.quantity }} &bull; {{ p.farming_method }}</div>
-                        </td>
-                        <td>
-                            <div>{{ p.farmer_data.farm_location if p.farmer_data and p.farmer_data.farm_location else (p.farmer.full_name or p.farmer.username) }}</div>
-                            <div class="text-muted smaller">Packed: {{ p.packaging_date }}</div>
-                        </td>
-                        <td style="max-width:260px;">
-                            {% if vst %}
-                                {% if vst.status == 'verified' %}
-                                    <span class="badge bg-success mb-1"><i class="bi bi-shield-check me-1"></i>{{ vst.label }}</span>
-                                {% elif vst.status == 'tampered' %}
-                                    <span class="badge bg-danger mb-1"><i class="bi bi-exclamation-octagon me-1"></i>{{ vst.label }}</span>
-                                {% else %}
-                                    <span class="badge bg-warning text-dark mb-1"><i class="bi bi-question-circle me-1"></i>{{ vst.label }}</span>
-                                {% endif %}
-                                <div class="text-muted smaller">{{ vst.reason }}</div>
-                            {% else %}
-                                <span class="badge bg-info text-dark">{{ p.status }}</span>
-                            {% endif %}
-                        </td>
-                        <td>
-                            {% if p.retail_data and p.retail_data.price %}
-                                <span class="fw-bold text-success">${{ '%.2f'|format(p.retail_data.price) }}</span>
-                                <div class="text-muted smaller">{{ p.retail_data.store_name }}</div>
-                            {% else %}
-                                <span class="badge bg-secondary-subtle text-secondary">Pending</span>
-                            {% endif %}
-                        </td>
-                        <td>
-                            <div class="d-flex align-items-center gap-2">
-                                <a href="{{ url_for('verify_batch', batch_id=p.batch_id) }}" title="Open verification page for {{ p.batch_id }}">
-                                    <img src="{{ url_for('batch_qr_png', batch_id=p.batch_id) }}" alt="QR code for {{ p.batch_id }}" width="45" height="45" class="border rounded p-1">
-                                </a>
-                                <a href="{{ url_for('batch_qr_png', batch_id=p.batch_id, download=1) }}" download="qr_{{ p.batch_id }}.png" class="btn btn-sm btn-outline-secondary py-0 px-2" title="Download QR PNG">
-                                    <i class="bi bi-download"></i>
-                                </a>
-                            </div>
-                        </td>
-                        <td>
-                            <a href="{{ url_for('verify_batch', batch_id=p.batch_id) }}" class="btn btn-sm btn-ag-primary">
-                                <i class="bi bi-shield-check me-1"></i> View Journey
-                            </a>
-                        </td>
-                    </tr>
-                    {% else %}
-                    <tr>
-                        <td colspan="6" class="text-center py-4 text-muted">No produce batches available right now.</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </div>
+    <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2 rounded-pill">
+        {{ products|length }} Item(s) Listed
+    </span>
 </div>
+
+{% if products %}
+<div class="consumer-food-grid mb-4">
+    {% for p in products %}
+    {% set vst = (batch_statuses.get(p.batch_id) if batch_statuses is defined else none) %}
+    <article class="consumer-food-card">
+        <img src="{{ product_image_url(p.image) }}" alt="{{ p.name }}" loading="lazy">
+        <header>
+            <div class="d-flex justify-content-between align-items-start gap-2 mb-1">
+                <h3 class="h5 fw-bold mb-0">{{ p.name }}</h3>
+                {% if vst %}
+                    {% if vst.status == 'verified' %}
+                        <span class="badge bg-success text-nowrap"><i class="bi bi-shield-check me-1" aria-hidden="true"></i>{{ vst.label }}</span>
+                    {% elif vst.status == 'tampered' %}
+                        <span class="badge bg-danger text-nowrap"><i class="bi bi-exclamation-octagon me-1" aria-hidden="true"></i>{{ vst.label }}</span>
+                    {% else %}
+                        <span class="badge bg-warning text-dark text-nowrap"><i class="bi bi-question-circle me-1" aria-hidden="true"></i>{{ vst.label }}</span>
+                    {% endif %}
+                {% else %}
+                    <span class="badge bg-info text-dark text-nowrap">{{ p.status }}</span>
+                {% endif %}
+            </div>
+            <div class="small text-muted">{{ p.farming_method }} &bull; <span class="font-monospace">{{ p.batch_id }}</span></div>
+        </header>
+        <ul>
+            <li>
+                <i class="bi bi-geo-alt text-success me-1" aria-hidden="true"></i>
+                <strong>Grown at:</strong> {{ p.farmer_data.farm_location if p.farmer_data and p.farmer_data.farm_location else (p.farmer.full_name or p.farmer.username) }}
+            </li>
+            <li>
+                <i class="bi bi-calendar3 text-muted me-1" aria-hidden="true"></i>
+                <strong>Packed:</strong> {{ p.packaging_date }} ({{ p.quantity }})
+            </li>
+            {% if vst and vst.latest_temp %}
+            <li>
+                <i class="bi bi-thermometer-half {{ 'text-danger' if vst.latest_temp.status == 'breach' else 'text-primary' }} me-1" aria-hidden="true"></i>
+                <strong>Cold Storage:</strong> {{ vst.latest_temp.label }}
+            </li>
+            {% endif %}
+            <li>
+                <i class="bi bi-shop text-warning-emphasis me-1" aria-hidden="true"></i>
+                <strong>Store:</strong>
+                {% if p.retail_data and p.retail_data.price %}
+                    {{ p.retail_data.store_name }} &bull; <span class="fw-bold text-success">${{ '%.2f'|format(p.retail_data.price) }}</span>
+                {% else %}
+                    <span class="text-muted">Not in store yet</span>
+                {% endif %}
+            </li>
+        </ul>
+        <footer>
+            <a href="{{ url_for('verify_batch', batch_id=p.batch_id) }}" class="btn btn-sm btn-ag-primary flex-grow-1 fw-semibold">
+                <i class="bi bi-shield-check me-1" aria-hidden="true"></i> Check Food Story
+            </a>
+            <a href="{{ url_for('batch_qr_png', batch_id=p.batch_id, download=1) }}" download="qr_{{ p.batch_id }}.png" class="btn btn-sm btn-outline-secondary" aria-label="Download QR code for {{ p.batch_id }}">
+                <i class="bi bi-qr-code" aria-hidden="true"></i>
+            </a>
+        </footer>
+    </article>
+    {% endfor %}
+</div>
+{% else %}
+<div class="card card-custom p-5 text-center text-muted mb-4">
+    No produce batches available right now.
+</div>
+{% endif %}
 {% endblock %}
 
 {% block scripts %}

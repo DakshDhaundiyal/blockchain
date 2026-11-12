@@ -157,8 +157,55 @@
         <p class="text-success fw-semibold mt-2 mb-3 fs-6 mx-auto" style="max-width: 680px;">
             <i class="bi bi-check-circle-fill me-1" aria-hidden="true"></i> {{ result_reason }}
         </p>
+
+        <!-- 3-Step Plain-English Consumer Safety Strip -->
+        <div class="consumer-check-strip" role="list" aria-label="At-a-glance food check">
+            <div class="consumer-check-pill is-ok" role="listitem">
+                <span class="consumer-check-icon" aria-hidden="true"><i class="bi bi-check-lg"></i></span>
+                <div class="small lh-sm">
+                    <div class="fw-bold text-dark">1. Farm Origin</div>
+                    <div class="text-muted">{{ product.farmer_data.farm_location if (product.farmer_data and product.farmer_data.farm_location) else 'Registered Farm' }}</div>
+                </div>
+            </div>
+            {% if transport_verifications %}
+            {% set latest_t = transport_verifications[-1] %}
+            <div class="consumer-check-pill {{ 'is-alert' if latest_t.temp_eval.status == 'breach' else 'is-ok' }}" role="listitem">
+                <span class="consumer-check-icon" aria-hidden="true"><i class="bi {{ 'bi-thermometer-high' if latest_t.temp_eval.status == 'breach' else 'bi-snow2' }}"></i></span>
+                <div class="small lh-sm">
+                    <div class="fw-bold text-dark">2. Cold Storage</div>
+                    <div class="text-muted">{{ latest_t.temp_eval.label }}</div>
+                </div>
+            </div>
+            {% else %}
+            <div class="consumer-check-pill is-pending" role="listitem">
+                <span class="consumer-check-icon" aria-hidden="true"><i class="bi bi-truck"></i></span>
+                <div class="small lh-sm">
+                    <div class="fw-bold text-dark">2. Cold Storage</div>
+                    <div class="text-muted">Not shipped yet</div>
+                </div>
+            </div>
+            {% endif %}
+            {% if retail_verification %}
+            <div class="consumer-check-pill is-ok" role="listitem">
+                <span class="consumer-check-icon" aria-hidden="true"><i class="bi bi-shop"></i></span>
+                <div class="small lh-sm">
+                    <div class="fw-bold text-dark">3. Store Shelf</div>
+                    <div class="text-muted">{{ retail_verification.record.store_name }}{% if retail_verification.record.price %} &bull; ${{ '%.2f'|format(retail_verification.record.price) }}{% endif %}</div>
+                </div>
+            </div>
+            {% else %}
+            <div class="consumer-check-pill is-pending" role="listitem">
+                <span class="consumer-check-icon" aria-hidden="true"><i class="bi bi-shop"></i></span>
+                <div class="small lh-sm">
+                    <div class="fw-bold text-dark">3. Store Shelf</div>
+                    <div class="text-muted">Not listed at store yet</div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
         {% if demo_mode %}
-        <div class="d-flex justify-content-center align-items-center gap-2 flex-wrap no-print">
+        <div class="d-flex justify-content-center align-items-center gap-2 flex-wrap no-print mt-3">
             <span class="small text-muted me-1 fw-medium">Presentation Demo:</span>
             <form action="{{ url_for('toggle_demo_tamper', batch_id=product.batch_id) }}" method="POST" class="d-inline m-0">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
@@ -186,6 +233,64 @@
         <p class="text-danger fw-semibold mt-2 mb-3 fs-6 mx-auto" style="max-width: 720px;">
             <i class="bi bi-exclamation-triangle-fill me-1" aria-hidden="true"></i> {{ result_reason }}
         </p>
+
+        <!-- 3-Step Plain-English Consumer Safety Strip -->
+        <div class="consumer-check-strip mb-3" role="list" aria-label="At-a-glance food check">
+            <div class="consumer-check-pill {{ 'is-alert' if harvest_status == 'tampered' else 'is-ok' }}" role="listitem">
+                <span class="consumer-check-icon" aria-hidden="true">
+                    <i class="bi {{ 'bi-exclamation-lg' if harvest_status == 'tampered' else 'bi-check-lg' }}"></i>
+                </span>
+                <div class="small lh-sm">
+                    <div class="fw-bold text-dark">1. Farm Origin</div>
+                    <div class="{{ 'text-danger fw-semibold' if harvest_status == 'tampered' else 'text-muted' }}">
+                        {{ 'Record Altered' if harvest_status == 'tampered' else (product.farmer_data.farm_location if (product.farmer_data and product.farmer_data.farm_location) else 'Verified') }}
+                    </div>
+                </div>
+            </div>
+            {% if transport_verifications %}
+            {% set latest_t = transport_verifications[-1] %}
+            <div class="consumer-check-pill {{ 'is-alert' if (transport_tampered or latest_t.temp_eval.status == 'breach') else 'is-ok' }}" role="listitem">
+                <span class="consumer-check-icon" aria-hidden="true">
+                    <i class="bi {{ 'bi-exclamation-lg' if transport_tampered else ('bi-thermometer-high' if latest_t.temp_eval.status == 'breach' else 'bi-snow2') }}"></i>
+                </span>
+                <div class="small lh-sm">
+                    <div class="fw-bold text-dark">2. Cold Storage</div>
+                    <div class="{{ 'text-danger fw-semibold' if transport_tampered else 'text-muted' }}">
+                        {{ 'Tampered: ' if transport_tampered else '' }}{{ latest_t.temp_eval.label }}
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="consumer-check-pill is-pending" role="listitem">
+                <span class="consumer-check-icon" aria-hidden="true"><i class="bi bi-truck"></i></span>
+                <div class="small lh-sm">
+                    <div class="fw-bold text-dark">2. Cold Storage</div>
+                    <div class="text-muted">Not shipped yet</div>
+                </div>
+            </div>
+            {% endif %}
+            {% if retail_verification %}
+            <div class="consumer-check-pill {{ 'is-alert' if retail_verification.status == 'tampered' else 'is-ok' }}" role="listitem">
+                <span class="consumer-check-icon" aria-hidden="true">
+                    <i class="bi {{ 'bi-exclamation-lg' if retail_verification.status == 'tampered' else 'bi-shop' }}"></i>
+                </span>
+                <div class="small lh-sm">
+                    <div class="fw-bold text-dark">3. Store Shelf</div>
+                    <div class="{{ 'text-danger fw-semibold' if retail_verification.status == 'tampered' else 'text-muted' }}">
+                        {{ 'Record Altered' if retail_verification.status == 'tampered' else retail_verification.record.store_name }}
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="consumer-check-pill is-pending" role="listitem">
+                <span class="consumer-check-icon" aria-hidden="true"><i class="bi bi-shop"></i></span>
+                <div class="small lh-sm">
+                    <div class="fw-bold text-dark">3. Store Shelf</div>
+                    <div class="text-muted">Not listed at store yet</div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
 
         {% if tamper_incidents %}
         <div class="tamper-incident-panel" role="region" aria-label="Where and When Tampering Was Detected">
@@ -705,6 +810,45 @@
 
     <!-- Full Journey Timeline: Farm -> Transport -> Shop -->
     <div class="col-lg-8">
+        <!-- Quick Plain-English Answers for Shoppers -->
+        <div class="consumer-facts-grid">
+            <div class="consumer-fact-tile">
+                <div class="fact-kicker"><i class="bi bi-flower1 text-success" aria-hidden="true"></i> Where Grown</div>
+                <div class="fact-main">{{ product.farmer_data.farm_location if product.farmer_data and product.farmer_data.farm_location else (product.farmer.full_name or product.farmer.username) }}</div>
+                <div class="fact-sub">{{ product.farming_method }} &bull; Packed {{ product.packaging_date }}</div>
+            </div>
+            <div class="consumer-fact-tile">
+                <div class="fact-kicker"><i class="bi bi-thermometer-half text-primary" aria-hidden="true"></i> Freshness &amp; Cold Chain</div>
+                {% if transport_verifications %}
+                {% set latest_tv = transport_verifications[-1] %}
+                <div class="fact-main {{ 'text-danger' if latest_tv.temp_eval.status == 'breach' else 'text-success' }}">
+                    {{ latest_tv.temp_eval.label }}
+                </div>
+                <div class="fact-sub">{{ transport_verifications|length }} transit check(s) &bull; Latest: {{ latest_tv.record.current_location }}</div>
+                {% else %}
+                <div class="fact-main text-muted">Awaiting Pickup</div>
+                <div class="fact-sub">Shipping checkpoints will appear once picked up.</div>
+                {% endif %}
+            </div>
+            <div class="consumer-fact-tile">
+                <div class="fact-kicker"><i class="bi bi-shop text-warning-emphasis" aria-hidden="true"></i> Retail Store &amp; Price</div>
+                {% if product.retail_data %}
+                <div class="fact-main">{{ product.retail_data.store_name }}</div>
+                <div class="fact-sub">
+                    {% if product.retail_data.price %}${{ '%.2f'|format(product.retail_data.price) }} &bull; {% endif %}{{ product.retail_data.store_location }}
+                </div>
+                {% else %}
+                <div class="fact-main text-muted">Not in Store Yet</div>
+                <div class="fact-sub">Store price and stock appear once stocked.</div>
+                {% endif %}
+            </div>
+            <div class="consumer-fact-tile">
+                <div class="fact-kicker"><i class="bi bi-clock-history text-success" aria-hidden="true"></i> Shelf Life &amp; Pack Size</div>
+                <div class="fact-main">{{ product.retail_data.shelf_life if product.retail_data and product.retail_data.shelf_life else product.quantity }}</div>
+                <div class="fact-sub">Batch Qty: {{ product.quantity }} &bull; Stage: {{ product.status }}</div>
+            </div>
+        </div>
+
         <div class="card card-custom shadow-sm mb-4">
             <div class="card-header card-header-ag d-flex justify-content-between align-items-center">
                 <h2 class="h5 mb-0 fw-bold"><i class="bi bi-signpost-split me-2" aria-hidden="true"></i>Food Journey Timeline</h2>

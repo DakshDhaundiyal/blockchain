@@ -643,6 +643,11 @@ def test_mandatory_live_ganache_acceptance_demonstration(app, monkeypatch):
     assert r_rest.status_code == 200
     html_ok = r_rest.data.decode("utf-8")
     assert "OVERALL RESULT: ALL RECORDED STAGES VERIFIED" in html_ok
+    assert "Where Grown" in html_ok
+    assert "Freshness &amp; Cold Chain" in html_ok
+    assert "1. Farm Origin" in html_ok
+    assert "2. Cold Storage" in html_ok
+    assert "3. Store Shelf" in html_ok
     with app.app_context():
         p_db = Product.query.filter_by(batch_id=batch_id).first()
         assert TransportData.query.filter_by(product_id=p_db.id).first().temperature == "4.0 °C"

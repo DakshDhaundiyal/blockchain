@@ -1231,11 +1231,13 @@ def customer_dashboard():
     batch_statuses = {}
     for p in products:
         vctx = _build_verification_context(p, simulate_tamper=False)
+        latest_tv = vctx["transport_verifications"][-1] if vctx["transport_verifications"] else None
         batch_statuses[p.batch_id] = {
             "status": vctx["verification_status"],
             "label": vctx["result_label"],
             "reason": vctx["result_reason"],
             "pending": vctx["has_pending_stages"],
+            "latest_temp": latest_tv["temp_eval"] if latest_tv else None,
         }
     return render_template('customer.html', products=products, batch_statuses=batch_statuses)
 
