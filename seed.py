@@ -1,26 +1,13 @@
+import argparse
 import os
+import sys
 from datetime import timedelta
-from app import app
+from app import app, is_demo_mode
 from models import db, User, Product, FarmerData, TransportData, RetailData, Feedback, utcnow
 from blockchain import (
     store_hash_detailed, store_stage_hash,
     compute_batch_hash, compute_transport_hash, compute_retail_hash,
-    load_config
 )
-from utils import generate_batch_qr
-
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-UPLOAD_FOLDER = os.path.join(BASE_DIR, 'static', 'uploads')
-QR_FOLDER = os.path.join(BASE_DIR, 'static', 'qr')
-
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-os.makedirs(QR_FOLDER, exist_ok=True)
-
-
-def generate_qr(batch_id):
-    cfg = load_config()
-    base_url = cfg.get('BASE_URL', 'http://localhost:5000')
-    return generate_batch_qr(batch_id, QR_FOLDER, base_url)
 
 
 def seed():
@@ -29,26 +16,26 @@ def seed():
         db.drop_all()
         db.create_all()
 
-        print("Seeding users...")
+        print("Seeding demo users (DEMO_MODE enabled)...")
         admin = User(username='admin', role='admin', full_name='Global Admin', contact='admin@trustharvest.org')
-        admin.set_password('admin123')
+        admin.set_password(os.environ.get('DEMO_ADMIN_PASSWORD', 'admin123'))
 
         farmer = User(username='farmer_john', role='farmer', full_name='John Evergreen', contact='+1-509-555-0192')
-        farmer.set_password('farmer123')
+        farmer.set_password(os.environ.get('DEMO_FARMER_PASSWORD', 'farmer123'))
 
         transporter = User(username='transporter_dan', role='transporter', full_name='Dan Logistics Ltd', contact='+1-206-555-0144')
-        transporter.set_password('transit123')
+        transporter.set_password(os.environ.get('DEMO_TRANSPORTER_PASSWORD', 'transit123'))
 
         retailer = User(username='retailer_sarah', role='retailer', full_name='Whole Harvest Market', contact='+1-206-555-0188')
-        retailer.set_password('retail123')
+        retailer.set_password(os.environ.get('DEMO_RETAILER_PASSWORD', 'retail123'))
 
         customer = User(username='customer_amy', role='customer', full_name='Amy Chen', contact='amy.c@example.com')
-        customer.set_password('customer123')
+        customer.set_password(os.environ.get('DEMO_CUSTOMER_PASSWORD', 'customer123'))
 
         db.session.add_all([admin, farmer, transporter, retailer, customer])
         db.session.commit()
 
-        print("Seeding sample batches & anchoring multi-stage hashes to Ethereum V2 smart contract...")
+        print("Seeding sample batches & anchoring multi-stage hashes on-chain...")
 
         # Batch 1: Organic Honeycrisp Apples
         batch1_id = "TH-APPLES-001"
@@ -70,7 +57,6 @@ def seed():
 
         print(f"Storing Harvest Hash for {batch1_id} on-chain: {hash1}")
         meta1 = store_hash_detailed(batch1_id, hash1, role="farmer")
-        qr1 = generate_qr(batch1_id)
 
         p1 = Product(
             batch_id=batch1_id,
@@ -80,11 +66,12 @@ def seed():
             packaging_date=batch1_date,
             farmer_id=farmer.id,
             image=batch1_img,
-            qr_code=qr1,
+            qr_code=f"qr_{batch1_id}.png",
             on_chain_hash=hash1,
             tx_hash=meta1.get("tx_hash"),
             block_number=meta1.get("block_number"),
             contract_address=meta1.get("contract_address"),
+            contract_version=meta1.get("contract_version", "V2"),
             signer_address=meta1.get("signer_address"),
             status="In Stock",
             created_at=utcnow() - timedelta(days=5)
@@ -175,7 +162,6 @@ def seed():
 
         print(f"Storing Harvest Hash for {batch2_id} on-chain: {hash2}")
         meta2 = store_hash_detailed(batch2_id, hash2, role="farmer")
-        qr2 = generate_qr(batch2_id)
 
         p2 = Product(
             batch_id=batch2_id,
@@ -185,11 +171,12 @@ def seed():
             packaging_date=batch2_date,
             farmer_id=farmer.id,
             image=batch2_img,
-            qr_code=qr2,
+            qr_code=f"qr_{batch2_id}.png",
             on_chain_hash=hash2,
             tx_hash=meta2.get("tx_hash"),
             block_number=meta2.get("block_number"),
             contract_address=meta2.get("contract_address"),
+            contract_version=meta2.get("contract_version", "V2"),
             signer_address=meta2.get("signer_address"),
             status="In Transit",
             created_at=utcnow() - timedelta(days=2)
@@ -242,5 +229,19 @@ def seed():
         print("Database and TrustHarvestV2 multi-stage blockchain seed complete!")
 
 
-if __name__ == '__main__':
+def main(argv=None):
+    parser = argparse.ArgumentParser(description='Seed TrustHarvest demo data (requires DEMO_MODE=true or --demo).')
+    parser.add_argument('--demo', action='store_true', help='Explicitly allow creating demo logins and sample batches.')
+    args = parser.parse_args(argv)
+    if not (args.demo or is_demo_mode()):
+        print(
+            'Refusing to seed demo passwords while DEMO_MODE is off. '
+            'Run with "--demo" or set DEMO_MODE=true for local demonstrations.',
+            file=sys.stderr,
+        )
+        sys.exit(1)
     seed()
+
+
+if __name__ == '__main__':
+    main()

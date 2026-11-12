@@ -1,44 +1,46 @@
 {% extends "base.html" %}
 
-{% block title %}Logistics & Transport Portal - TrustHarvest{% endblock %}
+{% block title %}Transport & Logistics Portal - TrustHarvest{% endblock %}
 
 {% block content %}
+{% set current_step = 3 %}
+{% include "workflow_stepper.html" %}
+
 <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
     <div>
-        <span class="badge bg-primary-subtle text-primary border border-primary-subtle mb-1">Step 2 of 3 &bull; Cold-Chain Transit</span>
-        <h1 class="h2 fw-bold mb-1"><i class="bi bi-truck text-primary me-2" aria-hidden="true"></i>Logistics &amp; Transport Management</h1>
-        <p class="text-muted mb-0">Log shipment checkpoints, vehicle location, and cold-chain temperature readings.</p>
+        <h1 class="h2 fw-bold mb-1"><i class="bi bi-truck text-primary me-2" aria-hidden="true"></i>Transport &amp; Cold-Chain Portal</h1>
+        <p class="text-muted mb-0">Log transit checkpoints, current location, and storage temperature as shipments move.</p>
     </div>
     <div class="d-flex align-items-center gap-2">
         <a href="{{ url_for('workflow_entry', stage='transport') }}" class="btn btn-sm btn-outline-primary fw-semibold">
-            <i class="bi bi-diagram-3 me-1" aria-hidden="true"></i> Guided Workflow Mode
+            <i class="bi bi-diagram-3 me-1" aria-hidden="true"></i> Guided Workflow
         </a>
-        <span class="badge bg-primary py-2 px-3"><i class="bi bi-person-badge me-1" aria-hidden="true"></i> Transporter: {{ session.get('username') }}</span>
+        <span class="badge bg-primary py-2 px-3"><i class="bi bi-person-badge me-1" aria-hidden="true"></i> {{ session.get('username') }}</span>
     </div>
 </div>
 
-<div class="row g-4">
+<div class="row g-3 g-lg-4">
     <div class="col-lg-5">
         <div class="card card-custom shadow-sm">
             <div class="card-header card-header-ag">
-                <h2 class="h5 mb-0 fw-bold"><i class="bi bi-geo-alt-fill me-2" aria-hidden="true"></i>Log Transport Checkpoint</h2>
+                <h2 class="h5 mb-0 fw-bold"><i class="bi bi-geo-alt-fill me-2" aria-hidden="true"></i>Add Transport Checkpoint</h2>
             </div>
-            <div class="card-body p-4">
+            <div class="card-body p-3 p-md-4">
                 <form method="POST" action="{{ url_for('add_transport_data') }}">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                     <div class="mb-3">
-                        <label for="tr-product" class="form-label fw-semibold">Select Harvest Batch</label>
+                        <label for="tr-product" class="form-label fw-semibold">Select Batch</label>
                         <select id="tr-product" name="product_id" class="form-select" required>
-                            <option value="" disabled selected>-- Select Batch to Update --</option>
+                            <option value="" disabled selected>-- Select Batch --</option>
                             {% for p in products %}
                             <option value="{{ p.id }}">
-                                {{ p.batch_id }} - {{ p.name }} (Current: {{ p.status }})
+                                {{ p.batch_id }} - {{ p.name }} ({{ p.status }})
                             </option>
                             {% endfor %}
                         </select>
                     </div>
                     <div class="mb-3">
-                        <label for="tr-status" class="form-label fw-semibold">Logistics Status</label>
+                        <label for="tr-status" class="form-label fw-semibold">Checkpoint Stage</label>
                         <select id="tr-status" name="status" class="form-select" required>
                             <option value="Picked Up from Farm">Picked Up from Farm</option>
                             <option value="In Transit (Cold-Storage)">In Transit (Cold-Storage)</option>
@@ -49,25 +51,25 @@
                         </select>
                     </div>
                     <div class="mb-3">
-                        <label for="tr-location" class="form-label fw-semibold">Current Location / Facility</label>
-                        <input id="tr-location" type="text" name="current_location" class="form-control" placeholder="e.g. Interstate 90 East, Mile 142 or Spokane Depot" required>
+                        <label for="tr-location" class="form-label fw-semibold">Location / Facility</label>
+                        <input id="tr-location" type="text" name="current_location" class="form-control" placeholder="e.g. Spokane Regional Cold Hub" required>
                     </div>
-                    <div class="row mb-3">
+                    <div class="row g-2 mb-3">
                         <div class="col-6">
                             <label for="tr-temp" class="form-label fw-semibold">Temperature</label>
                             <input id="tr-temp" type="text" name="temperature" class="form-control" placeholder="e.g. 3.5 °C" value="4.0 °C">
                         </div>
                         <div class="col-6">
-                            <label for="tr-vehicle" class="form-label fw-semibold">Vehicle / Fleet ID</label>
+                            <label for="tr-vehicle" class="form-label fw-semibold">Vehicle ID</label>
                             <input id="tr-vehicle" type="text" name="vehicle_number" class="form-control" placeholder="e.g. TRK-7842" required>
                         </div>
                     </div>
                     <div class="mb-4">
                         <label for="tr-notes" class="form-label fw-semibold">Condition Notes</label>
-                        <textarea id="tr-notes" name="notes" class="form-control" rows="2" placeholder="Cold storage intact, packaging inspected..."></textarea>
+                        <textarea id="tr-notes" name="notes" class="form-control" rows="2" placeholder="Cold storage intact, seal inspected..."></textarea>
                     </div>
                     <button type="submit" class="btn btn-primary w-100 py-2 fw-bold">
-                        <i class="bi bi-save me-1"></i> Update Shipment Status
+                        <i class="bi bi-save me-1"></i> Record Transport Checkpoint
                     </button>
                 </form>
             </div>
@@ -77,7 +79,7 @@
     <div class="col-lg-7">
         <div class="card card-custom shadow-sm">
             <div class="card-header card-header-ag d-flex justify-content-between align-items-center">
-                <h2 class="h5 mb-0 fw-bold"><i class="bi bi-clock-history me-2" aria-hidden="true"></i>Recent Transport Checkpoints</h2>
+                <h2 class="h5 mb-0 fw-bold"><i class="bi bi-clock-history me-2" aria-hidden="true"></i>Recent Checkpoints Logged</h2>
                 <span class="badge bg-secondary">{{ transport_entries|length }} Updates</span>
             </div>
             <div class="card-body p-0">
@@ -86,10 +88,10 @@
                         <thead class="table-light">
                             <tr>
                                 <th scope="col">Batch ID</th>
-                                <th scope="col">Status &amp; Anchor</th>
-                                <th scope="col">Location &amp; Telemetry</th>
+                                <th scope="col">Checkpoint</th>
+                                <th scope="col">Location &amp; Temp</th>
                                 <th scope="col">Vehicle &amp; Time</th>
-                                <th scope="col">Action</th>
+                                <th scope="col">View</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -99,13 +101,13 @@
                                 <td class="fw-bold font-monospace text-success">{{ t.product.batch_id }}</td>
                                 <td>
                                     <span class="badge bg-primary text-white d-inline-block mb-1">{{ t.status }}</span>
-                                    {% if t.tx_hash %}
                                     <div>
-                                        <span class="badge bg-success-subtle text-success border border-success-subtle smaller">
-                                            <i class="bi bi-link-45deg"></i> Anchored #{{ t.block_number }}
-                                        </span>
+                                        {% if t.on_chain_hash %}
+                                        <span class="badge bg-success-subtle text-success border border-success-subtle smaller">Recorded</span>
+                                        {% else %}
+                                        <span class="badge bg-secondary-subtle text-secondary smaller">Pending</span>
+                                        {% endif %}
                                     </div>
-                                    {% endif %}
                                 </td>
                                 <td>
                                     <div>{{ t.current_location }}</div>
@@ -116,7 +118,7 @@
                                     <div class="text-muted smaller">{{ t.timestamp.strftime('%Y-%m-%d %H:%M') if t.timestamp else '' }}</div>
                                 </td>
                                 <td>
-                                    <a href="{{ url_for('verify_batch', batch_id=t.product.batch_id) }}" class="btn btn-sm btn-outline-success" title="Verify {{ t.product.batch_id }}">
+                                    <a href="{{ url_for('verify_batch', batch_id=t.product.batch_id) }}" class="btn btn-sm btn-outline-success" title="View journey for {{ t.product.batch_id }}">
                                         <i class="bi bi-eye"></i>
                                     </a>
                                 </td>
@@ -125,7 +127,7 @@
                             <tr>
                                 <td colspan="5" class="text-center py-5 text-muted">
                                     <i class="bi bi-truck fs-1 d-block mb-2"></i>
-                                    No transit checkpoint updates logged yet.
+                                    No transport checkpoints logged yet.
                                 </td>
                             </tr>
                             {% endfor %}

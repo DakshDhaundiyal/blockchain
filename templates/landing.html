@@ -57,17 +57,18 @@
           </div>
         </form>
 
-        <!-- Quick Try Sample Pills (No memorization required) -->
+        <!-- Quick Links (Dynamic based on existing batches) -->
         <div class="d-flex align-items-center flex-wrap gap-2 mb-3 small">
-          <span class="text-muted fw-medium">Try a sample:</span>
-          <a href="{{ url_for('verify_batch', batch_id='TH-APPLES-001') }}" class="badge rounded-pill text-bg-light border text-decoration-none px-3 py-2 text-success fw-semibold">
-            <i class="bi bi-patch-check me-1"></i> TH-APPLES-001 (Apples)
+          {% if recent_products %}
+          <span class="text-muted fw-medium">Recent batches:</span>
+          {% for sample in recent_products[:2] %}
+          <a href="{{ url_for('verify_batch', batch_id=sample.batch_id) }}" class="badge rounded-pill text-bg-light border text-decoration-none px-3 py-2 text-success fw-semibold">
+            <i class="bi bi-patch-check me-1"></i> {{ sample.batch_id }} ({{ sample.name }})
           </a>
-          <a href="{{ url_for('verify_batch', batch_id='TH-TOMATO-002') }}" class="badge rounded-pill text-bg-light border text-decoration-none px-3 py-2 text-primary fw-semibold">
-            <i class="bi bi-truck me-1"></i> TH-TOMATO-002 (Tomatoes)
-          </a>
+          {% endfor %}
+          {% endif %}
           <a href="{{ url_for('customer_dashboard') }}#scan" class="badge rounded-pill text-bg-light border text-decoration-none px-3 py-2 text-dark fw-semibold">
-            <i class="bi bi-qr-code-scan me-1"></i> Scan QR / Demo
+            <i class="bi bi-qr-code-scan me-1"></i> Scan QR Code
           </a>
         </div>
 
@@ -75,16 +76,11 @@
         <div class="hero-trust-row">
           <span class="trust-badge-item">
             <i class="bi bi-shield-check"></i>
-            SHA-256 Hash
+            Digital Fingerprints
           </span>
           <span class="trust-badge-item">
-            <svg class="trust-eth-icon" viewBox="0 0 784.37 1277.39" width="13" height="13">
-              <polygon fill="#1e40af" points="392.07,0 383.5,29.11 383.5,873.74 392.07,882.29 784.13,650.54 "/>
-              <polygon fill="#3b82f6" points="392.07,0 0,650.54 392.07,882.29 392.07,472.33 "/>
-              <polygon fill="#1e40af" points="392.07,956.52 387.24,962.41 387.24,1263.28 392.07,1277.38 784.37,724.89 "/>
-              <polygon fill="#3b82f6" points="392.07,1277.38 392.07,956.52 0,724.89 "/>
-            </svg>
-            Ethereum Smart Contract
+            <i class="bi bi-check2-circle text-success"></i>
+            End-to-End History
           </span>
           <span class="trust-badge-item">
             <i class="bi bi-lock-fill"></i>
@@ -98,7 +94,13 @@
         <div class="farm-table-card">
           <div class="ft-header">
             <h2 class="ft-title">From Farm to Table</h2>
-            <p class="ft-subtitle">Every stage checked &amp; locked on blockchain. Use <strong>Switch Role</strong> in the top bar to try each step.</p>
+            <p class="ft-subtitle">
+              {% if demo_mode %}
+                Every stage checked &amp; recorded. Use <strong>Switch Role</strong> above to try each step.
+              {% else %}
+                Every harvest, shipment, and store check is easy for shoppers to verify.
+              {% endif %}
+            </p>
           </div>
 
           <div class="ft-timeline">
@@ -267,108 +269,18 @@
   </div>
 </div>
 
-<!-- ══════════════════════ BLOCKCHAIN NETWORK STATUS ═════════ -->
-<div class="container" id="blockchain-status">
-  <div class="network-strip-card">
-    <!-- Brand / Title item -->
-    <div class="net-left-brand">
-      <div class="net-icon-wrap"><i class="bi bi-diagram-3-fill"></i></div>
-      <div>
-        <div class="net-title">Blockchain Network Status</div>
-        <div class="net-desc">Live status from Ganache local network</div>
-      </div>
-    </div>
-
-    <div class="net-v-divider"></div>
-
-    <!-- Network -->
-    <div class="net-info-col">
-      <div class="net-col-label">Network</div>
-      {% if network_block is not none %}
-        <div class="net-col-val"><span class="dot-live-green"></span> Ganache (Local)</div>
-        <div class="net-col-sub"><span class="dot-sub-green">●</span> Online</div>
-      {% else %}
-        <div class="net-col-val"><span class="dot-live-amber"></span> Ganache (Local)</div>
-        <div class="net-col-sub" style="color:#b45309;"><span>●</span> Standby / Offline</div>
-      {% endif %}
-    </div>
-
-    <div class="net-v-divider"></div>
-
-    <!-- Contract Status -->
-    <div class="net-info-col">
-      <div class="net-col-label">Contract Status</div>
-      <div class="net-col-val">
-        {% if contract_address %}
-          <span class="dot-live-green"></span> Deployed &amp; Active
-        {% else %}
-          <span class="dot-live-amber"></span> Standby
-        {% endif %}
-      </div>
-    </div>
-
-    <div class="net-v-divider"></div>
-
-    <!-- Contract Address -->
-    <div class="net-info-col">
-      <div class="net-col-label">Contract Address</div>
-      <div class="net-col-val mono">
-        <span>{{ contract_address or '0xBC4B16a9...179348' }}</span>
-        {% if raw_contract_address %}
-        <button type="button" class="btn-copy-address" onclick="copyAddress('{{ raw_contract_address }}', this)" title="Copy full address">
-          <i class="bi bi-copy"></i>
-        </button>
-        {% else %}
-        <i class="bi bi-copy" style="font-size:12px;color:#9ca3af;cursor:pointer;"></i>
-        {% endif %}
-      </div>
-    </div>
-
-    <div class="net-v-divider"></div>
-
-    <!-- Latest Block -->
-    <div class="net-info-col">
-      <div class="net-col-label">Latest Block</div>
-      <div class="net-col-val mono">
-        #{{ network_block if network_block is not none else '—' }}
-        <span class="block-time">{{ 'Live' if network_block is not none else 'Offline' }}</span>
-      </div>
-    </div>
-
-    <div class="net-v-divider"></div>
-
-    <!-- Hash Algorithm -->
-    <div class="net-info-col">
-      <div class="net-col-label">Hash Algorithm</div>
-      <div class="net-col-val mono">SHA-256</div>
-    </div>
-
-    <div class="net-v-divider"></div>
-
-    <!-- Smart Contract -->
-    <div class="net-info-col">
-      <div class="net-col-label">Smart Contract</div>
-      <div class="net-col-val mono">TrustHarvest{{ contract_version or 'V2' }} &bull; Solidity 0.8.19</div>
-    </div>
-  </div>
-</div>
-
-<!-- ══════════════════════ LIVE LEDGER TABLE ══════════════════ -->
+<!-- ══════════════════════ RECENT BATCHES TABLE ══════════════════ -->
 <div class="container ledger-section-wrap">
   <div class="ledger-box-card">
     <div class="ledger-top-bar">
       <div class="ledger-title-group">
         <div class="ledger-icon-box"><i class="bi bi-file-earmark-text"></i></div>
         <div>
-          <h2 class="ledger-heading">Live Traceability Ledger</h2>
-          <p class="ledger-subheading">Recent harvest batches from the blockchain network</p>
+          <h2 class="ledger-heading">Recent Food Batches</h2>
+          <p class="ledger-subheading">Select any batch to view its Farm &rarr; Transport &rarr; Shop history</p>
         </div>
       </div>
       <div class="ledger-top-actions">
-        <span class="badge-live-records">
-          <span class="live-dot-pulse"></span>
-          Live Records
-        </span>
         <a href="{{ url_for('customer_dashboard') }}" class="btn-ledger-view-all">
           View All <i class="bi bi-arrow-right"></i>
         </a>
@@ -383,8 +295,8 @@
             <th scope="col">PRODUCT</th>
             <th scope="col">FARMING METHOD</th>
             <th scope="col">QUANTITY</th>
-            <th scope="col">STATUS</th>
-            <th scope="col">BLOCKCHAIN</th>
+            <th scope="col">STAGE</th>
+            <th scope="col">RECORD</th>
             <th scope="col">ACTION</th>
           </tr>
         </thead>
@@ -412,8 +324,8 @@
             <td class="td-chain">
               {% if p.on_chain_hash %}
                 <span class="pill-chain-verified">
-                  <i class="bi bi-link-45deg"></i>
-                  On-Chain
+                  <i class="bi bi-check-circle"></i>
+                  Recorded
                 </span>
               {% else %}
                 <span class="pill-chain-pending">
@@ -424,7 +336,7 @@
             </td>
             <td class="td-action">
               <a href="{{ url_for('verify_batch', batch_id=p.batch_id) }}" class="btn-table-trace">
-                View Trace <i class="bi bi-arrow-right"></i>
+                Check Batch <i class="bi bi-arrow-right"></i>
               </a>
             </td>
           </tr>
@@ -440,15 +352,5 @@
     </div>
   </div>
 </div>
-
-<script>
-function copyAddress(address, btn) {
-  navigator.clipboard.writeText(address).then(function() {
-    const original = btn.innerHTML;
-    btn.innerHTML = '<i class="bi bi-check-lg text-success"></i>';
-    setTimeout(function() { btn.innerHTML = original; }, 1800);
-  });
-}
-</script>
 
 {% endblock %}

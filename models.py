@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import text
+from sqlalchemy import inspect, text
 from werkzeug.security import generate_password_hash, check_password_hash
 
 db = SQLAlchemy()
@@ -43,13 +43,19 @@ class Product(db.Model):
     tx_hash = db.Column(db.String(80), nullable=True)
     block_number = db.Column(db.Integer, nullable=True)
     contract_address = db.Column(db.String(64), nullable=True)
+    contract_version = db.Column(db.String(10), nullable=True)
     signer_address = db.Column(db.String(64), nullable=True)
     status = db.Column(db.String(50), default='Harvested') # Harvested, In Transit, Delivered to Retail, In Stock, Sold
     created_at = db.Column(db.DateTime, default=utcnow)
 
     farmer = db.relationship('User', foreign_keys=[farmer_id], backref='farmer_products')
     farmer_data = db.relationship('FarmerData', backref='product', uselist=False, cascade='all, delete-orphan')
-    transport_data = db.relationship('TransportData', backref='product', cascade='all, delete-orphan', order_by='TransportData.timestamp.asc()')
+    transport_data = db.relationship(
+        'TransportData',
+        backref='product',
+        cascade='all, delete-orphan',
+        order_by='(TransportData.timestamp.asc(), TransportData.id.asc())'
+    )
     retail_data = db.relationship('RetailData', backref='product', uselist=False, cascade='all, delete-orphan')
     feedback = db.relationship('Feedback', backref='product', cascade='all, delete-orphan', order_by='Feedback.created_at.desc()')
 
@@ -132,18 +138,19 @@ class Feedback(db.Model):
 
 def ensure_schema_columns():
     """
-    Idempotent SQLite schema upgrader: adds newly introduced blockchain receipt columns
-    to existing tables without wiping existing user/product records.
+    Idempotent schema upgrader: adds newly introduced blockchain receipt/version columns
+    to existing tables without wiping existing user/product records (SQLite & PostgreSQL).
     """
     engine = db.engine
-    if engine.dialect.name != 'sqlite':
-        return
+    inspector = inspect(engine)
+    existing_tables = set(inspector.get_table_names())
 
     expected_columns = {
         'products': [
             ('tx_hash', 'VARCHAR(80)'),
             ('block_number', 'INTEGER'),
             ('contract_address', 'VARCHAR(64)'),
+            ('contract_version', 'VARCHAR(10)'),
             ('signer_address', 'VARCHAR(64)'),
         ],
         'transport_data': [
@@ -162,8 +169,9 @@ def ensure_schema_columns():
 
     with engine.begin() as conn:
         for table_name, cols in expected_columns.items():
-            rows = conn.execute(text(f"PRAGMA table_info({table_name})")).fetchall()
-            existing_names = {row[1] for row in rows}
+            if table_name not in existing_tables:
+                continue
+            existing_names = {col['name'] for col in inspector.get_columns(table_name)}
             for col_name, col_type in cols:
                 if col_name not in existing_names:
                     conn.execute(text(f"ALTER TABLE {table_name} ADD COLUMN {col_name} {col_type}"))

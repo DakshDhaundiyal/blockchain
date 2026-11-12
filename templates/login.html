@@ -5,14 +5,15 @@
 {% block content %}
 <div class="row justify-content-center py-5">
     <div class="col-md-6 col-lg-5">
-        <!-- Quick Seamless Persona Switcher Card -->
+        {% if demo_mode %}
+        <!-- Quick Seamless Persona Switcher Card (Demo Mode Only) -->
         <div class="card card-custom shadow-sm mb-4 border-success-subtle" style="background:#f0fdf4;border-radius:14px;">
             <div class="card-body p-4 text-center">
                 <div class="d-inline-flex p-2 rounded-circle bg-success-subtle text-success mb-2" aria-hidden="true">
                     <i class="bi bi-lightning-charge-fill" style="font-size:22px;"></i>
                 </div>
-                <h1 class="h5 fw-bold mb-1 text-success-emphasis">Instant Role Switcher</h1>
-                <p class="text-muted small mb-3">No password required. Switch directly to any stakeholder dashboard:</p>
+                <h1 class="h5 fw-bold mb-1 text-success-emphasis">Instant Demo Role Switcher</h1>
+                <p class="text-muted small mb-3">Demo Mode is active. Switch directly to any stakeholder dashboard:</p>
                 <div class="d-grid gap-2">
                     <a href="{{ url_for('switch_role', role='farmer', next=request.args.get('next')) if request.args.get('next') else url_for('switch_role', role='farmer') }}" class="btn btn-outline-success text-start d-flex align-items-center justify-content-between px-3 py-2" style="border-radius:10px;">
                         <span><i class="bi bi-tree-fill me-2" aria-hidden="true"></i><strong>Farmer / Producer</strong></span>
@@ -37,10 +38,11 @@
                 </div>
             </div>
         </div>
+        {% endif %}
 
         <div class="card card-custom shadow">
             <div class="card-header card-header-ag text-center py-3">
-                <h2 class="h6 mb-0 fw-semibold text-muted"><i class="bi bi-key me-2" aria-hidden="true"></i>Or sign in with custom credentials</h2>
+                <h1 class="h5 mb-0 fw-bold text-dark"><i class="bi bi-key me-2" aria-hidden="true"></i>Sign In to TrustHarvest</h1>
             </div>
             <div class="card-body p-4">
                 <form method="POST" action="{{ url_for('login', next=request.args.get('next')) if request.args.get('next') else url_for('login') }}">

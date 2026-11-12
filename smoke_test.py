@@ -76,10 +76,12 @@ def run_smoke_test():
         batch_id = product.batch_id
         print(f" Created Product: {product.name} (Batch ID: {batch_id})")
 
-        # Check QR Code exists
-        qr_path = os.path.join(app.root_path, 'static', 'qr', f"qr_{batch_id}.png")
-        assert os.path.exists(qr_path), f"QR code file not found at {qr_path}"
-        print(f" Generated QR code verified at {qr_path}")
+        # Check dynamic in-memory QR Code endpoint returns PNG
+        qr_resp = client.get(f'/qr/{batch_id}.png')
+        assert qr_resp.status_code == 200, f"QR endpoint failed: {qr_resp.status_code}"
+        assert qr_resp.mimetype == 'image/png'
+        assert qr_resp.data[:8] == b'\x89PNG\r\n\x1a\n'
+        print(f" Dynamic in-memory QR PNG verified at /qr/{batch_id}.png")
 
         # Check On-Chain Hash
         expected_hash = compute_batch_hash(
@@ -150,27 +152,28 @@ def run_smoke_test():
         assert r_record.tx_hash is not None, "Retail stage should anchor tx_hash on TrustHarvestV2!"
         print(f" Retail record verified: ${r_record.price}/unit at {r_record.store_name} (Block #{r_record.block_number})")
 
-    # 6. Verify shows "BLOCKCHAIN VERIFIED" + JSON API Check
+    # 6. Verify shows "Verified" + JSON API Check
     print("\n[Step 6] Customer accesses /verify/<batch_id> & /api/verify/<batch_id> (Clean Authentic State)...")
     resp = client.get(f'/verify/{batch_id}')
     assert resp.status_code == 200
     html_content = resp.data.decode('utf-8')
-    assert 'BLOCKCHAIN VERIFIED' in html_content, "Expected BLOCKCHAIN VERIFIED badge!"
+    assert 'Verified' in html_content, "Expected Verified status label!"
     assert 'Integrity Score: 100/100' in html_content, "Expected full multi-stage Integrity Score: 100/100!"
-    assert 'Stage 1: Farm Harvest & Stamping' in html_content
-    assert 'Stage 2: Transport' in html_content
-    assert 'Stage 3: Retail Stock & Distribution' in html_content
+    assert 'Farm' in html_content
+    assert 'Transport' in html_content
+    assert 'Shop' in html_content
 
     api_resp = client.get(f'/api/verify/{batch_id}')
     assert api_resp.status_code == 200
     api_data = api_resp.get_json()
     assert api_data['verification_status'] == 'verified'
+    assert api_data['result_label'] == 'Verified'
     assert api_data['trust_score']['score'] == 100
-    assert api_data['transport_checkpoints'][0]['verification'] == 'verified'
-    assert api_data['retail']['verification'] == 'verified'
+    assert api_data['timeline']['transport'][0]['verification'] == 'verified'
+    assert api_data['timeline']['shop']['verification'] == 'verified'
     print(" Authentic Verification & JSON Proof API succeeded!")
 
-    # 7. Tamper with one DB field and verify it shows "TAMPER DETECTED"
+    # 7. Tamper with one DB field and verify it shows "Changed after recording"
     print("\n[Step 7] Tampering with one database field (changing farming_method to fake data)...")
     with app.app_context():
         p_to_tamper = db.session.get(Product, product_id)
@@ -183,8 +186,8 @@ def run_smoke_test():
     resp = client.get(f'/verify/{batch_id}')
     assert resp.status_code == 200
     html_content = resp.data.decode('utf-8')
-    assert 'TAMPER DETECTED' in html_content, "Expected TAMPER DETECTED badge after database tampering!"
-    assert 'BLOCKCHAIN VERIFIED' not in html_content, "Did not expect BLOCKCHAIN VERIFIED on tampered record!"
+    assert 'Changed after recording' in html_content, "Expected Changed after recording status after database tampering!"
+    assert 'All farm, transport, and store details match' not in html_content
     print(" Tamper detection succeeded! 'TAMPER DETECTED' badge confirmed.")
 
     print("\n" + "=" * 60)

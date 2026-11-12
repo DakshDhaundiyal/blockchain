@@ -18,14 +18,36 @@ if not logger.handlers:
     logger.setLevel(logging.INFO)
 
 
-def generate_batch_qr(batch_id: str, qr_folder: str, base_url: str = "http://localhost:5000") -> str:
+def _is_localhost_url(url: str) -> bool:
+    low = (url or "").strip().lower()
+    return any(tok in low for tok in ("//localhost", "//127.0.0.1", "localhost:", "127.0.0.1:"))
+
+
+def resolve_qr_base_url(request_url_root: str | None = None) -> str:
     """
-    Generates a high-quality QR code pointing to the batch verification URL.
-    Returns the generated filename.
+    Resolves public BASE_URL from environment (BASE_URL or RENDER_EXTERNAL_URL) first,
+    then non-localhost request origin. Never returns a localhost URL.
     """
-    os.makedirs(qr_folder, exist_ok=True)
-    clean_base = (base_url or "http://localhost:5000").rstrip("/")
-    verify_url = f"{clean_base}/verify/{batch_id}"
+    for candidate in (
+        os.environ.get("BASE_URL", ""),
+        os.environ.get("RENDER_EXTERNAL_URL", ""),
+        request_url_root or "",
+    ):
+        clean = str(candidate).strip().rstrip("/")
+        if clean and not _is_localhost_url(clean):
+            return clean
+    return ""
+
+
+def generate_batch_qr_bytes(batch_id: str, base_url: str = "") -> BytesIO:
+    """
+    Generates a QR code PNG in memory (no local disk persistence required)
+    pointing to <base_url>/verify/<batch_id>. Never encodes localhost.
+    """
+    clean_base = str(base_url or "").strip().rstrip("/")
+    if _is_localhost_url(clean_base):
+        clean_base = ""
+    verify_url = f"{clean_base}/verify/{batch_id}" if clean_base else f"/verify/{batch_id}"
 
     qr = qrcode.QRCode(
         version=1,
@@ -37,12 +59,56 @@ def generate_batch_qr(batch_id: str, qr_folder: str, base_url: str = "http://loc
     qr.make(fit=True)
     qr_img = qr.make_image(fill_color="#1b4332", back_color="white")
 
+    buf = BytesIO()
+    qr_img.save(buf, format="PNG")
+    buf.seek(0)
+    return buf
+
+
+def generate_batch_qr(batch_id: str, qr_folder: str, base_url: str = "") -> str:
+    """
+    Optional local helper returning the QR filename; production serves QR codes dynamically via /qr/<batch_id>.png.
+    """
+    os.makedirs(qr_folder, exist_ok=True)
+    resolved = base_url if (base_url and not _is_localhost_url(base_url)) else resolve_qr_base_url()
+    buf = generate_batch_qr_bytes(batch_id, resolved)
     qr_filename = f"qr_{batch_id}.png"
     dest_path = os.path.join(qr_folder, qr_filename)
     with open(dest_path, "wb") as f:
-        qr_img.save(f)
+        f.write(buf.getvalue())
     logger.info("Generated QR code for batch %s -> %s", batch_id, dest_path)
     return qr_filename
+
+
+def sanitize_error_text(msg: str) -> str:
+    """
+    Redacts RPC provider API keys, DB passwords, and private keys from error text before logging or display.
+    """
+    text = str(msg or "")
+    # Mask explicit private-key values configured in environment variables
+    for env_key in (
+        "SECRET_KEY",
+        "DEPLOYER_PRIVATE_KEY",
+        "FARMER_PRIVATE_KEY",
+        "TRANSPORTER_PRIVATE_KEY",
+        "RETAILER_PRIVATE_KEY",
+        "SIGNER_PRIVATE_KEY",
+    ):
+        secret_val = (os.environ.get(env_key) or "").strip()
+        if len(secret_val) >= 8 and secret_val in text:
+            text = text.replace(secret_val, "***REDACTED***")
+    # Mask Alchemy / Infura style RPC API keys in URLs
+    text = re.sub(r"(https?://[^\s/]+/(?:v2|v3)/)[A-Za-z0-9_-]{8,}", r"\1***REDACTED***", text)
+    # Mask database URI userinfo passwords
+    text = re.sub(r"(postgresql(?:\+psycopg2)?://[^:\s]+:)[^@\s]+(@)", r"\1***REDACTED***\2", text)
+    # Mask explicit private_key / key assignments or key 0x... patterns
+    text = re.sub(
+        r"((?:private[_-]?)?key\s*(?:[:=]\s*|\s+))(?:0x)?[0-9a-fA-F]{32,}",
+        r"\1***REDACTED***",
+        text,
+        flags=re.IGNORECASE,
+    )
+    return text
 
 
 def validate_image_file(file_storage, allowed_extensions=None) -> tuple[bool, str]:

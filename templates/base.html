@@ -43,20 +43,21 @@
                 <li><a href="{{ url_for('customer_dashboard') }}" class="{% if request.endpoint == 'customer_dashboard' %}active{% endif %}" {% if request.endpoint == 'customer_dashboard' %}aria-current="page"{% endif %}>Verify Produce</a></li>
             </ul>
 
-            <!-- Right Controls: Compact Chain Status + Single Role Dropdown -->
+            <!-- Right Controls: Status + Demo Role Switcher (if DEMO_MODE) or Account Link -->
             <div class="nav-actions flex-shrink-0">
-                <div class="nav-status-pill d-none d-md-inline-flex {% if blockchain_online %}is-online{% else %}is-offline{% endif %}" title="Local Ethereum (Ganache) Status">
+                <div class="nav-status-pill d-none d-md-inline-flex {% if blockchain_online %}is-online{% else %}is-offline{% endif %}" title="Verification Service Status">
                     <span class="nav-status-dot" aria-hidden="true"></span>
                     <span>
                         {% if blockchain_online %}
-                            Chain Live &bull; #{{ blockchain_block }}
+                            Verification Live
                         {% else %}
-                            Chain Offline
+                            Verification Offline
                         {% endif %}
                     </span>
                 </div>
 
-                <!-- SINGLE ROLE SWITCHER DROPDOWN -->
+                {% if demo_mode %}
+                <!-- DEMO-ONLY ROLE SWITCHER DROPDOWN -->
                 <div class="dropdown">
                     <button class="btn btn-dashboard-switch dropdown-toggle d-flex align-items-center" type="button" id="dashboardSwitcherDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                         {% if current_persona %}
@@ -70,7 +71,6 @@
                     </button>
 
                     <ul class="dropdown-menu dropdown-menu-end shadow-lg py-2 border-0 persona-dropdown-menu" aria-labelledby="dashboardSwitcherDropdown">
-                        <!-- Mobile Navigation Fallback (only shown below lg breakpoint) -->
                         <li class="d-lg-none dropdown-header px-3 py-1 text-uppercase fw-bold text-muted" style="font-size:11px;letter-spacing:0.06em;">Navigation</li>
                         <li class="d-lg-none"><a class="dropdown-item py-1.5 px-3 fw-medium" href="{{ url_for('landing') }}" {% if request.endpoint == 'landing' %}aria-current="page"{% endif %}><i class="bi bi-house me-2 text-success" aria-hidden="true"></i>Home</a></li>
                         <li class="d-lg-none"><a class="dropdown-item py-1.5 px-3 fw-medium" href="{{ url_for('workflow_entry') }}" {% if request.endpoint == 'workflow_entry' %}aria-current="page"{% endif %}><i class="bi bi-diagram-3 me-2 text-success" aria-hidden="true"></i>Guided Workflow</a></li>
@@ -78,91 +78,79 @@
                         <li class="d-lg-none"><hr class="dropdown-divider my-1"></li>
 
                         <li class="dropdown-header px-3 py-2 text-uppercase fw-bold text-muted" style="font-size:11px;letter-spacing:0.06em;">
-                            <i class="bi bi-people me-1" aria-hidden="true"></i> Select Supply-Chain Role
+                            <i class="bi bi-people me-1" aria-hidden="true"></i> Demo Role Switcher
                         </li>
                         <li><hr class="dropdown-divider my-1"></li>
 
                         <li>
                             <a class="dropdown-item persona-item d-flex align-items-center py-2 px-3 {% if current_role == 'farmer' %}active-persona{% endif %}" href="{{ url_for('switch_role', role='farmer') }}">
-                                <div class="persona-icon-box bg-success-subtle text-success me-3" aria-hidden="true">
-                                    <i class="bi bi-tree-fill"></i>
-                                </div>
+                                <div class="persona-icon-box bg-success-subtle text-success me-3" aria-hidden="true"><i class="bi bi-tree-fill"></i></div>
                                 <div class="flex-grow-1">
                                     <div class="persona-name fw-semibold">Farmer</div>
                                     <div class="persona-sub text-muted">Register harvest &amp; print QR</div>
                                 </div>
-                                {% if current_role == 'farmer' %}
-                                    <span class="badge bg-success rounded-pill ms-2" style="font-size:10px;">Active</span>
-                                {% endif %}
+                                {% if current_role == 'farmer' %}<span class="badge bg-success rounded-pill ms-2" style="font-size:10px;">Active</span>{% endif %}
                             </a>
                         </li>
-
                         <li>
                             <a class="dropdown-item persona-item d-flex align-items-center py-2 px-3 {% if current_role == 'transporter' %}active-persona{% endif %}" href="{{ url_for('switch_role', role='transporter') }}">
-                                <div class="persona-icon-box bg-primary-subtle text-primary me-3" aria-hidden="true">
-                                    <i class="bi bi-truck"></i>
-                                </div>
+                                <div class="persona-icon-box bg-primary-subtle text-primary me-3" aria-hidden="true"><i class="bi bi-truck"></i></div>
                                 <div class="flex-grow-1">
                                     <div class="persona-name fw-semibold">Transporter</div>
                                     <div class="persona-sub text-muted">Log location &amp; cold-chain temp</div>
                                 </div>
-                                {% if current_role == 'transporter' %}
-                                    <span class="badge bg-primary rounded-pill ms-2" style="font-size:10px;">Active</span>
-                                {% endif %}
+                                {% if current_role == 'transporter' %}<span class="badge bg-primary rounded-pill ms-2" style="font-size:10px;">Active</span>{% endif %}
                             </a>
                         </li>
-
                         <li>
                             <a class="dropdown-item persona-item d-flex align-items-center py-2 px-3 {% if current_role == 'retailer' %}active-persona{% endif %}" href="{{ url_for('switch_role', role='retailer') }}">
-                                <div class="persona-icon-box me-3" style="background:#f3e8ff;color:#9333ea;" aria-hidden="true">
-                                    <i class="bi bi-shop"></i>
-                                </div>
+                                <div class="persona-icon-box me-3" style="background:#f3e8ff;color:#9333ea;" aria-hidden="true"><i class="bi bi-shop"></i></div>
                                 <div class="flex-grow-1">
                                     <div class="persona-name fw-semibold">Retailer</div>
                                     <div class="persona-sub text-muted">Update store stock &amp; price</div>
                                 </div>
-                                {% if current_role == 'retailer' %}
-                                    <span class="badge rounded-pill ms-2" style="background:#9333ea;font-size:10px;">Active</span>
-                                {% endif %}
+                                {% if current_role == 'retailer' %}<span class="badge rounded-pill ms-2" style="background:#9333ea;font-size:10px;">Active</span>{% endif %}
                             </a>
                         </li>
-
                         <li>
                             <a class="dropdown-item persona-item d-flex align-items-center py-2 px-3 {% if current_role == 'customer' %}active-persona{% endif %}" href="{{ url_for('switch_role', role='customer') }}">
-                                <div class="persona-icon-box bg-info-subtle text-info me-3" aria-hidden="true">
-                                    <i class="bi bi-qr-code-scan"></i>
-                                </div>
+                                <div class="persona-icon-box bg-info-subtle text-info me-3" aria-hidden="true"><i class="bi bi-qr-code-scan"></i></div>
                                 <div class="flex-grow-1">
                                     <div class="persona-name fw-semibold">Consumer</div>
                                     <div class="persona-sub text-muted">Scan QR or inspect food origin</div>
                                 </div>
-                                {% if current_role == 'customer' %}
-                                    <span class="badge bg-info text-dark rounded-pill ms-2" style="font-size:10px;">Active</span>
-                                {% endif %}
+                                {% if current_role == 'customer' %}<span class="badge bg-info text-dark rounded-pill ms-2" style="font-size:10px;">Active</span>{% endif %}
                             </a>
                         </li>
-
                         <li>
                             <a class="dropdown-item persona-item d-flex align-items-center py-2 px-3 {% if current_role == 'admin' %}active-persona{% endif %}" href="{{ url_for('switch_role', role='admin') }}">
-                                <div class="persona-icon-box bg-warning-subtle text-warning-emphasis me-3" aria-hidden="true">
-                                    <i class="bi bi-shield-lock-fill"></i>
-                                </div>
+                                <div class="persona-icon-box bg-warning-subtle text-warning-emphasis me-3" aria-hidden="true"><i class="bi bi-shield-lock-fill"></i></div>
                                 <div class="flex-grow-1">
                                     <div class="persona-name fw-semibold">Admin</div>
-                                    <div class="persona-sub text-muted">Overview charts &amp; ledger audit</div>
+                                    <div class="persona-sub text-muted">Overview &amp; system audit</div>
                                 </div>
-                                {% if current_role == 'admin' %}
-                                    <span class="badge bg-dark rounded-pill ms-2" style="font-size:10px;">Active</span>
-                                {% endif %}
+                                {% if current_role == 'admin' %}<span class="badge bg-dark rounded-pill ms-2" style="font-size:10px;">Active</span>{% endif %}
                             </a>
                         </li>
                     </ul>
                 </div>
+                {% else %}
+                <!-- STANDARD PRODUCTION MENU -->
+                {% if current_persona %}
+                <a href="{{ url_for(current_persona.route) }}" class="btn btn-sm btn-outline-success fw-semibold d-inline-flex align-items-center" style="border-radius:8px;">
+                    <i class="bi {{ current_persona.icon }} me-1" aria-hidden="true"></i> {{ current_persona.short_title }} Portal
+                </a>
+                {% else %}
+                <a href="{{ url_for('login') }}" class="btn btn-sm btn-outline-success fw-semibold" style="border-radius:8px;">
+                    <i class="bi bi-box-arrow-in-right me-1" aria-hidden="true"></i> Sign In
+                </a>
+                {% endif %}
+                {% endif %}
 
                 {% if session.get('user_id') %}
                 <form action="{{ url_for('logout') }}" method="POST" class="d-inline m-0 p-0">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                    <button type="submit" class="btn btn-sm btn-outline-secondary" style="border-radius:8px;font-size:12px;padding:6px 10px;" title="Sign out / Reset role" aria-label="Sign out or reset role">
+                    <button type="submit" class="btn btn-sm btn-outline-secondary" style="border-radius:8px;font-size:12px;padding:6px 10px;" title="Sign out" aria-label="Sign out">
                         <i class="bi bi-box-arrow-right" aria-hidden="true"></i>
                     </button>
                 </form>
@@ -205,9 +193,9 @@
             </div>
             <div class="col-md-6">
                 <div class="footer-tags justify-content-md-end mt-2 mt-md-0">
-                    <span class="footer-tag">TrustHarvestV2</span>
-                    <span class="footer-tag">Ganache</span>
-                    <span class="footer-tag">SHA-256</span>
+                    <span class="footer-tag">Farm-to-Table</span>
+                    <span class="footer-tag">SHA-256 Fingerprints</span>
+                    <span class="footer-tag">Public Traceability</span>
                 </div>
             </div>
         </div>

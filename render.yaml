@@ -1,0 +1,38 @@
+services:
+  - type: web
+    name: trustharvest
+    runtime: docker
+    plan: free
+    healthCheckPath: /api/health
+    envVars:
+      - key: FLASK_ENV
+        value: production
+      - key: PRODUCTION
+        value: "true"
+      - key: DEMO_MODE
+        value: "false"
+      - key: ALLOW_IMAGE_UPLOADS
+        value: "false"
+      - key: ALLOW_AUTO_DEPLOY
+        value: "false"
+      - key: CHAIN_ID
+        value: "11155111"
+      - key: SECRET_KEY
+        generateValue: true
+      - key: BASE_URL
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+      - key: ETH_RPC_URL
+        sync: false
+      - key: CONTRACT_ADDRESS
+        sync: false
+      - key: HISTORICAL_CONTRACT_ADDRESSES
+        sync: false
+      - key: FARMER_PRIVATE_KEY
+        sync: false
+      - key: TRANSPORTER_PRIVATE_KEY
+        sync: false
+      - key: RETAILER_PRIVATE_KEY
+        sync: false
+

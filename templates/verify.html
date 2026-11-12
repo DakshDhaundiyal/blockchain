@@ -31,7 +31,7 @@
                             {% endif %}
                         </h5>
                         <span class="small text-muted">
-                            Batch <strong>{{ product.batch_id }}</strong> &bull; Authenticated records verified across database &amp; Ethereum smart contract
+                            Batch <strong>{{ product.batch_id }}</strong> &bull; Journey stages recorded
                         </span>
                     </div>
                 </div>
@@ -39,16 +39,14 @@
                     <button type="button" class="btn btn-sm btn-outline-dark fw-semibold" onclick="window.print()">
                         <i class="bi bi-printer me-1" aria-hidden="true"></i> Print Report
                     </button>
-                    {% if product.qr_code %}
-                    <a href="{{ url_for('static', filename='qr/' + product.qr_code) }}" download="qr_{{ product.batch_id }}.png" class="btn btn-sm btn-outline-success fw-semibold">
+                    <a href="{{ url_for('batch_qr_png', batch_id=product.batch_id, download=1) }}" download="qr_{{ product.batch_id }}.png" class="btn btn-sm btn-outline-success fw-semibold">
                         <i class="bi bi-download me-1" aria-hidden="true"></i> QR PNG
                     </a>
-                    {% endif %}
                     <a href="{{ url_for('workflow_entry') }}" class="btn btn-sm btn-outline-success fw-semibold">
                         <i class="bi bi-plus-circle me-1" aria-hidden="true"></i> Start New Batch
                     </a>
                     <a href="{{ url_for('workflow_entry', stage='retail', batch_id=product.batch_id) }}" class="btn btn-sm btn-outline-secondary">
-                        <i class="bi bi-arrow-left me-1" aria-hidden="true"></i> Previous (Retail)
+                        <i class="bi bi-arrow-left me-1" aria-hidden="true"></i> Previous (Shop)
                     </a>
                 </div>
             </div>
@@ -132,11 +130,9 @@
         <button type="button" class="btn btn-sm btn-outline-dark fw-semibold" onclick="window.print()">
             <i class="bi bi-printer me-1" aria-hidden="true"></i> Print Certificate
         </button>
-        {% if product.qr_code %}
-        <a href="{{ url_for('static', filename='qr/' + product.qr_code) }}" download="qr_{{ product.batch_id }}.png" class="btn btn-sm btn-outline-success fw-semibold">
+        <a href="{{ url_for('batch_qr_png', batch_id=product.batch_id, download=1) }}" download="qr_{{ product.batch_id }}.png" class="btn btn-sm btn-outline-success fw-semibold">
             <i class="bi bi-download me-1" aria-hidden="true"></i> Download QR PNG
         </a>
-        {% endif %}
     </div>
 </div>
 {% endif %}
@@ -145,13 +141,13 @@
 <h1 class="h3 fw-bold mb-3">{{ product.name }} <span class="badge bg-light text-success border font-monospace ms-1 fs-6">{{ product.batch_id }}</span></h1>
 {% endif %}
 
-<!-- Plain-English Verification Status Banner -->
+<!-- Honest Three-Outcome Verification Status Banner -->
 <div class="card card-custom shadow-sm mb-4 text-center overflow-hidden border">
     {% if is_verified %}
     <div class="py-4 px-3 bg-success bg-opacity-10 position-relative">
         <div class="d-inline-flex align-items-center badge-verified mb-2">
             <i class="bi bi-shield-fill-check fs-2 me-2" aria-hidden="true"></i>
-            <span class="fs-3 fw-bold">BLOCKCHAIN VERIFIED</span>
+            <span class="fs-3 fw-bold">{{ result_label }}</span>
         </div>
         <div class="mb-2">
             <span class="badge rounded-pill bg-{{ trust_score.color }} px-3 py-1">
@@ -159,8 +155,9 @@
             </span>
         </div>
         <p class="text-success fw-semibold mt-2 mb-3 fs-6 mx-auto" style="max-width: 680px;">
-            <i class="bi bi-check-circle-fill me-1" aria-hidden="true"></i> Authentic produce! All recorded farm, cold-chain transit, and retail details match the sealed blockchain ledger 100%.
+            <i class="bi bi-check-circle-fill me-1" aria-hidden="true"></i> {{ result_reason }}
         </p>
+        {% if demo_mode %}
         <div class="d-flex justify-content-center align-items-center gap-2 flex-wrap no-print">
             <span class="small text-muted me-1 fw-medium">Presentation Demo:</span>
             <form action="{{ url_for('toggle_demo_tamper', batch_id=product.batch_id) }}" method="POST" class="d-inline m-0">
@@ -178,20 +175,19 @@
             </form>
             {% endif %}
         </div>
+        {% endif %}
     </div>
     {% elif is_tampered %}
     <div class="py-4 px-3 bg-danger bg-opacity-10">
         <div class="d-inline-flex align-items-center badge-tampered mb-2">
             <i class="bi bi-shield-fill-x fs-2 me-2" aria-hidden="true"></i>
-            <span class="fs-3 fw-bold">TAMPER DETECTED</span>
+            <span class="fs-3 fw-bold">{{ result_label }}</span>
         </div>
         <p class="text-danger fw-semibold mt-2 mb-3 fs-6 mx-auto" style="max-width: 720px;">
-            <i class="bi bi-exclamation-triangle-fill me-1" aria-hidden="true"></i> Warning: Database record does not match the immutable blockchain ledger.
-            {% if transport_tampered %} Cold-chain logistics data was altered! {% endif %}
-            {% if retail_tampered %} Retail listing data was altered! {% endif %}
-            {% if harvest_status == 'tampered' %} Harvest origin data was altered! {% endif %}
+            <i class="bi bi-exclamation-triangle-fill me-1" aria-hidden="true"></i> {{ result_reason }}
         </p>
 
+        {% if demo_mode %}
         <div class="d-flex justify-content-center align-items-center gap-2 mt-2 flex-wrap no-print">
             {% if harvest_status == 'tampered' %}
             <form action="{{ url_for('toggle_demo_tamper', batch_id=product.batch_id) }}" method="POST" class="d-inline m-0">
@@ -215,14 +211,11 @@
         <div class="alert alert-warning border-warning d-flex align-items-center justify-content-between p-3 mx-auto mt-3 mb-0 text-start shadow-sm" style="max-width:850px;border-radius:12px;background:#fffbeb;">
             <div class="me-3">
                 <div class="d-flex align-items-center mb-1">
-                    <span class="badge bg-danger text-uppercase me-2" style="font-size:11px;">Interactive Demo Simulation Active</span>
+                    <span class="badge bg-danger text-uppercase me-2" style="font-size:11px;">Demo Simulation Active</span>
                     <strong class="text-dark">Field Alteration Injected:</strong>
                 </div>
                 <div class="text-dark small">
                     The attribute <code>{{ simulated_field }}</code> was modified from <strong class="text-success">"{{ original_value }}"</strong> &rarr; <strong class="text-danger">"{{ tampered_value }}"</strong>.
-                </div>
-                <div class="text-muted small mt-1">
-                    Changing even a single character changes the cryptographic fingerprint, triggering an instant alert against the sealed Ethereum record.
                 </div>
             </div>
             <a href="{{ url_for('verify_batch', batch_id=product.batch_id) }}" class="btn btn-success fw-bold text-nowrap px-3 py-2 shadow-sm" style="border-radius:8px;">
@@ -230,137 +223,73 @@
             </a>
         </div>
         {% endif %}
-    </div>
-    {% elif is_conflict %}
-    <div class="py-4 px-3 bg-danger bg-opacity-10">
-        <div class="d-inline-flex align-items-center text-danger mb-2" style="background:#fee2e2;padding:8px 18px;border-radius:30px;border:1px solid #fecaca;">
-            <i class="bi bi-exclamation-octagon-fill fs-2 me-2" aria-hidden="true"></i>
-            <span class="fs-3 fw-bold">LEDGER CONFLICT DETECTED</span>
-        </div>
-        <p class="text-danger fw-semibold mt-2 mb-0 fs-6">
-            <i class="bi bi-exclamation-triangle-fill me-1" aria-hidden="true"></i> Warning: Conflicting cryptographic records exist across smart contract deployments for this batch ID.
-        </p>
-        {% if conflict_details and conflict_details.entries %}
-        <div class="mt-3 p-3 bg-white rounded border border-danger text-start small mx-auto" style="max-width:700px;">
-            <strong class="text-danger d-block mb-1">Conflicting Deployments Found:</strong>
-            <ul class="mb-0 ps-3">
-                {% for entry in conflict_details.entries %}
-                <li>
-                    <span class="badge bg-secondary me-1">{{ entry.type }}</span>
-                    <code>{{ entry.address }}</code>:
-                    <span class="font-monospace text-muted">{{ entry.hash[:16] }}…</span>
-                </li>
-                {% endfor %}
-            </ul>
-        </div>
         {% endif %}
     </div>
-    {% elif is_rpc_offline %}
+    {% else %}
     <div class="py-4 px-3 bg-warning bg-opacity-10">
         <div class="d-inline-flex align-items-center text-warning-emphasis mb-2" style="background:#fff3cd;padding:8px 18px;border-radius:30px;border:1px solid #ffe69c;">
-            <i class="bi bi-wifi-off fs-2 me-2 text-warning" aria-hidden="true"></i>
-            <span class="fs-3 fw-bold">BLOCKCHAIN RPC OFFLINE</span>
+            <i class="bi bi-question-circle-fill fs-2 me-2 text-warning" aria-hidden="true"></i>
+            <span class="fs-3 fw-bold">{{ result_label }}</span>
         </div>
         <p class="text-warning-emphasis fw-semibold mt-2 mb-0 fs-6 mx-auto" style="max-width: 720px;">
-            <i class="bi bi-info-circle-fill me-1" aria-hidden="true"></i> Live Ethereum node is currently unreachable. Showing local food records with an offline notice; expand technical details below to inspect cached hashes.
-        </p>
-    </div>
-    {% else %}
-    <div class="py-4 px-3 bg-secondary bg-opacity-10">
-        <div class="d-inline-flex align-items-center text-secondary mb-2" style="background:#e9ecef;padding:8px 18px;border-radius:30px;border:1px solid #ced4da;">
-            <i class="bi bi-question-diamond-fill fs-2 me-2" aria-hidden="true"></i>
-            <span class="fs-3 fw-bold">UNRECORDED ON CHAIN</span>
-        </div>
-        <p class="text-secondary fw-semibold mt-2 mb-0 fs-6">
-            <i class="bi bi-exclamation-circle me-1" aria-hidden="true"></i> Batch exists in local storage, but no cryptographic proof was found on the active smart contract.
+            <i class="bi bi-info-circle-fill me-1" aria-hidden="true"></i> {{ result_reason }}
         </p>
     </div>
     {% endif %}
 
-    <!-- Collapsible Technical Proof (clean by default; expandable on demand) -->
+    <!-- Collapsible Technical Details (Batch ID and record fingerprints ONLY for ordinary users) -->
     <details class="th-disclosure border-0 border-top rounded-0 text-start">
         <summary>
-            View Technical Blockchain Proof (SHA-256 Hashes, Block # &amp; Signer Wallets)
+            Technical details
         </summary>
         <div class="th-disclosure-body bg-white">
-            <div class="row g-2 align-items-center small">
+            <div class="mb-3 small">
+                <strong class="text-dark">Batch ID:</strong>
+                <span class="font-monospace ms-1">{{ product.batch_id }}</span>
+            </div>
+
+            <div class="row g-2 align-items-center small mb-3">
                 <div class="col-md-6">
-                    <span class="fw-bold text-muted d-block"><i class="bi bi-database me-1" aria-hidden="true"></i> Current Recomputed Harvest Hash (Live DB):</span>
-                    <div class="hash-box {{ 'text-success' if harvest_status == 'verified' else ('text-warning-emphasis' if is_rpc_offline else 'text-danger fw-bold') }}">
+                    <span class="fw-bold text-muted d-block">Farm Record Fingerprint (Computed):</span>
+                    <div class="hash-box {{ 'text-success' if harvest_status == 'verified' else ('text-danger fw-bold' if harvest_status == 'tampered' else 'text-warning-emphasis') }}">
                         {{ computed_hash }}
                     </div>
                 </div>
                 <div class="col-md-6">
-                    <span class="fw-bold text-muted d-block">
-                        <i class="bi bi-link-45deg me-1" aria-hidden="true"></i>
-                        {% if is_rpc_offline %}
-                        Cached On-Chain Hash (Offline Node):
-                        {% else %}
-                        Immutable On-Chain Hash (Ethereum Smart Contract):
-                        {% endif %}
-                        {% if contract_source_addr %}
-                        <span class="badge bg-light text-dark border ms-1 font-monospace" title="{{ contract_source_addr }}">{{ contract_source_addr[:8] }}…{{ contract_source_addr[-4:] }}</span>
-                        {% endif %}
-                    </span>
-                    <div class="hash-box {{ 'text-primary' if (harvest_status == 'verified' or harvest_status == 'tampered') else ('text-muted' if not on_chain_hash else 'text-warning-emphasis') }}">
-                        {{ on_chain_hash or 'Not Found on Blockchain' }}
+                    <span class="fw-bold text-muted d-block">Farm Record Fingerprint (Sealed):</span>
+                    <div class="hash-box {{ 'text-primary' if (harvest_status == 'verified' or harvest_status == 'tampered') else 'text-muted' }}">
+                        {{ on_chain_hash or 'Not recorded yet' }}
                     </div>
                 </div>
             </div>
 
-            <!-- On-Chain Transaction Receipt Metadata -->
-            <div class="row g-2 mt-2 pt-2 border-top small text-muted align-items-center">
-                <div class="col-sm-6 col-lg-3">
-                    <strong class="text-dark d-block">Contract Version</strong>
-                    <span class="font-monospace">{{ 'TrustHarvestV2 (Multi-Stage)' if v2_details.available else 'TrustHarvest' }}</span>
+            {% if transport_verifications %}
+            <div class="border-top pt-2 mb-3 small">
+                <span class="fw-bold text-muted d-block mb-1">Transport Checkpoint Fingerprints:</span>
+                {% for tv in transport_verifications %}
+                <div class="bg-light rounded p-2 mb-2 font-monospace" style="font-size:12px;">
+                    <div><strong>Checkpoint #{{ loop.index }} Computed:</strong> {{ tv.computed_hash }}</div>
+                    <div><strong>Checkpoint #{{ loop.index }} Sealed:</strong> {{ tv.on_chain_hash or 'Not recorded yet' }}</div>
                 </div>
-                <div class="col-sm-6 col-lg-3">
-                    <strong class="text-dark d-block">Harvest Tx Hash</strong>
-                    <span class="font-monospace">{{ (product.tx_hash[:14] ~ '…' ~ product.tx_hash[-6:]) if product.tx_hash else 'N/A (Pre-receipt)' }}</span>
-                </div>
-                <div class="col-sm-6 col-lg-3">
-                    <strong class="text-dark d-block">Mined Block &amp; Time</strong>
-                    <span class="font-monospace">
-                        {{ ('Block #' ~ product.block_number) if product.block_number else '—' }}
-                        {% if v2_details.timestamp %}
-                            &bull; {{ v2_details.timestamp.strftime('%Y-%m-%d %H:%M UTC') }}
-                        {% endif %}
-                    </span>
-                </div>
-                <div class="col-sm-6 col-lg-3">
-                    <strong class="text-dark d-block">Farmer Signer Wallet</strong>
-                    {% set farmer_wallet = v2_details.registered_by or product.signer_address %}
-                    <span class="font-monospace" title="{{ farmer_wallet or '' }}">{{ (farmer_wallet[:10] ~ '…' ~ farmer_wallet[-6:]) if farmer_wallet else 'Account #0' }}</span>
-                </div>
-            </div>
-
-            {% if is_tampered %}
-            <div class="mt-3 p-3 rounded d-flex align-items-center" style="background:#fef2f2;border:1px solid #fecaca;">
-                <i class="bi bi-x-octagon-fill text-danger fs-4 me-3 flex-shrink-0" aria-hidden="true"></i>
-                <div>
-                    <strong class="text-danger d-block">Cryptographic Fingerprint Mismatch!</strong>
-                    <span class="text-danger-emphasis small">
-                        The hash calculated from the live database does <strong>NOT match</strong> the immutable hash sealed onto the Ethereum blockchain.
-                    </span>
-                </div>
-            </div>
-            {% elif is_verified %}
-            <div class="mt-3 p-2 px-3 rounded d-flex align-items-center justify-content-between flex-wrap gap-2" style="background:#f0fdf4;border:1px solid #bbf7d0;">
-                <span class="text-success-emphasis small">
-                    <i class="bi bi-check-circle-fill text-success me-1" aria-hidden="true"></i>
-                    <strong>Mathematical Match:</strong> Database hashes match the Ethereum smart contract character-for-character.
-                </span>
-                <a href="{{ url_for('api_verify_batch', batch_id=product.batch_id) }}" target="_blank" class="btn btn-xs btn-outline-primary py-1 px-2 no-print" style="font-size:12px;">
-                    <i class="bi bi-filetype-json me-1" aria-hidden="true"></i> Open Raw JSON Proof
-                </a>
-            </div>
-            {% else %}
-            <div class="mt-3 text-end no-print">
-                <a href="{{ url_for('api_verify_batch', batch_id=product.batch_id) }}" target="_blank" class="btn btn-xs btn-outline-primary py-1 px-2" style="font-size:12px;">
-                    <i class="bi bi-filetype-json me-1" aria-hidden="true"></i> Open Raw JSON Proof
-                </a>
+                {% endfor %}
             </div>
             {% endif %}
+
+            {% if retail_verification %}
+            <div class="border-top pt-2 mb-3 small">
+                <span class="fw-bold text-muted d-block mb-1">Shop Record Fingerprints:</span>
+                <div class="bg-light rounded p-2 font-monospace" style="font-size:12px;">
+                    <div><strong>Computed:</strong> {{ retail_verification.computed_hash }}</div>
+                    <div><strong>Sealed:</strong> {{ retail_verification.on_chain_hash or 'Not recorded yet' }}</div>
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="mt-2 text-end no-print">
+                <a href="{{ url_for('api_verify_batch', batch_id=product.batch_id) }}" target="_blank" class="btn btn-xs btn-outline-primary py-1 px-2" style="font-size:12px;">
+                    <i class="bi bi-filetype-json me-1" aria-hidden="true"></i> View JSON Summary
+                </a>
+            </div>
         </div>
     </details>
 </div>
@@ -374,12 +303,16 @@
             </div>
             <div class="card-body text-center p-4">
                 <div class="mb-3">
-                    <img src="{{ url_for('static', filename='uploads/' + product.image) }}" alt="{{ product.name }}" class="img-fluid rounded border shadow-sm" style="max-height: 220px; object-fit: cover;">
+                    <img src="{{ product_image_url(product.image) }}" alt="{{ product.name }}" class="img-fluid rounded border shadow-sm" style="max-height: 220px; object-fit: cover;">
                 </div>
                 <p class="h5 fw-bold mb-1">{{ product.name }}</p>
                 <p class="text-muted font-monospace small mb-3">Batch ID: {{ product.batch_id }}</p>
 
                 <div class="text-start bg-light p-3 rounded mb-3 small">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span class="text-muted">Origin:</span>
+                        <span class="fw-semibold">{{ product.farmer_data.farm_location if product.farmer_data and product.farmer_data.farm_location else 'Registered Farm' }}</span>
+                    </div>
                     <div class="d-flex justify-content-between mb-1">
                         <span class="text-muted">Quantity:</span>
                         <span class="fw-semibold">{{ product.quantity }}</span>
@@ -396,29 +329,33 @@
                         <span class="text-muted">Farmer:</span>
                         <span class="fw-semibold">{{ product.farmer.full_name or product.farmer.username }}</span>
                     </div>
+                    {% if product.retail_data and product.retail_data.price %}
+                    <div class="d-flex justify-content-between mb-1">
+                        <span class="text-muted">Shop Price:</span>
+                        <span class="fw-semibold text-success">${{ '%.2f'|format(product.retail_data.price) }}</span>
+                    </div>
+                    {% endif %}
                     <div class="d-flex justify-content-between">
-                        <span class="text-muted">Current Status:</span>
+                        <span class="text-muted">Current Stage:</span>
                         <span class="badge bg-primary">{{ product.status }}</span>
                     </div>
                 </div>
 
-                {% if product.qr_code %}
                 <div class="border rounded p-3 bg-white">
-                    <span class="fw-semibold small d-block mb-2 text-muted"><i class="bi bi-qr-code me-1"></i> Scan for Instant Mobile Verification</span>
-                    <img src="{{ url_for('static', filename='qr/' + product.qr_code) }}" alt="Verification QR code for {{ product.batch_id }}" class="img-fluid" style="max-width: 150px;">
-                    <div class="small text-muted font-monospace mt-1">{{ config_base_url }}/verify/{{ product.batch_id }}</div>
+                    <span class="fw-semibold small d-block mb-2 text-muted"><i class="bi bi-qr-code me-1"></i> Scan to Verify on Phone</span>
+                    <img src="{{ url_for('batch_qr_png', batch_id=product.batch_id) }}" alt="Verification QR code for {{ product.batch_id }}" class="img-fluid" style="max-width: 150px;">
+                    <div class="small text-muted font-monospace mt-1 text-break">{{ qr_verify_url }}</div>
                 </div>
-                {% endif %}
             </div>
         </div>
     </div>
 
-    <!-- Full Journey Timeline -->
+    <!-- Full Journey Timeline: Farm -> Transport -> Shop -->
     <div class="col-lg-8">
         <div class="card card-custom shadow-sm mb-4">
             <div class="card-header card-header-ag d-flex justify-content-between align-items-center">
-                <h2 class="h5 mb-0 fw-bold"><i class="bi bi-signpost-split me-2" aria-hidden="true"></i>Full Supply-Chain Journey Timeline</h2>
-                <span class="badge bg-success">Farm &rarr; Logistics &rarr; Retail</span>
+                <h2 class="h5 mb-0 fw-bold"><i class="bi bi-signpost-split me-2" aria-hidden="true"></i>Food Journey Timeline</h2>
+                <span class="badge bg-success">Farm &rarr; Transport &rarr; Shop</span>
             </div>
             <div class="card-body p-4">
                 <ul class="timeline">
@@ -429,12 +366,14 @@
                         </div>
                         <div class="timeline-content">
                             <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-1">
-                                <h3 class="h6 fw-bold text-success mb-0">Stage 1: Farm Harvest & Stamping</h3>
+                                <h3 class="h6 fw-bold text-success mb-0">Farm</h3>
                                 <div class="d-flex gap-1 align-items-center">
                                     {% if harvest_status == 'verified' %}
-                                    <span class="badge bg-success-subtle text-success border border-success-subtle"><i class="bi bi-shield-check me-1"></i>On-Chain Verified</span>
+                                    <span class="badge bg-success-subtle text-success border border-success-subtle"><i class="bi bi-shield-check me-1"></i>Verified</span>
                                     {% elif harvest_status == 'tampered' %}
-                                    <span class="badge bg-danger"><i class="bi bi-x-octagon me-1"></i>Tamper Detected</span>
+                                    <span class="badge bg-danger"><i class="bi bi-x-octagon me-1"></i>Changed after recording</span>
+                                    {% else %}
+                                    <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle">Can't check right now</span>
                                     {% endif %}
                                     <span class="badge bg-light text-dark border">{{ product.packaging_date }}</span>
                                 </div>
@@ -455,13 +394,10 @@
                                     {% endif %}
                                 </div>
                             {% endif %}
-                            <div class="mt-2 text-muted small">
-                                <i class="bi bi-shield-check text-success"></i> SHA-256 seal deployed on Ethereum smart contract.
-                            </div>
                         </div>
                     </li>
 
-                    <!-- 2. Logistics & Transport Stage -->
+                    <!-- 2. Transport Checkpoints -->
                     {% if transport_verifications %}
                         {% for tv in transport_verifications %}
                         {% set t = tv.record %}
@@ -471,16 +407,14 @@
                             </div>
                             <div class="timeline-content">
                                 <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-1">
-                                    <h3 class="h6 fw-bold text-primary mb-0">Stage 2: Transport &bull; {{ t.status }}</h3>
+                                    <h3 class="h6 fw-bold text-primary mb-0">Transport Checkpoint #{{ loop.index }} &bull; {{ t.status }}</h3>
                                     <div class="d-flex gap-1 align-items-center">
                                         {% if tv.status == 'verified' %}
-                                            <span class="badge bg-success-subtle text-success border border-success-subtle"><i class="bi bi-shield-check me-1"></i>On-Chain Verified</span>
+                                            <span class="badge bg-success-subtle text-success border border-success-subtle"><i class="bi bi-shield-check me-1"></i>Verified</span>
                                         {% elif tv.status == 'tampered' %}
-                                            <span class="badge bg-danger"><i class="bi bi-x-octagon me-1"></i>Checkpoint Tampered</span>
-                                        {% elif tv.status == 'rpc_offline' %}
-                                            <span class="badge bg-warning-subtle text-warning-emphasis">Cached (Offline)</span>
+                                            <span class="badge bg-danger"><i class="bi bi-x-octagon me-1"></i>Changed after recording</span>
                                         {% else %}
-                                            <span class="badge bg-secondary-subtle text-secondary">SQLite Record</span>
+                                            <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle">Can't check right now</span>
                                         {% endif %}
                                         <span class="badge bg-light text-dark border">{{ t.timestamp.strftime('%Y-%m-%d %H:%M') if t.timestamp else '' }}</span>
                                     </div>
@@ -502,12 +436,6 @@
                                     "{{ t.notes }}"
                                 </div>
                                 {% endif %}
-                                {% if tv.recorded_by or t.tx_hash %}
-                                <div class="mt-2 smaller text-muted font-monospace">
-                                    Signer: {{ (tv.recorded_by[:10] ~ '…' ~ tv.recorded_by[-4:]) if tv.recorded_by else '—' }}
-                                    {% if t.block_number %} &bull; Block #{{ t.block_number }}{% endif %}
-                                </div>
-                                {% endif %}
                             </div>
                         </li>
                         {% endfor %}
@@ -517,13 +445,16 @@
                                 <i class="bi bi-truck"></i>
                             </div>
                             <div class="timeline-content text-muted">
-                                <h3 class="h6 fw-bold mb-1">Stage 2: Transport</h3>
-                                <small>Shipment awaiting carrier pickup.</small>
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <h3 class="h6 fw-bold mb-0">Transport</h3>
+                                    <span class="badge bg-secondary-subtle text-secondary border">Pending</span>
+                                </div>
+                                <small>Pending &mdash; Shipment has not departed yet.</small>
                             </div>
                         </li>
                     {% endif %}
 
-                    <!-- 3. Retailer Stage -->
+                    <!-- 3. Shop Stage -->
                     {% if retail_verification %}
                     {% set r = retail_verification.record %}
                     <li class="timeline-item">
@@ -532,16 +463,14 @@
                         </div>
                         <div class="timeline-content">
                             <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-1">
-                                <h3 class="h6 fw-bold text-warning-emphasis mb-0">Stage 3: Retail Stock & Distribution</h3>
+                                <h3 class="h6 fw-bold text-warning-emphasis mb-0">Shop</h3>
                                 <div class="d-flex gap-1 align-items-center">
                                     {% if retail_verification.status == 'verified' %}
-                                        <span class="badge bg-success-subtle text-success border border-success-subtle"><i class="bi bi-shield-check me-1"></i>On-Chain Verified</span>
+                                        <span class="badge bg-success-subtle text-success border border-success-subtle"><i class="bi bi-shield-check me-1"></i>Verified</span>
                                     {% elif retail_verification.status == 'tampered' %}
-                                        <span class="badge bg-danger"><i class="bi bi-x-octagon me-1"></i>Retail Tampered</span>
-                                    {% elif retail_verification.status == 'rpc_offline' %}
-                                        <span class="badge bg-warning-subtle text-warning-emphasis">Cached (Offline)</span>
+                                        <span class="badge bg-danger"><i class="bi bi-x-octagon me-1"></i>Changed after recording</span>
                                     {% else %}
-                                        <span class="badge bg-secondary-subtle text-secondary">SQLite Record</span>
+                                        <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle">Can't check right now</span>
                                     {% endif %}
                                     <span class="badge bg-light text-dark border">{{ r.arrival_date or 'Received' }}</span>
                                 </div>
@@ -551,18 +480,12 @@
                             </div>
                             <div class="row g-2 small text-muted">
                                 <div class="col-sm-6">
-                                    <strong>Retail Price:</strong> <span class="badge bg-success fs-6">${{ '%.2f'|format(r.price) if r.price else 'N/A' }}</span>
+                                    <strong>Price:</strong> <span class="badge bg-success fs-6">${{ '%.2f'|format(r.price) if r.price else 'N/A' }}</span>
                                 </div>
                                 <div class="col-sm-6">
                                     <strong>Stock:</strong> {{ r.stock_quantity }} (Shelf Life: {{ r.shelf_life }})
                                 </div>
                             </div>
-                            {% if retail_verification.recorded_by or r.tx_hash %}
-                            <div class="mt-2 smaller text-muted font-monospace">
-                                Signer: {{ (retail_verification.recorded_by[:10] ~ '…' ~ retail_verification.recorded_by[-4:]) if retail_verification.recorded_by else '—' }}
-                                {% if r.block_number %} &bull; Block #{{ r.block_number }}{% endif %}
-                            </div>
-                            {% endif %}
                         </div>
                     </li>
                     {% else %}
@@ -571,8 +494,11 @@
                             <i class="bi bi-shop"></i>
                         </div>
                         <div class="timeline-content text-muted">
-                            <h3 class="h6 fw-bold mb-1">Stage 3: Retail Distribution</h3>
-                            <small>Produce has not yet reached retail stocking.</small>
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <h3 class="h6 fw-bold mb-0">Shop</h3>
+                                <span class="badge bg-secondary-subtle text-secondary border">Pending</span>
+                            </div>
+                            <small>Pending &mdash; Produce has not reached a retail store yet.</small>
                         </div>
                     </li>
                     {% endif %}

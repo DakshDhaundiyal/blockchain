@@ -79,23 +79,23 @@
 
                     <div class="col-md-6">
                         <div class="p-3 bg-light rounded border h-100">
-                            <div class="small fw-bold text-dark mb-1">Option B: Test Without a Camera</div>
+                            <div class="small fw-bold text-dark mb-1">Option B: Upload a QR Image</div>
                             <p class="small text-muted mb-3">
-                                Presentation mode: upload any downloaded QR PNG or click the instant Demo button to run the live in-browser decoder.
+                                Upload any QR code photo or PNG file to open its food journey immediately.
                             </p>
 
                             <div class="mb-3">
-                                <label for="qr-file-input" class="form-label small fw-semibold">1. Upload a QR Image (.png / .jpg)</label>
+                                <label for="qr-file-input" class="form-label small fw-semibold">Upload QR Image (.png / .jpg)</label>
                                 <input type="file" id="qr-file-input" class="form-control form-control-sm" accept="image/*">
                             </div>
 
-                            {% if products and products[0].qr_code %}
-                            <div class="small fw-semibold mb-1">2. Or run instant 1-click QR demo:</div>
+                            {% if demo_mode and products %}
+                            <div class="small fw-semibold mb-1">Demo Mode: Instant 1-click QR test</div>
                             <button
                                 type="button"
                                 id="btn-demo-qr-scan"
                                 class="btn btn-sm btn-outline-success w-100 fw-semibold py-2"
-                                data-qr-url="{{ url_for('static', filename='qr/' + products[0].qr_code) }}"
+                                data-qr-url="{{ url_for('batch_qr_png', batch_id=products[0].batch_id) }}"
                                 data-batch-id="{{ products[0].batch_id }}"
                             >
                                 <i class="bi bi-magic me-1" aria-hidden="true"></i> Demo Decode QR: {{ products[0].batch_id }}
@@ -113,7 +113,7 @@
 
 <div class="card card-custom shadow-sm mb-4">
     <div class="card-header card-header-ag d-flex justify-content-between align-items-center">
-        <h2 class="h5 mb-0 fw-bold"><i class="bi bi-basket me-2" aria-hidden="true"></i>Available Produce Batches</h2>
+        <h2 class="h5 mb-0 fw-bold"><i class="bi bi-basket me-2" aria-hidden="true"></i>Produce Verification Directory</h2>
         <span class="badge bg-secondary">{{ products|length }} Available</span>
     </div>
     <div class="card-body p-0">
@@ -121,9 +121,9 @@
             <table class="table table-hover align-middle mb-0">
                 <thead class="table-light">
                     <tr>
-                        <th scope="col">Produce &amp; Batch</th>
-                        <th scope="col">Origin &amp; Method</th>
-                        <th scope="col">Status</th>
+                        <th scope="col">Crop &amp; Batch</th>
+                        <th scope="col">Origin &amp; Dates</th>
+                        <th scope="col">Verification Result</th>
                         <th scope="col">Retail Price</th>
                         <th scope="col">QR Code</th>
                         <th scope="col">Action</th>
@@ -131,40 +131,52 @@
                 </thead>
                 <tbody>
                     {% for p in products %}
+                    {% set vst = (batch_statuses.get(p.batch_id) if batch_statuses is defined else none) %}
                     <tr>
                         <td>
                             <div class="fw-bold">{{ p.name }}</div>
                             <span class="font-monospace text-success small">{{ p.batch_id }}</span>
+                            <div class="text-muted smaller">{{ p.quantity }} &bull; {{ p.farming_method }}</div>
                         </td>
                         <td>
-                            <div>{{ p.farmer_data.farm_name if p.farmer_data else (p.farmer.full_name or p.farmer.username) }}</div>
-                            <span class="badge bg-light text-dark border">{{ p.farming_method }}</span>
+                            <div>{{ p.farmer_data.farm_location if p.farmer_data and p.farmer_data.farm_location else (p.farmer.full_name or p.farmer.username) }}</div>
+                            <div class="text-muted smaller">Packed: {{ p.packaging_date }}</div>
                         </td>
-                        <td>
-                            <span class="badge bg-info text-dark">{{ p.status }}</span>
+                        <td style="max-width:260px;">
+                            {% if vst %}
+                                {% if vst.status == 'verified' %}
+                                    <span class="badge bg-success mb-1"><i class="bi bi-shield-check me-1"></i>{{ vst.label }}</span>
+                                {% elif vst.status == 'tampered' %}
+                                    <span class="badge bg-danger mb-1"><i class="bi bi-exclamation-octagon me-1"></i>{{ vst.label }}</span>
+                                {% else %}
+                                    <span class="badge bg-warning text-dark mb-1"><i class="bi bi-question-circle me-1"></i>{{ vst.label }}</span>
+                                {% endif %}
+                                <div class="text-muted smaller">{{ vst.reason }}</div>
+                            {% else %}
+                                <span class="badge bg-info text-dark">{{ p.status }}</span>
+                            {% endif %}
                         </td>
                         <td>
                             {% if p.retail_data and p.retail_data.price %}
                                 <span class="fw-bold text-success">${{ '%.2f'|format(p.retail_data.price) }}</span>
+                                <div class="text-muted smaller">{{ p.retail_data.store_name }}</div>
                             {% else %}
-                                <span class="text-muted small">In Transit</span>
+                                <span class="badge bg-secondary-subtle text-secondary">Pending</span>
                             {% endif %}
                         </td>
                         <td>
-                            {% if p.qr_code %}
                             <div class="d-flex align-items-center gap-2">
                                 <a href="{{ url_for('verify_batch', batch_id=p.batch_id) }}" title="Open verification page for {{ p.batch_id }}">
-                                    <img src="{{ url_for('static', filename='qr/' + p.qr_code) }}" alt="QR code for {{ p.batch_id }}" width="45" height="45" class="border rounded p-1">
+                                    <img src="{{ url_for('batch_qr_png', batch_id=p.batch_id) }}" alt="QR code for {{ p.batch_id }}" width="45" height="45" class="border rounded p-1">
                                 </a>
-                                <a href="{{ url_for('static', filename='qr/' + p.qr_code) }}" download="qr_{{ p.batch_id }}.png" class="btn btn-sm btn-outline-secondary py-0 px-2" title="Download QR PNG for scanner demo">
+                                <a href="{{ url_for('batch_qr_png', batch_id=p.batch_id, download=1) }}" download="qr_{{ p.batch_id }}.png" class="btn btn-sm btn-outline-secondary py-0 px-2" title="Download QR PNG">
                                     <i class="bi bi-download"></i>
                                 </a>
                             </div>
-                            {% endif %}
                         </td>
                         <td>
                             <a href="{{ url_for('verify_batch', batch_id=p.batch_id) }}" class="btn btn-sm btn-ag-primary">
-                                <i class="bi bi-shield-check me-1"></i> Verify History
+                                <i class="bi bi-shield-check me-1"></i> View Journey
                             </a>
                         </td>
                     </tr>
@@ -302,7 +314,11 @@ document.addEventListener("DOMContentLoaded", function () {
                 setStatus("Camera active. Hold a TrustHarvest QR code in front of your webcam.", "info");
             } catch (err) {
                 if (placeholderEl) placeholderEl.hidden = false;
-                setStatus(`Camera access failed or unavailable (${err}). Try uploading a QR image or using the Demo Decode button.`, "error");
+                const httpsHint = (!window.isSecureContext && location.hostname !== "localhost" && location.hostname !== "127.0.0.1")
+                    ? " Camera scanning requires an HTTPS connection."
+                    : "";
+                const demoHint = demoBtn ? " or using the Demo Decode button" : "";
+                setStatus(`Camera access failed or unavailable (${err}).${httpsHint} Try uploading a QR image${demoHint}.`, "error");
             }
         });
     }

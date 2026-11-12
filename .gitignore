@@ -28,7 +28,6 @@ instance/
 # Uploads & Generated QR Code Artifacts
 static/uploads/*
 !static/uploads/.gitkeep
-!static/uploads/default.jpg
 static/qr/*
 !static/qr/.gitkeep
 

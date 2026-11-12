@@ -1,65 +1,57 @@
 {% extends "base.html" %}
 
-{% block title %}Admin Analytics & Management - TrustHarvest{% endblock %}
+{% block title %}Admin Overview - TrustHarvest{% endblock %}
 
 {% block content %}
 <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
     <div>
-        <h1 class="h2 fw-bold mb-1"><i class="bi bi-speedometer2 text-danger me-2" aria-hidden="true"></i>Admin Overview &amp; Supply Chain Audit</h1>
-        <p class="text-muted mb-0">Monitor platform totals, verify every food batch, and review analytics charts.</p>
+        <h1 class="h2 fw-bold mb-1"><i class="bi bi-speedometer2 text-danger me-2" aria-hidden="true"></i>Admin Overview</h1>
+        <p class="text-muted mb-0">Monitor batch counts, verification statuses, transit checkpoints, and user accounts.</p>
     </div>
     <div class="d-flex gap-2 align-items-center">
         <a href="{{ url_for('api_health') }}" target="_blank" class="btn btn-sm btn-outline-secondary">
-            <i class="bi bi-activity me-1" aria-hidden="true"></i> API Health
+            <i class="bi bi-activity me-1" aria-hidden="true"></i> System Health
         </a>
-        <span class="badge bg-danger py-2 px-3"><i class="bi bi-shield-lock me-1" aria-hidden="true"></i> System Administrator</span>
+        <span class="badge bg-danger py-2 px-3"><i class="bi bi-shield-lock me-1" aria-hidden="true"></i> Administrator</span>
     </div>
 </div>
 
-<!-- Key Performance Indicators -->
+<!-- Key Counts -->
 <div class="row g-3 mb-4">
-    <div class="col-md-3">
+    <div class="col-6 col-md-4 col-lg-2">
         <div class="card card-custom p-3 stat-card shadow-sm h-100">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <span class="text-muted small fw-semibold">TOTAL USERS</span>
-                    <div class="h3 fw-bold mb-0 mt-1">{{ total_users }}</div>
-                </div>
-                <div class="bg-primary bg-opacity-10 text-primary p-3 rounded-circle" aria-hidden="true"><i class="bi bi-people fs-4"></i></div>
-            </div>
+            <span class="text-muted small fw-semibold">USERS</span>
+            <div class="h3 fw-bold mb-0 mt-1">{{ total_users }}</div>
         </div>
     </div>
-    <div class="col-md-3">
+    <div class="col-6 col-md-4 col-lg-2">
         <div class="card card-custom p-3 stat-card shadow-sm h-100">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <span class="text-muted small fw-semibold">ACTIVE BATCHES</span>
-                    <div class="h3 fw-bold mb-0 mt-1">{{ total_products }}</div>
-                </div>
-                <div class="bg-success bg-opacity-10 text-success p-3 rounded-circle" aria-hidden="true"><i class="bi bi-box-seam fs-4"></i></div>
-            </div>
+            <span class="text-muted small fw-semibold">BATCHES</span>
+            <div class="h3 fw-bold mb-0 mt-1">{{ total_products }}</div>
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="card card-custom p-3 stat-card shadow-sm h-100">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <span class="text-muted small fw-semibold">TRANSIT LOGS</span>
-                    <div class="h3 fw-bold mb-0 mt-1">{{ total_transports }}</div>
-                </div>
-                <div class="bg-warning bg-opacity-10 text-warning p-3 rounded-circle" aria-hidden="true"><i class="bi bi-truck fs-4"></i></div>
-            </div>
+    <div class="col-6 col-md-4 col-lg-2">
+        <div class="card card-custom p-3 stat-card shadow-sm h-100 border-success-subtle">
+            <span class="text-success small fw-semibold">VERIFIED</span>
+            <div class="h3 fw-bold text-success mb-0 mt-1">{{ outcome_counts.get('verified', 0) if outcome_counts is defined else 0 }}</div>
         </div>
     </div>
-    <div class="col-md-3">
+    <div class="col-6 col-md-4 col-lg-2">
+        <div class="card card-custom p-3 stat-card shadow-sm h-100 border-danger-subtle">
+            <span class="text-danger small fw-semibold">CHANGED</span>
+            <div class="h3 fw-bold text-danger mb-0 mt-1">{{ outcome_counts.get('tampered', 0) if outcome_counts is defined else 0 }}</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-4 col-lg-2">
+        <div class="card card-custom p-3 stat-card shadow-sm h-100 border-warning-subtle">
+            <span class="text-warning-emphasis small fw-semibold">CAN'T CHECK</span>
+            <div class="h3 fw-bold text-warning-emphasis mb-0 mt-1">{{ outcome_counts.get('cannot_verify', 0) if outcome_counts is defined else 0 }}</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-4 col-lg-2">
         <div class="card card-custom p-3 stat-card shadow-sm h-100">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <span class="text-muted small fw-semibold">CUSTOMER REVIEWS</span>
-                    <div class="h3 fw-bold mb-0 mt-1">{{ total_feedback }}</div>
-                </div>
-                <div class="bg-info bg-opacity-10 text-info p-3 rounded-circle" aria-hidden="true"><i class="bi bi-star-fill fs-4"></i></div>
-            </div>
+            <span class="text-muted small fw-semibold">CHECKPOINTS</span>
+            <div class="h3 fw-bold mb-0 mt-1">{{ total_transports }}</div>
         </div>
     </div>
 </div>
@@ -79,7 +71,7 @@
     <div class="col-lg-4">
         <div class="card card-custom shadow-sm h-100">
             <div class="card-header card-header-ag">
-                <h2 class="h6 mb-0 fw-bold"><i class="bi bi-pie-chart me-2" aria-hidden="true"></i>Supply Chain Status Distribution</h2>
+                <h2 class="h6 mb-0 fw-bold"><i class="bi bi-pie-chart me-2" aria-hidden="true"></i>Supply Chain Stage Distribution</h2>
             </div>
             <div class="card-body">
                 <canvas id="statusChart" height="220"></canvas>
@@ -89,7 +81,7 @@
     <div class="col-lg-4">
         <div class="card card-custom shadow-sm h-100">
             <div class="card-header card-header-ag">
-                <h2 class="h6 mb-0 fw-bold"><i class="bi bi-star-half me-2" aria-hidden="true"></i>Customer Rating Feedback</h2>
+                <h2 class="h6 mb-0 fw-bold"><i class="bi bi-star-half me-2" aria-hidden="true"></i>Customer Ratings ({{ total_feedback }})</h2>
             </div>
             <div class="card-body">
                 <canvas id="ratingChart" height="220"></canvas>
@@ -98,10 +90,10 @@
     </div>
 </div>
 
-<!-- Products and Live On-Chain Audit Table -->
+<!-- Batches and Honest Verification Status Table -->
 <div class="card card-custom shadow-sm mb-4">
     <div class="card-header card-header-ag d-flex justify-content-between align-items-center">
-        <h2 class="h5 mb-0 fw-bold"><i class="bi bi-diagram-3 me-2" aria-hidden="true"></i>Produce Batches &amp; Integrity Status</h2>
+        <h2 class="h5 mb-0 fw-bold"><i class="bi bi-diagram-3 me-2" aria-hidden="true"></i>Batches &amp; Verification Status</h2>
         <span class="badge bg-secondary">{{ products|length }} Batches</span>
     </div>
     <div class="card-body p-0">
@@ -112,37 +104,36 @@
                         <th scope="col">Batch ID</th>
                         <th scope="col">Produce</th>
                         <th scope="col">Farmer</th>
-                        <th scope="col">Status</th>
-                        <th scope="col">Integrity Check</th>
-                        <th scope="col">Ledger Record</th>
+                        <th scope="col">Journey Progress</th>
+                        <th scope="col">Verification Result</th>
                         <th scope="col">Action</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for p in products %}
-                    {% set audit_st = chain_overview.audit_map.get(p.batch_id, 'error') %}
+                    {% set vst = (batch_verifications.get(p.batch_id) if batch_verifications is defined else none) %}
                     <tr>
                         <td class="fw-bold font-monospace text-success">{{ p.batch_id }}</td>
                         <td>{{ p.name }}</td>
-                        <td>{{ p.farmer.username }}</td>
-                        <td><span class="badge bg-info text-dark">{{ p.status }}</span></td>
+                        <td>{{ p.farmer.full_name or p.farmer.username }}</td>
                         <td>
-                            {% if audit_st == 'verified' %}
-                                <span class="badge bg-success"><i class="bi bi-shield-check me-1" aria-hidden="true"></i>Verified</span>
-                            {% elif audit_st == 'tampered' %}
-                                <span class="badge bg-danger"><i class="bi bi-exclamation-octagon me-1" aria-hidden="true"></i>Tampered!</span>
-                            {% elif audit_st == 'rpc_offline' %}
-                                <span class="badge bg-warning text-dark">RPC Offline</span>
-                            {% elif audit_st == 'not_found' %}
-                                <span class="badge bg-secondary">Unrecorded</span>
-                            {% else %}
-                                <span class="badge bg-secondary">{{ audit_st }}</span>
-                            {% endif %}
+                            <span class="badge bg-light text-dark border">{{ p.status }}</span>
+                            <div class="text-muted smaller">
+                                {{ p.transport_data|length }} transport checkpoint(s) &bull;
+                                {% if p.retail_data %}In shop{% else %}Shop pending{% endif %}
+                            </div>
                         </td>
-                        <td>
-                            <span class="badge bg-light text-dark border font-monospace" title="SHA-256: {{ p.on_chain_hash }}">
-                                {% if p.block_number %}Block #{{ p.block_number }}{% else %}Sealed{% endif %}
-                            </span>
+                        <td style="max-width:260px;">
+                            {% if vst %}
+                                {% if vst.status == 'verified' %}
+                                    <span class="badge bg-success mb-1"><i class="bi bi-shield-check me-1"></i>{{ vst.label }}</span>
+                                {% elif vst.status == 'tampered' %}
+                                    <span class="badge bg-danger mb-1"><i class="bi bi-exclamation-octagon me-1"></i>{{ vst.label }}</span>
+                                {% else %}
+                                    <span class="badge bg-warning text-dark mb-1"><i class="bi bi-question-circle me-1"></i>{{ vst.label }}</span>
+                                {% endif %}
+                                <div class="text-muted smaller">{{ vst.reason }}</div>
+                            {% endif %}
                         </td>
                         <td>
                             <a href="{{ url_for('verify_batch', batch_id=p.batch_id) }}" class="btn btn-sm btn-ag-primary">
@@ -157,19 +148,20 @@
     </div>
 </div>
 
-<!-- Collapsible Technical Blockchain Inspector (Signer Wallets + EVM Event Log) -->
+<!-- Demo-Only & Admin-Only Blockchain Explorer -->
+{% if demo_mode and chain_overview %}
 <details class="th-disclosure shadow-sm mb-4">
     <summary>
-        Technical Blockchain &amp; EVM Wallet Inspector ({{ chain_overview.events|length }} on-chain events &bull; {% if chain_overview.online %}Block #{{ chain_overview.block_number }}{% else %}RPC Offline{% endif %})
+        Demo Blockchain Explorer ({{ chain_overview.events|length }} on-chain events &bull; {% if chain_overview.online %}Block #{{ chain_overview.block_number }}{% else %}RPC Offline{% endif %})
     </summary>
     <div class="th-disclosure-body">
         <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 pb-3 mb-3 border-bottom">
             <div>
-                <div class="small text-muted fw-semibold">Active Deployed Contract ({{ chain_overview.contract_version }})</div>
+                <div class="small text-muted fw-semibold">Active Contract ({{ chain_overview.contract_version }})</div>
                 <div class="font-monospace fw-bold text-success small">{{ chain_overview.contract_address or 'Not deployed yet' }}</div>
             </div>
             {% if chain_overview.online %}
-            <span class="badge bg-success">Ganache Online &bull; Chain ID {{ chain_overview.chain_id }} &bull; Block #{{ chain_overview.block_number }}</span>
+            <span class="badge bg-success">RPC Online &bull; Chain ID {{ chain_overview.chain_id }} &bull; Block #{{ chain_overview.block_number }}</span>
             {% else %}
             <span class="badge bg-warning text-dark">RPC Offline</span>
             {% endif %}
@@ -192,7 +184,7 @@
         </div>
         {% endif %}
 
-        <div class="fw-semibold small text-muted mb-2">Live EVM Smart Contract Event Log</div>
+        <div class="fw-semibold small text-muted mb-2">Smart Contract Event Log</div>
         <div class="table-responsive border rounded">
             <table class="table table-hover align-middle mb-0 small">
                 <thead class="table-light">
@@ -200,7 +192,7 @@
                         <th scope="col">Block #</th>
                         <th scope="col">Event</th>
                         <th scope="col">Stage</th>
-                        <th scope="col">Signer Wallet</th>
+                        <th scope="col">Signer Address</th>
                         <th scope="col">Anchored Hash</th>
                         <th scope="col">Tx Hash</th>
                     </tr>
@@ -225,6 +217,7 @@
         </div>
     </div>
 </details>
+{% endif %}
 
 <!-- User Management Table -->
 <div class="card card-custom shadow-sm mb-4">

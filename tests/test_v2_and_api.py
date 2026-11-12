@@ -151,11 +151,22 @@ def test_api_health_and_verify_json_endpoints(client, app):
     assert res_verify.status_code == 200
     payload = res_verify.get_json()
     assert payload["batch_id"] == "TH-API-001"
-    assert "trust_score" in payload
-    assert "blockchain_proof" in payload
+    assert payload["verification_status"] in ("verified", "tampered", "cannot_verify")
+    assert payload["result_label"] in ("Verified", "Changed after recording", "Can't check right now")
+    assert "reason" in payload
+    assert payload["timeline"]["transport"] == "Pending"
+    assert payload["timeline"]["shop"] == "Pending"
+    assert "fingerprints" in payload
+    # Sensitive internal blockchain details must not be present in public API
+    for forbidden in ("blockchain_proof", "contract_address", "tx_hash", "block_number", "signer_address", "v2_provenance"):
+        assert forbidden not in payload
+
+    # Health endpoint must be trimmed similarly
+    assert set(h_json.keys()) == {"status", "blockchain", "database"}
+    assert list(h_json["blockchain"].keys()) == ["online"]
 
 
-def test_demo_tamper_toggle_routes(client, app):
+def test_demo_tamper_toggle_routes(client, app, monkeypatch):
     with app.app_context():
         farmer = User.query.filter_by(username="farmer_test").first()
         transporter = User.query.filter_by(username="transporter_test").first()
@@ -182,6 +193,12 @@ def test_demo_tamper_toggle_routes(client, app):
             vehicle_number="TRK-100",
         ))
         db.session.commit()
+
+    # Hidden behind 404 when DEMO_MODE is off
+    assert client.post("/verify/TH-TAMPER-UI/toggle-demo-tamper").status_code == 404
+    assert client.post("/verify/TH-TAMPER-UI/toggle-transport-tamper").status_code == 404
+
+    monkeypatch.setenv("DEMO_MODE", "true")
 
     # Toggle harvest tamper on and off
     r1 = client.post("/verify/TH-TAMPER-UI/toggle-demo-tamper", follow_redirects=True)
@@ -214,7 +231,7 @@ def test_ensure_schema_columns_idempotent(app):
         ensure_schema_columns()
 
 
-def test_customer_qr_scanner_ui_present(client, app):
+def test_customer_qr_scanner_ui_present(client, app, monkeypatch):
     with app.app_context():
         farmer = User.query.filter_by(username="farmer_test").first()
         db.session.add(Product(
@@ -238,7 +255,12 @@ def test_customer_qr_scanner_ui_present(client, app):
     assert 'id="tab-qr-scan"' in html
     assert 'id="btn-start-cam"' in html
     assert 'id="qr-file-input"' in html
-    assert 'id="btn-demo-qr-scan"' in html
+    assert 'id="btn-demo-qr-scan"' not in html
+
+    monkeypatch.setenv("DEMO_MODE", "true")
+    res_demo = client.get("/customer")
+    assert res_demo.status_code == 200
+    assert 'id="btn-demo-qr-scan"' in res_demo.data.decode("utf-8")
 
 
 @pytest.mark.skipif(not _ganache_up(), reason="Ganache node not reachable on configured RPC URL")
@@ -368,9 +390,10 @@ def test_live_ganache_v2_multistage_immutability_and_tamper(client, app):
     # Clean verified JSON & HTML verification check
     api_clean = client.get(f"/api/verify/{batch_id}").get_json()
     assert api_clean["verification_status"] == "verified"
+    assert api_clean["result_label"] == "Verified"
     assert api_clean["trust_score"]["score"] == 100
-    assert api_clean["transport_checkpoints"][0]["verification"] == "verified"
-    assert api_clean["retail"]["verification"] == "verified"
+    assert api_clean["timeline"]["transport"][0]["verification"] == "verified"
+    assert api_clean["timeline"]["shop"]["verification"] == "verified"
 
     # Falsify cold-chain temperature in DB -> Stage 2 tamper detected even though Harvest wasn't touched
     with app.app_context():
@@ -380,9 +403,10 @@ def test_live_ganache_v2_multistage_immutability_and_tamper(client, app):
 
     api_tampered = client.get(f"/api/verify/{batch_id}").get_json()
     assert api_tampered["verification_status"] == "tampered"
-    assert api_tampered["transport_checkpoints"][0]["verification"] == "tampered"
+    assert api_tampered["result_label"] == "Changed after recording"
+    assert api_tampered["timeline"]["transport"][0]["verification"] == "tampered"
 
     html_tampered = client.get(f"/verify/{batch_id}").data.decode("utf-8")
-    assert "TAMPER DETECTED" in html_tampered
-    assert "Cold-chain logistics data was altered" in html_tampered
+    assert "Changed after recording" in html_tampered
+    assert "Transport checkpoint #1" in html_tampered
 

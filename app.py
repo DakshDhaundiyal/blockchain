@@ -4,7 +4,8 @@ import time
 from datetime import datetime, timezone, timedelta
 from functools import wraps
 from flask import (
-    Flask, render_template, request, redirect, url_for, flash, session, jsonify
+    Flask, render_template, request, redirect, url_for, flash, session, jsonify,
+    abort, send_file
 )
 from flask_wtf.csrf import CSRFProtect, CSRFError
 from werkzeug.utils import secure_filename
@@ -20,47 +21,78 @@ from models import (
 from blockchain import (
     store_hash, store_hash_detailed, store_stage_hash, get_hash,
     compute_batch_hash, compute_transport_hash, compute_retail_hash,
-    load_config, fetch_on_chain_status, fetch_v2_provenance_details,
-    get_admin_blockchain_overview, get_w3
+    fetch_on_chain_status, fetch_v2_provenance_details,
+    inspect_batch_on_chain, get_admin_blockchain_overview, get_w3
 )
 from utils import (
-    generate_batch_qr, validate_image_file, evaluate_temperature,
-    compute_trust_score, logger
+    generate_batch_qr_bytes, resolve_qr_base_url, sanitize_error_text,
+    validate_image_file, evaluate_temperature, compute_trust_score, logger
 )
 
 app = Flask(__name__)
 
+
+def is_production_mode() -> bool:
+    return (
+        os.environ.get('FLASK_ENV', '').strip().lower() == 'production'
+        or os.environ.get('PRODUCTION', 'false').strip().lower() in ('true', '1', 'yes')
+        or os.environ.get('RENDER', 'false').strip().lower() in ('true', '1', 'yes')
+    )
+
+
+def is_demo_mode() -> bool:
+    return os.environ.get('DEMO_MODE', 'false').strip().lower() in ('true', '1', 'yes', 'on')
+
+
+def allow_image_uploads() -> bool:
+    return os.environ.get('ALLOW_IMAGE_UPLOADS', 'false').strip().lower() in ('true', '1', 'yes', 'on')
+
+
 # Security: Move secret configuration to environment variables
 SECRET_KEY = os.environ.get('SECRET_KEY')
 if not SECRET_KEY:
-    if os.environ.get('FLASK_ENV') == 'production' or os.environ.get('PRODUCTION') == 'true':
+    if is_production_mode():
         raise RuntimeError("FATAL: SECRET_KEY environment variable must be set in production mode.")
     SECRET_KEY = 'trustharvest-dev-only-secret-key-change-in-production'
 app.config['SECRET_KEY'] = SECRET_KEY
 
-# Database Configuration
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///trustharvest.db')
+# Database Configuration (SQLite locally, Neon/PostgreSQL in production)
+raw_db_url = (os.environ.get('DATABASE_URL') or os.environ.get('DATABASE_URI') or 'sqlite:///trustharvest.db').strip()
+if raw_db_url.startswith('postgres://'):
+    raw_db_url = 'postgresql://' + raw_db_url[len('postgres://'):]
+app.config['SQLALCHEMY_DATABASE_URI'] = raw_db_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+if raw_db_url.startswith('postgresql'):
+    app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {'pool_pre_ping': True, 'pool_recycle': 300}
 
 # Security: Session Cookie Hardening
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
-app.config['SESSION_COOKIE_SECURE'] = os.environ.get('SESSION_COOKIE_SECURE', 'false').lower() in ('true', '1')
+cookie_secure_env = os.environ.get('SESSION_COOKIE_SECURE')
+if cookie_secure_env is not None:
+    app.config['SESSION_COOKIE_SECURE'] = cookie_secure_env.strip().lower() in ('true', '1', 'yes')
+else:
+    app.config['SESSION_COOKIE_SECURE'] = is_production_mode()
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=4)
 
-# Security: Restrict maximum upload size to 5 MB
-app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024
+# Security: Restrict maximum upload size (default 5 MB)
+try:
+    app.config['MAX_CONTENT_LENGTH'] = int(os.environ.get('MAX_CONTENT_LENGTH', 5 * 1024 * 1024))
+except (TypeError, ValueError):
+    app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024
 
 # Security: Initialize CSRF Protection
 csrf = CSRFProtect(app)
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 UPLOAD_FOLDER = os.path.join(BASE_DIR, 'static', 'uploads')
-QR_FOLDER = os.path.join(BASE_DIR, 'static', 'qr')
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
-
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-os.makedirs(QR_FOLDER, exist_ok=True)
+STATIC_PRODUCE_IMAGES = [
+    ('default.jpg', 'Fresh Harvest Crate (Default)'),
+    ('organic_apples.jpg', 'Crisp Orchard Apples'),
+    ('heirloom_tomatoes.jpg', 'Vine-Ripened Tomatoes'),
+]
+ALLOWED_STATIC_IMAGE_NAMES = {item[0] for item in STATIC_PRODUCE_IMAGES}
 
 db.init_app(app)
 
@@ -68,8 +100,22 @@ with app.app_context():
     db.create_all()
     ensure_schema_columns()
 
-# Make telemetry classifier available across Jinja templates
+
+def product_image_url(image_name: str | None) -> str:
+    clean = (image_name or 'default.jpg').strip() or 'default.jpg'
+    img_path = os.path.join(BASE_DIR, 'static', 'img', clean)
+    if os.path.exists(img_path):
+        return url_for('static', filename=f'img/{clean}')
+    up_path = os.path.join(UPLOAD_FOLDER, clean)
+    if os.path.exists(up_path):
+        return url_for('static', filename=f'uploads/{clean}')
+    return url_for('static', filename='img/default.jpg')
+
+
+# Make helpers available across Jinja templates
 app.jinja_env.globals['evaluate_temperature'] = evaluate_temperature
+app.jinja_env.globals['product_image_url'] = product_image_url
+app.jinja_env.globals['STATIC_PRODUCE_IMAGES'] = STATIC_PRODUCE_IMAGES
 
 # In-memory rate limiting for login attempts
 FAILED_LOGINS = {}
@@ -105,24 +151,23 @@ def request_entity_too_large(error):
 
 @app.context_processor
 def inject_system_status():
-    """Provides honest real-time blockchain status and active persona info to all templates/navbars."""
+    """Provides honest verification availability and active persona info to templates without leaking internal chain details."""
     is_online = False
-    block_num = None
     try:
         w3 = get_w3(die_on_error=False)
         if w3 and w3.is_connected():
             is_online = True
-            block_num = w3.eth.block_number
     except Exception:
         pass
     role = session.get('role', None)
     return {
         'blockchain_online': is_online,
-        'blockchain_block': block_num,
+        'demo_mode': is_demo_mode(),
+        'allow_uploads': allow_image_uploads(),
         'DEFAULT_PERSONAS': DEFAULT_PERSONAS,
         'current_role': role,
         'current_username': session.get('username', None),
-        'current_persona': DEFAULT_PERSONAS.get(role, None)
+        'current_persona': DEFAULT_PERSONAS.get(role, None),
     }
 
 def allowed_file(filename):
@@ -217,26 +262,6 @@ def landing():
     feedback_count = Feedback.query.count()
     recent_products = Product.query.order_by(Product.created_at.desc()).limit(8).all()
 
-    network_block = None
-    contract_address = None
-    raw_contract_address = ""
-    contract_version = "V2"
-    try:
-        cfg = load_config()
-        contract_version = str(cfg.get('contract_version') or 'V2')
-        raw_contract_address = str(cfg.get('contract_address') or '')
-        if raw_contract_address and len(raw_contract_address) >= 16:
-            contract_address = raw_contract_address[:10] + '…' + raw_contract_address[-6:]
-    except Exception:
-        pass
-
-    try:
-        w3 = get_w3(die_on_error=False)
-        if w3 and w3.is_connected():
-            network_block = w3.eth.block_number
-    except BaseException:
-        pass
-
     return render_template(
         'landing.html',
         product_count=product_count,
@@ -244,10 +269,6 @@ def landing():
         transport_count=transport_count,
         feedback_count=feedback_count,
         recent_products=recent_products,
-        network_block=network_block,
-        contract_address=contract_address,
-        raw_contract_address=raw_contract_address,
-        contract_version=contract_version,
     )
 
 @app.route('/register', methods=['GET', 'POST'])
@@ -351,9 +372,12 @@ def logout():
 @app.route('/switch-role/<role>')
 def switch_role(role):
     """
-    Seamlessly switches the active dashboard and persona without credentials
-    for quick live demonstration and stakeholder walkthroughs.
+    Demo-only helper to switch roles cleanly without credentials.
+    Returns 404 when DEMO_MODE is off.
     """
+    if not is_demo_mode():
+        abort(404)
+
     target_role = role.strip().lower()
     alias_map = {
         'producer': 'farmer',
@@ -434,17 +458,21 @@ def _register_harvest_batch(user, form_data, image_file):
         return None, f'Batch ID collision on blockchain for {batch_id}. Please resubmit.'
 
     image_filename = 'default.jpg'
-    if image_file and image_file.filename:
+    image_preset = (form_data.get('image_preset') or '').strip()
+    if image_preset in ALLOWED_STATIC_IMAGE_NAMES:
+        image_filename = image_preset
+
+    if allow_image_uploads() and image_file and image_file.filename:
         is_valid, err_msg = validate_image_file(image_file, ALLOWED_EXTENSIONS)
         if not is_valid:
             return None, f'Upload rejected: {err_msg}'
+        os.makedirs(UPLOAD_FOLDER, exist_ok=True)
         ext = secure_filename(image_file.filename).rsplit('.', 1)[1].lower()
         image_filename = f"{batch_id}.{ext}"
         image_file.save(os.path.join(UPLOAD_FOLDER, image_filename))
 
-    cfg = load_config()
-    base_url = str(cfg.get('BASE_URL') or 'http://localhost:5000')
-    qr_filename = generate_batch_qr(batch_id, QR_FOLDER, base_url)
+    # QR codes are generated dynamically in-memory via /qr/<batch_id>.png
+    qr_filename = f"qr_{batch_id}.png"
 
     product_hash = compute_batch_hash(
         batch_id=batch_id,
@@ -458,10 +486,11 @@ def _register_harvest_batch(user, form_data, image_file):
 
     try:
         receipt_meta = store_hash_detailed(batch_id, product_hash, role="farmer")
-        logger.info("Batch %s hash stored on blockchain: %s (tx: %s)", batch_id, product_hash, receipt_meta["tx_hash"])
+        logger.info("Batch %s hash stored on blockchain: %s", batch_id, product_hash)
     except Exception as e:
-        logger.error("Blockchain error storing batch %s: %s", batch_id, e)
-        return None, f'Blockchain error storing batch hash: {str(e)}'
+        safe_err = sanitize_error_text(str(e))
+        logger.error("Blockchain error storing batch %s: %s", batch_id, safe_err)
+        return None, f'Unable to record harvest on verification network right now ({safe_err}).'
 
     product = Product(
         batch_id=batch_id,
@@ -476,6 +505,7 @@ def _register_harvest_batch(user, form_data, image_file):
         tx_hash=receipt_meta.get("tx_hash"),
         block_number=receipt_meta.get("block_number"),
         contract_address=receipt_meta.get("contract_address"),
+        contract_version=receipt_meta.get("contract_version", "V2"),
         signer_address=receipt_meta.get("signer_address"),
         status='Harvested'
     )
@@ -533,7 +563,13 @@ def _record_transport_checkpoint(user, product, form_data):
         transporter_id=user.id,
     )
 
-    anchor_result = store_stage_hash(product.batch_id, "TRANSPORT", stage_hash, role="transporter")
+    anchor_result = store_stage_hash(
+        product.batch_id,
+        "TRANSPORT",
+        stage_hash,
+        role="transporter",
+        contract_address=product.contract_address,
+    )
 
     transport_record = TransportData(
         product_id=product.id,
@@ -597,7 +633,13 @@ def _record_retail_listing(user, product, form_data, require_price_stock=False):
         retailer_id=user.id,
     )
 
-    anchor_result = store_stage_hash(product.batch_id, "RETAIL", retail_hash, role="retailer")
+    anchor_result = store_stage_hash(
+        product.batch_id,
+        "RETAIL",
+        retail_hash,
+        role="retailer",
+        contract_address=product.contract_address,
+    )
 
     retail_entry = RetailData.query.filter_by(product_id=product.id).first()
     if not retail_entry:
@@ -733,7 +775,7 @@ def workflow_harvest():
         flash(err, 'danger')
         return redirect(url_for('workflow_entry', stage='harvest'))
 
-    flash(f'Stage 2 Complete: Batch {product.batch_id} registered and sealed on Ethereum blockchain!', 'success')
+    flash(f'Farm harvest recorded and sealed for batch {product.batch_id}!', 'success')
     return redirect(url_for('workflow_entry', stage='transport', batch_id=product.batch_id))
 
 
@@ -758,15 +800,14 @@ def workflow_transport():
         return redirect(url_for('workflow_entry', stage='transport', batch_id=batch_id))
 
     product = Product.query.filter_by(batch_id=batch_id).first_or_404()
-    _, anchor_res, err = _record_transport_checkpoint(user, product, request.form)
+    _, _, err = _record_transport_checkpoint(user, product, request.form)
     if err:
         flash(err, 'danger')
         return redirect(url_for('workflow_entry', stage='transport', batch_id=batch_id))
 
-    if anchor_res and anchor_res.get("status") == "anchored":
-        flash(f'Stage 3 Checkpoint: Transport status updated to "{product.status}" and anchored on Ethereum (Block #{anchor_res.get("block_number")}).', 'success')
-    else:
-        flash(f'Stage 3 Checkpoint: Transport status updated to "{product.status}" for batch {product.batch_id}.', 'success')
+    flash(f'Transport checkpoint recorded ("{product.status}") for batch {product.batch_id}.', 'success')
+    if request.form.get('stay_on_transport') == '1':
+        return redirect(url_for('workflow_entry', stage='transport', batch_id=product.batch_id))
     return redirect(url_for('workflow_entry', stage='retail', batch_id=product.batch_id))
 
 
@@ -787,15 +828,12 @@ def workflow_retail():
         return redirect(url_for('workflow_entry', stage='harvest'))
 
     product = Product.query.filter_by(batch_id=batch_id).first_or_404()
-    _, anchor_res, err = _record_retail_listing(user, product, request.form, require_price_stock=True)
+    _, _, err = _record_retail_listing(user, product, request.form, require_price_stock=True)
     if err:
         flash(err, 'danger')
         return redirect(url_for('workflow_entry', stage='retail', batch_id=batch_id))
 
-    if anchor_res and anchor_res.get("status") == "anchored":
-        flash(f'Stage 4 Complete: Retail listing sealed on Ethereum (Block #{anchor_res.get("block_number")}) for batch {product.batch_id}!', 'success')
-    else:
-        flash(f'Stage 4 Complete: Retail listing recorded for batch {product.batch_id}. Full journey completed!', 'success')
+    flash(f'Retail listing recorded for batch {product.batch_id}. Full journey completed!', 'success')
     return redirect(url_for('verify_batch', batch_id=product.batch_id, from_workflow=1))
 
 
@@ -884,7 +922,16 @@ def customer_dashboard():
         else:
             flash(f'Batch ID "{search_batch}" not found.', 'warning')
     products = Product.query.order_by(Product.created_at.desc()).all()
-    return render_template('customer.html', products=products)
+    batch_statuses = {}
+    for p in products:
+        vctx = _build_verification_context(p, simulate_tamper=False)
+        batch_statuses[p.batch_id] = {
+            "status": vctx["verification_status"],
+            "label": vctx["result_label"],
+            "reason": vctx["result_reason"],
+            "pending": vctx["has_pending_stages"],
+        }
+    return render_template('customer.html', products=products, batch_statuses=batch_statuses)
 
 
 # ═══════════════════════════════════════════════════════════════════
@@ -913,163 +960,362 @@ def _build_verification_context(product, simulate_tamper=False):
         image=product.image
     )
 
-    chain_info = fetch_on_chain_status(product.batch_id)
-    raw_chain_hash = chain_info.get("hash")
-    chain_status = chain_info.get("status")
-    contract_source_addr = chain_info.get("contract_address")
-    conflict_details = chain_info.get("conflict_details")
+    chain = inspect_batch_on_chain(
+        product.batch_id,
+        recorded_contract_address=product.contract_address,
+        recorded_contract_version=product.contract_version,
+    )
+    chain_status = chain.get("status")
+    on_chain_hash = chain.get("hash")
+    contract_source_addr = chain.get("contract_address")
+    resolved_version = chain.get("contract_version") or product.contract_version
+    conflict_details = chain.get("conflict_details")
+    expected_signers = chain.get("expected_signers")
+    v2_stages = chain.get("stages") or []
 
-    if chain_status == "ok":
-        on_chain_hash = raw_chain_hash
-        if on_chain_hash and computed_hash.lower() == str(on_chain_hash).lower():
-            verification_status = "verified"
-        else:
-            verification_status = "tampered"
-    elif chain_status == "conflict":
-        verification_status = "conflict"
-        on_chain_hash = None
-    elif chain_status == "not_found":
-        verification_status = "not_found"
-        on_chain_hash = None
-    elif chain_status == "rpc_offline":
-        verification_status = "rpc_offline"
-        on_chain_hash = product.on_chain_hash
-    else:
-        verification_status = "error"
-        on_chain_hash = None
-
-    # Fetch V2 multi-stage history & signer metadata
-    v2_details = fetch_v2_provenance_details(product.batch_id)
-    v2_stages = v2_details.get("stages", [])
-    transport_chain_stages = [s for s in v2_stages if s["stage"] == "TRANSPORT"]
-    retail_chain_stages = [s for s in v2_stages if s["stage"] == "RETAIL"]
+    db_transports = sorted(
+        list(product.transport_data or []),
+        key=lambda t: (
+            t.timestamp.replace(tzinfo=timezone.utc) if (t.timestamp and t.timestamp.tzinfo is None) else (t.timestamp or utcnow()),
+            t.id or 0,
+        ),
+    )
 
     transport_verifications = []
     has_temp_breach = False
     transport_verified_count = 0
     transport_tampered = False
-
-    for idx, t in enumerate(product.transport_data):
-        t_computed = compute_transport_hash(
-            batch_id=product.batch_id,
-            status=t.status,
-            current_location=t.current_location,
-            temperature=t.temperature,
-            vehicle_number=t.vehicle_number,
-            notes=t.notes,
-            transporter_id=t.transporter_id,
-        )
-        temp_eval = evaluate_temperature(t.temperature)
-        if temp_eval.get("status") == "breach":
-            has_temp_breach = True
-
-        if idx < len(transport_chain_stages):
-            chain_stage = transport_chain_stages[idx]
-            c_hash = chain_stage["hash"]
-            if c_hash.lower() == t_computed.lower():
-                t_status = "verified"
-                transport_verified_count += 1
-            else:
-                t_status = "tampered"
-                transport_tampered = True
-            recorded_by = chain_stage["recorded_by"]
-            on_chain_ts = chain_stage["timestamp"]
-        elif chain_status == "rpc_offline" and t.on_chain_hash:
-            t_status = "rpc_offline"
-            c_hash = t.on_chain_hash
-            recorded_by = t.signer_address
-            on_chain_ts = None
-        else:
-            t_status = "db_only"
-            c_hash = None
-            recorded_by = t.signer_address
-            on_chain_ts = None
-
-        transport_verifications.append({
-            "record": t,
-            "computed_hash": t_computed,
-            "on_chain_hash": c_hash,
-            "status": t_status,
-            "temp_eval": temp_eval,
-            "recorded_by": recorded_by,
-            "on_chain_timestamp": on_chain_ts,
-        })
-
     retail_verification = None
     retail_verified = False
     retail_tampered = False
-    if product.retail_data:
-        r = product.retail_data
-        r_computed = compute_retail_hash(
-            batch_id=product.batch_id,
-            store_name=r.store_name,
-            store_location=r.store_location,
-            price=r.price,
-            stock_quantity=r.stock_quantity,
-            arrival_date=r.arrival_date,
-            shelf_life=r.shelf_life,
-            retailer_id=r.retailer_id,
-        )
-        if retail_chain_stages:
-            latest_retail_chain = retail_chain_stages[-1]
-            rc_hash = latest_retail_chain["hash"]
-            if rc_hash.lower() == r_computed.lower():
-                r_status = "verified"
-                retail_verified = True
+
+    tampered_stage_names = []
+    cannot_verify_reasons = []
+
+    if chain_status == "rpc_offline":
+        harvest_status = "rpc_offline"
+        cannot_verify_reasons.append("The verification network is unreachable right now.")
+        for t in db_transports:
+            t_computed = compute_transport_hash(
+                batch_id=product.batch_id,
+                status=t.status,
+                current_location=t.current_location,
+                temperature=t.temperature,
+                vehicle_number=t.vehicle_number,
+                notes=t.notes,
+                transporter_id=t.transporter_id,
+            )
+            temp_eval = evaluate_temperature(t.temperature)
+            if temp_eval.get("status") == "breach":
+                has_temp_breach = True
+            transport_verifications.append({
+                "record": t,
+                "computed_hash": t_computed,
+                "on_chain_hash": t.on_chain_hash,
+                "status": "rpc_offline",
+                "temp_eval": temp_eval,
+                "recorded_by": t.signer_address,
+                "on_chain_timestamp": None,
+            })
+        if product.retail_data:
+            r = product.retail_data
+            r_computed = compute_retail_hash(
+                batch_id=product.batch_id,
+                store_name=r.store_name,
+                store_location=r.store_location,
+                price=r.price,
+                stock_quantity=r.stock_quantity,
+                arrival_date=r.arrival_date,
+                shelf_life=r.shelf_life,
+                retailer_id=r.retailer_id,
+            )
+            retail_verification = {
+                "record": r,
+                "computed_hash": r_computed,
+                "on_chain_hash": r.on_chain_hash,
+                "status": "rpc_offline",
+                "recorded_by": r.signer_address,
+                "on_chain_timestamp": None,
+            }
+    elif chain_status == "not_found":
+        harvest_status = "not_found"
+        cannot_verify_reasons.append("This batch has not been recorded on the blockchain yet.")
+    elif chain_status == "conflict":
+        harvest_status = "conflict"
+        cannot_verify_reasons.append("Conflicting records were found on the blockchain for this batch.")
+    elif chain_status == "error":
+        harvest_status = "error"
+        cannot_verify_reasons.append("Unable to read the blockchain record cleanly right now.")
+    else:
+        # chain_status == "ok" -> Harvest record exists on-chain
+        if chain.get("truncated"):
+            cannot_verify_reasons.append("Too many blockchain entries exist for this batch to verify safely.")
+
+        if on_chain_hash and computed_hash.lower() == str(on_chain_hash).lower():
+            # Hash matches; check V2 farmer signer allowlist if available
+            reg_by = (chain.get("registered_by") or "").lower()
+            allowed_farmers = (expected_signers or {}).get("farmer") or set()
+            if resolved_version == "V2" and allowed_farmers and reg_by and reg_by not in allowed_farmers:
+                harvest_status = "conflict"
+                cannot_verify_reasons.append("The farm harvest record on-chain was signed by an unexpected account.")
             else:
-                r_status = "tampered"
-                retail_tampered = True
-            r_recorded_by = latest_retail_chain["recorded_by"]
-            r_ts = latest_retail_chain["timestamp"]
-        elif chain_status == "rpc_offline" and r.on_chain_hash:
-            r_status = "rpc_offline"
-            rc_hash = r.on_chain_hash
-            r_recorded_by = r.signer_address
-            r_ts = None
+                harvest_status = "verified"
         else:
-            r_status = "db_only"
-            rc_hash = None
-            r_recorded_by = r.signer_address
-            r_ts = None
+            harvest_status = "tampered"
+            tampered_stage_names.append("Farm harvest")
 
-        retail_verification = {
-            "record": r,
-            "computed_hash": r_computed,
-            "on_chain_hash": rc_hash,
-            "status": r_status,
-            "recorded_by": r_recorded_by,
-            "on_chain_timestamp": r_ts,
-        }
+        # Validate stage history (V2 vs V1)
+        transport_chain_stages = [s for s in v2_stages if s["stage"] == "TRANSPORT"]
+        retail_chain_stages = [s for s in v2_stages if s["stage"] == "RETAIL"]
+        unknown_stages = [s for s in v2_stages if s["stage"] not in ("TRANSPORT", "RETAIL")]
+        if unknown_stages:
+            cannot_verify_reasons.append("An unrecognized stage entry exists on the blockchain for this batch.")
 
-    # If either transport or retail on-chain comparison detected tampering, surface global alert too
-    any_stage_tampered = (verification_status == "tampered") or transport_tampered or retail_tampered
+        # Transport checkpoints (chronological)
+        db_transport_hashes = []
+        for t in db_transports:
+            t_computed = compute_transport_hash(
+                batch_id=product.batch_id,
+                status=t.status,
+                current_location=t.current_location,
+                temperature=t.temperature,
+                vehicle_number=t.vehicle_number,
+                notes=t.notes,
+                transporter_id=t.transporter_id,
+            )
+            db_transport_hashes.append(t_computed.lower())
+
+        allowed_transporters = (expected_signers or {}).get("transporter") or set()
+        if resolved_version == "V2":
+            for s_idx, s in enumerate(transport_chain_stages):
+                rec_by = (s.get("recorded_by") or "").lower()
+                if allowed_transporters and rec_by and rec_by not in allowed_transporters:
+                    cannot_verify_reasons.append(f"Transport entry #{s_idx + 1} on-chain was signed by an unexpected account.")
+
+            if len(transport_chain_stages) > len(db_transports):
+                cannot_verify_reasons.append("Extra transport records exist on the blockchain that are missing locally.")
+
+        onchain_transport_hashes = {s["hash"].lower() for s in transport_chain_stages if s.get("hash")}
+
+        for idx, t in enumerate(db_transports):
+            t_computed = db_transport_hashes[idx]
+            temp_eval = evaluate_temperature(t.temperature)
+            if temp_eval.get("status") == "breach":
+                has_temp_breach = True
+
+            if resolved_version == "V1":
+                t_status = "unrecorded"
+                c_hash = None
+                recorded_by = t.signer_address
+                on_chain_ts = None
+                cannot_verify_reasons.append(f"Transport checkpoint #{idx + 1} exists locally but was recorded on a V1 contract without stage anchoring.")
+            elif len(transport_chain_stages) == 0:
+                t_status = "unrecorded"
+                c_hash = None
+                recorded_by = t.signer_address
+                on_chain_ts = None
+                cannot_verify_reasons.append(f"Transport checkpoint #{idx + 1} has not been recorded on the blockchain yet.")
+            elif idx < len(transport_chain_stages):
+                chain_stage = transport_chain_stages[idx]
+                c_hash = chain_stage["hash"]
+                rec_by = (chain_stage.get("recorded_by") or "").lower()
+                if allowed_transporters and rec_by and rec_by not in allowed_transporters:
+                    t_status = "conflict"
+                elif c_hash.lower() == t_computed:
+                    t_status = "verified"
+                    transport_verified_count += 1
+                else:
+                    # Distinguish genuine mismatch/order tampering vs unanchored earlier DB row shifting indices
+                    if len(transport_chain_stages) < len(db_transports) and c_hash.lower() in db_transport_hashes:
+                        if t_computed not in onchain_transport_hashes and not t.tx_hash:
+                            t_status = "unrecorded"
+                            cannot_verify_reasons.append(f"Transport checkpoint #{idx + 1} has not been recorded on the blockchain yet.")
+                        else:
+                            t_status = "tampered"
+                            transport_tampered = True
+                            tampered_stage_names.append(f"Transport checkpoint #{idx + 1}")
+                    else:
+                        t_status = "tampered"
+                        transport_tampered = True
+                        tampered_stage_names.append(f"Transport checkpoint #{idx + 1}")
+                recorded_by = chain_stage["recorded_by"]
+                on_chain_ts = chain_stage["timestamp"]
+            else:
+                # Database has a checkpoint that is missing on-chain
+                t_status = "unrecorded"
+                c_hash = None
+                recorded_by = t.signer_address
+                on_chain_ts = None
+                cannot_verify_reasons.append(f"Transport checkpoint #{idx + 1} has not been recorded on the blockchain yet.")
+
+            transport_verifications.append({
+                "record": t,
+                "computed_hash": t_computed,
+                "on_chain_hash": c_hash,
+                "status": t_status,
+                "temp_eval": temp_eval,
+                "recorded_by": recorded_by,
+                "on_chain_timestamp": on_chain_ts,
+            })
+
+        # Retail stage check
+        allowed_retailers = (expected_signers or {}).get("retailer") or set()
+        if resolved_version == "V2":
+            for s in retail_chain_stages:
+                rec_by = (s.get("recorded_by") or "").lower()
+                if allowed_retailers and rec_by and rec_by not in allowed_retailers:
+                    cannot_verify_reasons.append("The store record on-chain was signed by an unexpected account.")
+
+        if product.retail_data:
+            r = product.retail_data
+            r_computed = compute_retail_hash(
+                batch_id=product.batch_id,
+                store_name=r.store_name,
+                store_location=r.store_location,
+                price=r.price,
+                stock_quantity=r.stock_quantity,
+                arrival_date=r.arrival_date,
+                shelf_life=r.shelf_life,
+                retailer_id=r.retailer_id,
+            )
+            if resolved_version == "V1" or not retail_chain_stages:
+                r_status = "unrecorded"
+                rc_hash = None
+                r_recorded_by = r.signer_address
+                r_ts = None
+                cannot_verify_reasons.append("Store details exist locally but have not been recorded on the blockchain yet.")
+            else:
+                latest_retail_chain = retail_chain_stages[-1]
+                rc_hash = latest_retail_chain["hash"]
+                rec_by = (latest_retail_chain.get("recorded_by") or "").lower()
+                if allowed_retailers and rec_by and rec_by not in allowed_retailers:
+                    r_status = "conflict"
+                elif rc_hash.lower() == r_computed.lower():
+                    r_status = "verified"
+                    retail_verified = True
+                else:
+                    r_status = "tampered"
+                    retail_tampered = True
+                    tampered_stage_names.append("Retail store listing")
+                r_recorded_by = latest_retail_chain["recorded_by"]
+                r_ts = latest_retail_chain["timestamp"]
+
+            retail_verification = {
+                "record": r,
+                "computed_hash": r_computed,
+                "on_chain_hash": rc_hash,
+                "status": r_status,
+                "recorded_by": r_recorded_by,
+                "on_chain_timestamp": r_ts,
+            }
+        elif resolved_version == "V2" and retail_chain_stages:
+            cannot_verify_reasons.append("A store record exists on the blockchain that is missing from local records.")
+
+    # Populate offline/not_found unrecorded stage previews when not already built above
+    if chain_status in ("not_found", "conflict", "error"):
+        for t in db_transports:
+            t_computed = compute_transport_hash(
+                batch_id=product.batch_id,
+                status=t.status,
+                current_location=t.current_location,
+                temperature=t.temperature,
+                vehicle_number=t.vehicle_number,
+                notes=t.notes,
+                transporter_id=t.transporter_id,
+            )
+            temp_eval = evaluate_temperature(t.temperature)
+            if temp_eval.get("status") == "breach":
+                has_temp_breach = True
+            transport_verifications.append({
+                "record": t,
+                "computed_hash": t_computed,
+                "on_chain_hash": None,
+                "status": "unrecorded",
+                "temp_eval": temp_eval,
+                "recorded_by": t.signer_address,
+                "on_chain_timestamp": None,
+            })
+        if product.retail_data:
+            r = product.retail_data
+            r_computed = compute_retail_hash(
+                batch_id=product.batch_id,
+                store_name=r.store_name,
+                store_location=r.store_location,
+                price=r.price,
+                stock_quantity=r.stock_quantity,
+                arrival_date=r.arrival_date,
+                shelf_life=r.shelf_life,
+                retailer_id=r.retailer_id,
+            )
+            retail_verification = {
+                "record": r,
+                "computed_hash": r_computed,
+                "on_chain_hash": None,
+                "status": "unrecorded",
+                "recorded_by": r.signer_address,
+                "on_chain_timestamp": None,
+            }
+
+    any_stage_tampered = (harvest_status == "tampered") or transport_tampered or retail_tampered
+    has_pending_stages = (len(db_transports) == 0) or (product.retail_data is None)
+
+    if any_stage_tampered:
+        verification_status = "tampered"
+        result_label = "Changed after recording"
+        stages_list_str = ", ".join(tampered_stage_names)
+        result_reason = f"{stages_list_str} data no longer matches the immutable blockchain record."
+    elif cannot_verify_reasons:
+        verification_status = "cannot_verify"
+        result_label = "Can't check right now"
+        result_reason = cannot_verify_reasons[0]
+    else:
+        verification_status = "verified"
+        result_label = "Verified"
+        if has_pending_stages:
+            result_reason = "All recorded details so far match the blockchain. Remaining journey steps are still pending."
+        else:
+            result_reason = "All farm, transport, and store details match the blockchain ledger."
 
     trust_score = compute_trust_score(
-        harvest_verified=(verification_status == "verified"),
-        transport_count=len(product.transport_data),
+        harvest_verified=(harvest_status == "verified"),
+        transport_count=len(db_transports),
         transport_verified_count=transport_verified_count,
         has_retail=bool(product.retail_data),
         retail_verified=retail_verified,
         has_temp_breach=has_temp_breach,
     )
 
-    cfg = load_config()
-    config_base_url = str(cfg.get('BASE_URL') or 'http://localhost:5000')
+    v2_details = {
+        "available": (resolved_version == "V2" and chain_status == "ok"),
+        "registered_by": chain.get("registered_by"),
+        "timestamp": chain.get("timestamp"),
+        "stages": v2_stages,
+        "contract_version": resolved_version,
+    }
+
+    req_root = request.url_root if request else ""
+    config_base_url = resolve_qr_base_url(req_root)
+    qr_verify_url = f"{config_base_url}/verify/{product.batch_id}" if config_base_url else f"/verify/{product.batch_id}"
 
     return {
         "product": product,
         "computed_hash": computed_hash,
         "on_chain_hash": on_chain_hash,
         "contract_source_addr": contract_source_addr or product.contract_address,
-        "verification_status": "tampered" if any_stage_tampered else verification_status,
-        "harvest_status": verification_status,
-        "is_verified": (verification_status == "verified" and not any_stage_tampered),
-        "is_tampered": any_stage_tampered,
-        "is_conflict": (verification_status == "conflict" and not any_stage_tampered),
-        "is_rpc_offline": (verification_status == "rpc_offline" and not any_stage_tampered),
-        "is_not_found": (verification_status == "not_found" and not any_stage_tampered),
+        "resolved_contract_version": resolved_version or "Unknown",
+        "verification_status": verification_status,
+        "result_label": result_label,
+        "result_reason": result_reason,
+        "harvest_status": harvest_status,
+        "is_verified": (verification_status == "verified"),
+        "is_tampered": (verification_status == "tampered"),
+        "is_cannot_verify": (verification_status == "cannot_verify"),
+        "is_conflict": (chain_status == "conflict" and not any_stage_tampered),
+        "is_rpc_offline": (chain_status == "rpc_offline" and not any_stage_tampered),
+        "is_not_found": (chain_status == "not_found" and not any_stage_tampered),
         "conflict_details": conflict_details,
         "config_base_url": config_base_url,
+        "qr_verify_url": qr_verify_url,
         "simulate_tamper": simulate_tamper,
         "simulated_field": simulated_field,
         "original_value": original_value,
@@ -1080,14 +1326,30 @@ def _build_verification_context(product, simulate_tamper=False):
         "retail_verification": retail_verification,
         "retail_tampered": retail_tampered,
         "has_temp_breach": has_temp_breach,
+        "has_pending_stages": has_pending_stages,
         "trust_score": trust_score,
     }
+
+
+@app.route('/qr/<batch_id>.png')
+def batch_qr_png(batch_id):
+    """Generates and streams the batch QR code PNG dynamically in memory (zero disk storage)."""
+    Product.query.filter_by(batch_id=batch_id).first_or_404()
+    base_url = resolve_qr_base_url(request.url_root)
+    buf = generate_batch_qr_bytes(batch_id, base_url)
+    download = request.args.get('download') == '1'
+    return send_file(
+        buf,
+        mimetype='image/png',
+        as_attachment=download,
+        download_name=f'qr_{batch_id}.png',
+    )
 
 
 @app.route('/verify/<batch_id>')
 def verify_batch(batch_id):
     product = Product.query.filter_by(batch_id=batch_id).first_or_404()
-    simulate_tamper = request.args.get('simulate_tamper', '0') == '1'
+    simulate_tamper = is_demo_mode() and (request.args.get('simulate_tamper', '0') == '1')
     ctx = _build_verification_context(product, simulate_tamper=simulate_tamper)
     ctx['from_workflow'] = request.args.get('from_workflow') == '1'
     return render_template('verify.html', **ctx)
@@ -1095,9 +1357,12 @@ def verify_batch(batch_id):
 @app.route('/verify/<batch_id>/toggle-demo-tamper', methods=['POST'])
 def toggle_demo_tamper(batch_id):
     """
-    Demonstration helper: Toggles the product farming_method in the database
+    Demo-only helper: Toggles the product farming_method in the database
     to a tampered value and cleanly restores its exact authentic value.
+    Returns 404 when DEMO_MODE is off.
     """
+    if not is_demo_mode():
+        abort(404)
     product = Product.query.filter_by(batch_id=batch_id).first_or_404()
     session_key = f'orig_farming_method_{batch_id}'
     if 'Non-Organic' in product.farming_method or 'Chemically Treated' in product.farming_method or 'Tamper' in product.farming_method:
@@ -1138,9 +1403,11 @@ def toggle_demo_tamper(batch_id):
 @app.route('/verify/<batch_id>/toggle-transport-tamper', methods=['POST'])
 def toggle_transport_tamper(batch_id):
     """
-    Demonstration helper: Simulates cold-chain temperature falsification on the latest
-    transport checkpoint and restores its original value so Stage 2 proof passes again.
+    Demo-only helper: Simulates cold-chain temperature falsification on the latest
+    transport checkpoint and restores its original value. Returns 404 when DEMO_MODE is off.
     """
+    if not is_demo_mode():
+        abort(404)
     product = Product.query.filter_by(batch_id=batch_id).first_or_404()
     if not product.transport_data:
         flash('No transport checkpoints exist on this batch yet.', 'warning')
@@ -1200,17 +1467,12 @@ def submit_feedback(batch_id):
 
 @app.route('/api/health')
 def api_health():
-    cfg = load_config()
     w3 = get_w3(die_on_error=False)
     online = bool(w3 and w3.is_connected())
     return jsonify({
         "status": "ok",
         "blockchain": {
             "online": online,
-            "block_number": w3.eth.block_number if online else None,
-            "chain_id": w3.eth.chain_id if online else None,
-            "contract_version": cfg.get("contract_version", "V1"),
-            "contract_address": cfg.get("contract_address") or None,
         },
         "database": {
             "products": Product.query.count(),
@@ -1228,52 +1490,76 @@ def api_verify_batch(batch_id):
         return jsonify({"error": f"Batch '{batch_id}' not found"}), 404
 
     ctx = _build_verification_context(product, simulate_tamper=False)
+    harvest_step_status = (
+        "verified" if ctx["harvest_status"] == "verified"
+        else ("tampered" if ctx["harvest_status"] == "tampered" else "cannot_verify")
+    )
     return jsonify({
         "batch_id": product.batch_id,
         "name": product.name,
         "quantity": product.quantity,
         "farming_method": product.farming_method,
         "packaging_date": product.packaging_date,
+        "origin": product.farmer_data.farm_location if product.farmer_data else None,
         "status": product.status,
         "verification_status": ctx["verification_status"],
+        "result_label": ctx["result_label"],
+        "reason": ctx["result_reason"],
         "trust_score": ctx["trust_score"],
-        "blockchain_proof": {
-            "contract_address": ctx["contract_source_addr"],
-            "tx_hash": product.tx_hash,
-            "block_number": product.block_number,
-            "signer_address": ctx["v2_details"].get("registered_by") or product.signer_address,
-            "computed_hash": ctx["computed_hash"],
-            "on_chain_hash": ctx["on_chain_hash"],
+        "timeline": {
+            "farm": {
+                "status": harvest_step_status,
+                "farmer": product.farmer.full_name or product.farmer.username,
+                "origin": product.farmer_data.farm_location if product.farmer_data else None,
+                "packaging_date": product.packaging_date,
+                "certifications": product.farmer_data.certifications if product.farmer_data else None,
+            },
+            "transport": [
+                {
+                    "checkpoint": idx + 1,
+                    "status": tv["record"].status,
+                    "location": tv["record"].current_location,
+                    "temperature": tv["record"].temperature,
+                    "telemetry_status": tv["temp_eval"]["status"],
+                    "vehicle": tv["record"].vehicle_number,
+                    "timestamp": tv["record"].timestamp.isoformat() if tv["record"].timestamp else None,
+                    "verification": tv["status"],
+                }
+                for idx, tv in enumerate(ctx["transport_verifications"])
+            ] if ctx["transport_verifications"] else "Pending",
+            "shop": {
+                "store_name": ctx["retail_verification"]["record"].store_name,
+                "store_location": ctx["retail_verification"]["record"].store_location,
+                "price": ctx["retail_verification"]["record"].price,
+                "stock_quantity": ctx["retail_verification"]["record"].stock_quantity,
+                "arrival_date": ctx["retail_verification"]["record"].arrival_date,
+                "shelf_life": ctx["retail_verification"]["record"].shelf_life,
+                "verification": ctx["retail_verification"]["status"],
+            } if ctx["retail_verification"] else "Pending",
         },
-        "transport_checkpoints": [
-            {
-                "status": tv["record"].status,
-                "location": tv["record"].current_location,
-                "temperature": tv["record"].temperature,
-                "telemetry_status": tv["temp_eval"]["status"],
-                "vehicle": tv["record"].vehicle_number,
-                "verification": tv["status"],
-                "computed_hash": tv["computed_hash"],
-                "on_chain_hash": tv["on_chain_hash"],
-                "tx_hash": tv["record"].tx_hash,
-            }
-            for tv in ctx["transport_verifications"]
-        ],
-        "retail": {
-            "store_name": ctx["retail_verification"]["record"].store_name,
-            "store_location": ctx["retail_verification"]["record"].store_location,
-            "price": ctx["retail_verification"]["record"].price,
-            "stock_quantity": ctx["retail_verification"]["record"].stock_quantity,
-            "verification": ctx["retail_verification"]["status"],
-            "computed_hash": ctx["retail_verification"]["computed_hash"],
-            "on_chain_hash": ctx["retail_verification"]["on_chain_hash"],
-            "tx_hash": ctx["retail_verification"]["record"].tx_hash,
-        } if ctx["retail_verification"] else None,
+        "fingerprints": {
+            "harvest": {
+                "computed": ctx["computed_hash"],
+                "recorded": ctx["on_chain_hash"],
+            },
+            "transport": [
+                {
+                    "checkpoint": idx + 1,
+                    "computed": tv["computed_hash"],
+                    "recorded": tv["on_chain_hash"],
+                }
+                for idx, tv in enumerate(ctx["transport_verifications"])
+            ],
+            "shop": {
+                "computed": ctx["retail_verification"]["computed_hash"],
+                "recorded": ctx["retail_verification"]["on_chain_hash"],
+            } if ctx["retail_verification"] else None,
+        },
     })
 
 
 # ═══════════════════════════════════════════════════════════════════
-# ADMIN ANALYTICS & LIVE EVM AUDIT
+# ADMIN OVERVIEW & DEMO-GATED EVM AUDIT
 # ═══════════════════════════════════════════════════════════════════
 
 @app.route('/admin')
@@ -1312,7 +1598,20 @@ def admin_dashboard():
         if 1 <= fb.rating <= 5:
             rating_counts[fb.rating - 1] += 1
 
-    chain_overview = get_admin_blockchain_overview(products)
+    batch_verifications = {}
+    outcome_counts = {"verified": 0, "tampered": 0, "cannot_verify": 0}
+    for p in products:
+        vctx = _build_verification_context(p, simulate_tamper=False)
+        vst = vctx["verification_status"]
+        outcome_counts[vst] = outcome_counts.get(vst, 0) + 1
+        batch_verifications[p.batch_id] = {
+            "status": vst,
+            "label": vctx["result_label"],
+            "reason": vctx["result_reason"],
+            "pending": vctx["has_pending_stages"],
+        }
+
+    chain_overview = get_admin_blockchain_overview(products) if is_demo_mode() else None
 
     return render_template(
         'admin.html',
@@ -1325,6 +1624,8 @@ def admin_dashboard():
         farmer_chart_data=farmer_chart_data,
         status_chart_data=status_chart_data,
         rating_chart_data=rating_counts,
+        batch_verifications=batch_verifications,
+        outcome_counts=outcome_counts,
         chain_overview=chain_overview,
     )
 
@@ -1345,4 +1646,5 @@ if __name__ == '__main__':
         db.create_all()
         ensure_schema_columns()
     debug_mode = os.environ.get('FLASK_DEBUG', 'false').lower() in ('true', '1')
-    app.run(host='0.0.0.0', port=5000, debug=debug_mode)
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port, debug=debug_mode)
