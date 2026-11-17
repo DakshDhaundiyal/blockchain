@@ -2,7 +2,7 @@ import pytest
 
 
 def test_role_switcher_disabled_by_default(client):
-    for role in ("farmer", "transporter", "retailer", "customer", "admin"):
+    for role in ("farmer", "transporter", "retailer", "customer"):
         res = client.get(f"/switch-role/{role}", follow_redirects=False)
         assert res.status_code == 404
 
@@ -57,15 +57,11 @@ def test_switch_role_customer(client, app, monkeypatch):
         assert sess.get("user_id") is not None
 
 
-def test_switch_role_admin(client, app, monkeypatch):
+def test_switch_role_admin_removed(client, app, monkeypatch):
     monkeypatch.setenv("DEMO_MODE", "true")
     res = client.get("/switch-role/admin", follow_redirects=True)
     assert res.status_code == 200
-    assert b"Administrator" in res.data or b"Admin" in res.data
-
-    with client.session_transaction() as sess:
-        assert sess.get("role") == "admin"
-        assert sess.get("user_id") is not None
+    assert b"Unknown dashboard type" in res.data
 
 
 def test_switch_role_aliases(client, app, monkeypatch):
@@ -110,4 +106,4 @@ def test_navbar_renders_switcher_when_demo_enabled(client, monkeypatch):
     assert b"/switch-role/transporter" in res.data
     assert b"/switch-role/retailer" in res.data
     assert b"/switch-role/customer" in res.data
-    assert b"/switch-role/admin" in res.data
+    assert b"/switch-role/admin" not in res.data

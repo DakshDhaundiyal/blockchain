@@ -3,138 +3,181 @@
 {% block title %}Shop & Retail Portal - TrustHarvest{% endblock %}
 
 {% block content %}
-{% set current_step = 4 %}
-{% include "workflow_stepper.html" %}
-
-<div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
-    <div>
-        <h1 class="h2 fw-bold mb-1"><i class="bi bi-shop text-warning me-2" aria-hidden="true"></i>Shop &amp; Retail Portal</h1>
-        <p class="text-muted mb-0">Confirm store arrival, set shelf pricing, and make batches ready for customers to check.</p>
-    </div>
-    <div class="d-flex align-items-center gap-2">
-        <a href="{{ url_for('workflow_entry', stage='retail') }}" class="btn btn-sm btn-outline-dark fw-semibold">
-            <i class="bi bi-diagram-3 me-1" aria-hidden="true"></i> Guided Workflow
-        </a>
-        <span class="badge bg-warning text-dark py-2 px-3"><i class="bi bi-person-badge me-1" aria-hidden="true"></i> {{ session.get('username') }}</span>
-    </div>
-</div>
-
-<div class="row g-3 g-lg-4">
-    <div class="col-lg-5">
-        <div class="card card-custom shadow-sm">
-            <div class="card-header card-header-ag">
-                <h2 class="h5 mb-0 fw-bold"><i class="bi bi-tag-fill me-2" aria-hidden="true"></i>Save Shop Listing</h2>
+<div class="role-retail">
+    <!-- Portal Header + Merchandising KPIs -->
+    <div class="th-portal-header">
+        <div class="th-portal-heading-wrap">
+            <div class="th-portal-icon" aria-hidden="true">
+                <i class="bi bi-shop"></i>
             </div>
-            <div class="card-body p-3 p-md-4">
-                <form method="POST" action="{{ url_for('add_retail_data') }}">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                    <div class="mb-3">
-                        <label for="rt-product" class="form-label fw-semibold">Select Batch</label>
-                        <select id="rt-product" name="product_id" class="form-select" required>
-                            <option value="" disabled selected>-- Select Batch --</option>
-                            {% for p in products %}
-                            <option value="{{ p.id }}">
-                                {{ p.batch_id }} - {{ p.name }} ({{ p.status }})
-                            </option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="rt-store" class="form-label fw-semibold">Store / Shop Name</label>
-                        <input id="rt-store" type="text" name="store_name" class="form-control" placeholder="e.g. Whole Harvest Market" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="rt-location" class="form-label fw-semibold">Store Address / Outlet</label>
-                        <input id="rt-location" type="text" name="store_location" class="form-control" placeholder="e.g. 500 Market St, Seattle, WA" required>
-                    </div>
-                    <div class="row g-2 mb-3">
-                        <div class="col-6">
-                            <label for="rt-price" class="form-label fw-semibold">Price ($)</label>
-                            <div class="input-group">
-                                <span class="input-group-text">$</span>
-                                <input id="rt-price" type="number" step="0.01" min="0" name="price" class="form-control" placeholder="4.99" required>
-                            </div>
-                        </div>
-                        <div class="col-6">
-                            <label for="rt-stock" class="form-label fw-semibold">Available Stock</label>
-                            <input id="rt-stock" type="text" name="stock_quantity" class="form-control" placeholder="e.g. 450 kg" required>
-                        </div>
-                    </div>
-                    <div class="row g-2 mb-4">
-                        <div class="col-6">
-                            <label for="rt-arrival" class="form-label fw-semibold">Arrival Date</label>
-                            <input id="rt-arrival" type="date" name="arrival_date" class="form-control" value="{{ today_str }}" required>
-                        </div>
-                        <div class="col-6">
-                            <label for="rt-shelf" class="form-label fw-semibold">Est. Shelf Life</label>
-                            <input id="rt-shelf" type="text" name="shelf_life" class="form-control" placeholder="e.g. 14 Days" value="14 Days">
-                        </div>
-                    </div>
-                    <button type="submit" class="btn btn-warning text-dark w-100 py-2 fw-bold">
-                        <i class="bi bi-check-circle-fill me-1"></i> Save Shop Listing
-                    </button>
-                </form>
+            <div>
+                <h1 class="th-portal-title">Shop &amp; Retail Merchandising</h1>
+                <p class="th-portal-sub">Manage live store shelves, pricing stickers, available stock, and shelf-life freshness.</p>
+            </div>
+        </div>
+
+        <div class="th-kpi-group">
+            <div class="th-kpi-card">
+                <span class="th-kpi-value">{{ retail_entries|length }}</span>
+                <span class="th-kpi-label">On shelf</span>
+            </div>
+            <div class="th-kpi-card">
+                <span class="th-kpi-value">{{ total_stock_label|default('0 kg') }}</span>
+                <span class="th-kpi-label">Floor stock</span>
+            </div>
+            <div class="th-kpi-card">
+                <span class="th-kpi-value">{{ recorded_count|default(0) }} / {{ retail_entries|length }}</span>
+                <span class="th-kpi-label">Recorded</span>
             </div>
         </div>
     </div>
 
-    <div class="col-lg-7">
-        <div class="card card-custom shadow-sm">
-            <div class="card-header card-header-ag d-flex justify-content-between align-items-center">
-                <h2 class="h5 mb-0 fw-bold"><i class="bi bi-box2-heart me-2" aria-hidden="true"></i>Current Shop Inventory</h2>
-                <span class="badge bg-secondary">{{ retail_entries|length }} Listed</span>
+    <!-- Reversed 8 / 4 Layout: Storefront Shelf Showcase (Left) + Sticky POS Price/Stock Editor (Right) -->
+    <div class="row g-4 align-items-start">
+        <!-- Left 8 Cols: Visual Storefront Shelf Grid -->
+        <div class="col-lg-8">
+            <div class="th-panel-card">
+                <div class="th-panel-head">
+                    <div class="th-panel-head-left">
+                        <div class="th-panel-head-icon" aria-hidden="true">
+                            <i class="bi bi-basket2-fill"></i>
+                        </div>
+                        <div>
+                            <h2 class="th-panel-title">Live Storefront Shelves</h2>
+                            <p class="th-panel-sub">Customer-ready produce displays with verified pricing &amp; shelf life</p>
+                        </div>
+                    </div>
+                    <span class="th-count-pill">{{ retail_entries|length }} Listed</span>
+                </div>
+
+                <div class="th-panel-body">
+                    {% if retail_entries %}
+                    <div class="rt-shelf-grid">
+                        {% for r in retail_entries %}
+                        <article class="rt-shelf-card">
+                            <div class="rt-shelf-media">
+                                <img src="{{ product_image_url(r.product.image) }}" alt="{{ r.product.name }}" loading="lazy">
+                                {% if r.on_chain_hash %}
+                                <span class="rt-status-pill"><i class="bi bi-check2-circle me-1" aria-hidden="true"></i>Recorded</span>
+                                {% else %}
+                                <span class="rt-status-pill" style="color:#4b5563;border-color:#d1d5db;">Pending</span>
+                                {% endif %}
+                                <span class="rt-price-sticker">${{ '%.2f'|format(r.price) if r.price else 'N/A' }}</span>
+                            </div>
+
+                            <div class="rt-shelf-body">
+                                <span class="th-badge-batch align-self-start">{{ r.product.batch_id }}</span>
+                                <h3 class="th-batch-name mb-0">{{ r.product.name }}</h3>
+                                <div class="th-batch-meta">
+                                    <i class="bi bi-shop-window me-1" aria-hidden="true"></i>{{ r.store_name }}
+                                </div>
+                                <div class="th-batch-meta">
+                                    <i class="bi bi-geo-alt me-1" aria-hidden="true"></i>{{ r.store_location }}
+                                </div>
+                                <div class="d-flex flex-wrap gap-2 mt-2">
+                                    <span class="th-badge-method">{{ r.stock_quantity or 'In Stock' }}</span>
+                                    <span class="th-badge-method">
+                                        <i class="bi bi-hourglass-split me-1" aria-hidden="true"></i>Best by: {{ r.shelf_life or 'Fresh' }}
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div class="rt-shelf-footer">
+                                <a href="{{ url_for('verify_batch', batch_id=r.product.batch_id) }}" class="th-btn-forest py-2 px-3 flex-grow-1" style="font-size:13px;">
+                                    <i class="bi bi-eye" aria-hidden="true"></i> Customer View
+                                </a>
+                                <a href="{{ url_for('workflow_entry', batch_id=r.product.batch_id, stage='retail') }}" class="th-btn-outline" title="Open in Guided Workflow">
+                                    <i class="bi bi-diagram-3" aria-hidden="true"></i>
+                                </a>
+                                <a href="{{ url_for('batch_qr_png', batch_id=r.product.batch_id, download=1) }}" download="qr_{{ r.product.batch_id }}.png" class="th-btn-icon" title="Download shelf QR label" aria-label="Download QR label for {{ r.product.batch_id }}">
+                                    <i class="bi bi-qr-code" aria-hidden="true"></i>
+                                </a>
+                            </div>
+                        </article>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5 text-muted">
+                        <i class="bi bi-shop fs-1 d-block mb-2 opacity-50" aria-hidden="true"></i>
+                        <div class="fw-semibold text-dark mb-1">No shop inventory on shelves yet</div>
+                        <div class="small">Use the POS Shelf Updater on the right to list your first incoming harvest batch.</div>
+                    </div>
+                    {% endif %}
+                </div>
             </div>
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle mb-0">
-                        <thead class="table-light">
-                            <tr>
-                                <th scope="col">Batch ID &amp; Crop</th>
-                                <th scope="col">Shop Location</th>
-                                <th scope="col">Price</th>
-                                <th scope="col">Stock &amp; Shelf</th>
-                                <th scope="col">View</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for r in retail_entries %}
-                            <tr>
-                                <td>
-                                    <div class="fw-bold font-monospace text-success">{{ r.product.batch_id }}</div>
-                                    <div class="small fw-semibold">{{ r.product.name }}</div>
-                                    {% if r.on_chain_hash %}
-                                    <span class="badge bg-success-subtle text-success border border-success-subtle smaller">Recorded</span>
-                                    {% else %}
-                                    <span class="badge bg-secondary-subtle text-secondary smaller">Pending</span>
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    <div class="fw-semibold">{{ r.store_name }}</div>
-                                    <div class="text-muted smaller">{{ r.store_location }}</div>
-                                </td>
-                                <td>
-                                    <span class="badge bg-success fs-6">${{ '%.2f'|format(r.price) if r.price else 'N/A' }}</span>
-                                </td>
-                                <td>
-                                    <div>{{ r.stock_quantity }}</div>
-                                    <small class="text-muted">Best by: {{ r.shelf_life or 'Fresh' }}</small>
-                                </td>
-                                <td>
-                                    <a href="{{ url_for('verify_batch', batch_id=r.product.batch_id) }}" class="btn btn-sm btn-outline-success" title="View journey for {{ r.product.batch_id }}">
-                                        <i class="bi bi-eye"></i>
-                                    </a>
-                                </td>
-                            </tr>
-                            {% else %}
-                            <tr>
-                                <td colspan="5" class="text-center py-5 text-muted">
-                                    <i class="bi bi-shop fs-1 d-block mb-2"></i>
-                                    No shop inventory registered yet.
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+        </div>
+
+        <!-- Right 4 Cols: Sticky POS Shelf & Price Updater -->
+        <div class="col-lg-4">
+            <div class="th-panel-card rt-sticky-pos">
+                <div class="th-panel-head" style="background:linear-gradient(135deg, var(--green-50) 0%, #ffffff 75%);">
+                    <div class="th-panel-head-left">
+                        <div class="th-panel-head-icon" aria-hidden="true">
+                            <i class="bi bi-tag-fill"></i>
+                        </div>
+                        <div>
+                            <h2 class="th-panel-title">POS Shelf Updater</h2>
+                            <p class="th-panel-sub">Store arrival, price &amp; stock listing</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="th-panel-body">
+                    <form method="POST" action="{{ url_for('add_retail_data') }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+
+                        <div class="mb-3">
+                            <label for="rt-product" class="form-label">Incoming Batch</label>
+                            <select id="rt-product" name="product_id" class="form-select" required>
+                                <option value="" disabled selected>-- Select Batch --</option>
+                                {% for p in products %}
+                                <option value="{{ p.id }}">
+                                    {{ p.batch_id }} - {{ p.name }} ({{ p.status }})
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="rt-store" class="form-label">Store / Shop Name</label>
+                            <input id="rt-store" type="text" name="store_name" class="form-control" placeholder="e.g. Whole Harvest Market" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="rt-location" class="form-label">Store Address / Outlet</label>
+                            <input id="rt-location" type="text" name="store_location" class="form-control" placeholder="e.g. 500 Market St, Seattle, WA" required>
+                        </div>
+
+                        <div class="row g-2 mb-3">
+                            <div class="col-6">
+                                <label for="rt-price" class="form-label">Price ($)</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">$</span>
+                                    <input id="rt-price" type="number" step="0.01" min="0" name="price" class="form-control" placeholder="4.99" required>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <label for="rt-stock" class="form-label">Shelf Stock</label>
+                                <input id="rt-stock" type="text" name="stock_quantity" class="form-control" placeholder="e.g. 450 kg" required>
+                            </div>
+                        </div>
+
+                        <div class="row g-2 mb-4">
+                            <div class="col-6">
+                                <label for="rt-arrival" class="form-label">Arrival Date</label>
+                                <input id="rt-arrival" type="date" name="arrival_date" class="form-control" value="{{ today_str }}" required>
+                            </div>
+                            <div class="col-6">
+                                <label for="rt-shelf" class="form-label">Est. Shelf Life</label>
+                                <input id="rt-shelf" type="text" name="shelf_life" class="form-control" placeholder="e.g. 14 Days" value="14 Days">
+                            </div>
+                        </div>
+
+                        <button type="submit" class="rt-btn-emerald w-100">
+                            <i class="bi bi-check-circle-fill" aria-hidden="true"></i>
+                            <span>Save Shop Listing</span>
+                        </button>
+                    </form>
                 </div>
             </div>
         </div>

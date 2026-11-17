@@ -7,35 +7,31 @@
     <div class="col-md-6 col-lg-5">
         {% if demo_mode %}
         <!-- Quick Seamless Persona Switcher Card (Demo Mode Only) -->
-        <div class="card card-custom shadow-sm mb-4 border-success-subtle" style="background:#f0fdf4;border-radius:14px;">
-            <div class="card-body p-4 text-center">
-                <div class="d-inline-flex p-2 rounded-circle bg-success-subtle text-success mb-2" aria-hidden="true">
-                    <i class="bi bi-lightning-charge-fill" style="font-size:22px;"></i>
-                </div>
-                <h1 class="h5 fw-bold mb-1 text-success-emphasis">Instant Demo Role Switcher</h1>
-                <p class="text-muted small mb-3">Demo Mode is active. Switch directly to any stakeholder dashboard:</p>
-                <div class="d-grid gap-2">
-                    <a href="{{ url_for('switch_role', role='farmer', next=request.args.get('next')) if request.args.get('next') else url_for('switch_role', role='farmer') }}" class="btn btn-outline-success text-start d-flex align-items-center justify-content-between px-3 py-2" style="border-radius:10px;">
-                        <span><i class="bi bi-tree-fill me-2" aria-hidden="true"></i><strong>Farmer / Producer</strong></span>
-                        <i class="bi bi-arrow-right" aria-hidden="true"></i>
-                    </a>
-                    <a href="{{ url_for('switch_role', role='transporter', next=request.args.get('next')) if request.args.get('next') else url_for('switch_role', role='transporter') }}" class="btn btn-outline-primary text-start d-flex align-items-center justify-content-between px-3 py-2" style="border-radius:10px;">
-                        <span><i class="bi bi-truck me-2" aria-hidden="true"></i><strong>Transporter / Logistics</strong></span>
-                        <i class="bi bi-arrow-right" aria-hidden="true"></i>
-                    </a>
-                    <a href="{{ url_for('switch_role', role='retailer', next=request.args.get('next')) if request.args.get('next') else url_for('switch_role', role='retailer') }}" class="btn text-start d-flex align-items-center justify-content-between px-3 py-2" style="border-radius:10px;border:1px solid #9333ea;color:#9333ea;">
-                        <span><i class="bi bi-shop me-2" aria-hidden="true"></i><strong>Retailer / Supermarket</strong></span>
-                        <i class="bi bi-arrow-right" aria-hidden="true"></i>
-                    </a>
-                    <a href="{{ url_for('switch_role', role='customer', next=request.args.get('next')) if request.args.get('next') else url_for('switch_role', role='customer') }}" class="btn btn-outline-info text-start d-flex align-items-center justify-content-between px-3 py-2" style="border-radius:10px;">
-                        <span><i class="bi bi-qr-code-scan me-2" aria-hidden="true"></i><strong>Consumer / Customer</strong></span>
-                        <i class="bi bi-arrow-right" aria-hidden="true"></i>
-                    </a>
-                    <a href="{{ url_for('switch_role', role='admin', next=request.args.get('next')) if request.args.get('next') else url_for('switch_role', role='admin') }}" class="btn btn-outline-dark text-start d-flex align-items-center justify-content-between px-3 py-2" style="border-radius:10px;">
-                        <span><i class="bi bi-shield-shaded me-2" aria-hidden="true"></i><strong>System Administrator</strong></span>
-                        <i class="bi bi-arrow-right" aria-hidden="true"></i>
-                    </a>
-                </div>
+        <div class="workflow-stepper-container mb-4 p-4">
+            <div class="text-center mb-3">
+                <span class="th-stepper-eyebrow mb-2">
+                    <i class="bi bi-lightning-charge-fill" aria-hidden="true"></i> Demo Mode Active
+                </span>
+                <h1 class="h5 fw-bold mb-1 text-white">Instant Demo Role Switcher</h1>
+                <p class="small mb-0" style="color:rgba(255,255,255,0.72);">Switch directly to any stakeholder dashboard:</p>
+            </div>
+            <div class="d-grid gap-2">
+                <a href="{{ url_for('switch_role', role='farmer', next=request.args.get('next')) if request.args.get('next') else url_for('switch_role', role='farmer') }}" class="th-btn-outline justify-content-between py-2 px-3">
+                    <span><i class="bi bi-tree-fill text-success me-2" aria-hidden="true"></i><strong>Farmer / Producer</strong></span>
+                    <i class="bi bi-arrow-right" aria-hidden="true"></i>
+                </a>
+                <a href="{{ url_for('switch_role', role='transporter', next=request.args.get('next')) if request.args.get('next') else url_for('switch_role', role='transporter') }}" class="th-btn-outline justify-content-between py-2 px-3">
+                    <span><i class="bi bi-truck text-success me-2" aria-hidden="true"></i><strong>Transporter / Logistics</strong></span>
+                    <i class="bi bi-arrow-right" aria-hidden="true"></i>
+                </a>
+                <a href="{{ url_for('switch_role', role='retailer', next=request.args.get('next')) if request.args.get('next') else url_for('switch_role', role='retailer') }}" class="th-btn-outline justify-content-between py-2 px-3">
+                    <span><i class="bi bi-shop text-success me-2" aria-hidden="true"></i><strong>Retailer / Supermarket</strong></span>
+                    <i class="bi bi-arrow-right" aria-hidden="true"></i>
+                </a>
+                <a href="{{ url_for('switch_role', role='customer', next=request.args.get('next')) if request.args.get('next') else url_for('switch_role', role='customer') }}" class="th-btn-outline justify-content-between py-2 px-3">
+                    <span><i class="bi bi-qr-code-scan text-success me-2" aria-hidden="true"></i><strong>Consumer / Customer</strong></span>
+                    <i class="bi bi-arrow-right" aria-hidden="true"></i>
+                </a>
             </div>
         </div>
         {% endif %}

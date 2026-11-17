@@ -9,6 +9,7 @@ if BASE_DIR not in sys.path:
 # Ensure tests run against an isolated test SQLite database, never touching development db
 TEST_DB_PATH = os.path.join(BASE_DIR, "test_trustharvest.db")
 os.environ["DATABASE_URL"] = f"sqlite:///{TEST_DB_PATH}"
+os.environ["DEMO_MODE"] = "false"
 
 import pytest
 from app import app as flask_app

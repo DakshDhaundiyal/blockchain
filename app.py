@@ -1,4 +1,5 @@
 import os
+import re
 import json
 import uuid
 import time
@@ -23,7 +24,7 @@ from blockchain import (
     store_hash, store_hash_detailed, store_stage_hash, get_hash,
     compute_batch_hash, compute_transport_hash, compute_retail_hash,
     fetch_on_chain_status, fetch_v2_provenance_details,
-    inspect_batch_on_chain, get_admin_blockchain_overview, get_w3
+    inspect_batch_on_chain, get_w3
 )
 from utils import (
     generate_batch_qr_bytes, resolve_qr_base_url, sanitize_error_text,
@@ -92,8 +93,43 @@ STATIC_PRODUCE_IMAGES = [
     ('default.jpg', 'Fresh Harvest Crate (Default)'),
     ('organic_apples.jpg', 'Crisp Orchard Apples'),
     ('heirloom_tomatoes.jpg', 'Vine-Ripened Tomatoes'),
+    ('fresh_strawberries.jpg', 'Fresh Organic Strawberries'),
+    ('alphonso_mangoes.jpg', 'Ripe Golden Mangoes'),
+    ('organic_bananas.jpg', 'Organic Yellow Bananas'),
+    ('fresh_carrots.jpg', 'Harvest Organic Carrots'),
+    ('organic_potatoes.jpg', 'Farm Golden Potatoes'),
+    ('green_grapes.jpg', 'Fresh Vineyard Grapes'),
+    ('valencia_oranges.jpg', 'Citrus Valencia Oranges'),
+    ('hass_avocados.jpg', 'Ripe Hass Avocados'),
+    ('farm_milk.jpg', 'Fresh Organic Farm Milk'),
+    ('golden_wheat.jpg', 'Golden Harvest Grain & Wheat'),
 ]
 ALLOWED_STATIC_IMAGE_NAMES = {item[0] for item in STATIC_PRODUCE_IMAGES}
+
+_PRODUCE_IMAGE_KEYWORDS = [
+    (('apple', 'honeycrisp', 'gala', 'fuji', 'pear'), 'organic_apples.jpg'),
+    (('tomato', 'cherry tomato', 'roma', 'heirloom'), 'heirloom_tomatoes.jpg'),
+    (('strawberr', 'berr', 'blueberr', 'raspberr', 'cherr'), 'fresh_strawberries.jpg'),
+    (('mango', 'alphonso', 'kesar', 'papaya', 'peach'), 'alphonso_mangoes.jpg'),
+    (('banana', 'plantain'), 'organic_bananas.jpg'),
+    (('carrot', 'radish', 'beet', 'turnip'), 'fresh_carrots.jpg'),
+    (('potato', 'onion', 'garlic', 'ginger', 'yam', 'sweet potato'), 'organic_potatoes.jpg'),
+    (('grape', 'vineyard'), 'green_grapes.jpg'),
+    (('orange', 'citrus', 'lemon', 'lime', 'tangerine', 'mandarin', 'grapefruit'), 'valencia_oranges.jpg'),
+    (('avocado', 'hass'), 'hass_avocados.jpg'),
+    (('milk', 'dairy', 'cheese', 'butter', 'yogurt', 'curd', 'paneer', 'cream', 'egg'), 'farm_milk.jpg'),
+    (('wheat', 'rice', 'grain', 'oat', 'barley', 'corn', 'maize', 'millet', 'quinoa', 'flour', 'lentil', 'dal'), 'golden_wheat.jpg'),
+]
+
+
+def auto_select_product_image(product_name: str | None) -> str:
+    """Automatically selects a matching bundled produce photo based on crop name."""
+    lowered = (product_name or '').strip().lower()
+    for keywords, filename in _PRODUCE_IMAGE_KEYWORDS:
+        if any(kw in lowered for kw in keywords):
+            if os.path.exists(os.path.join(BASE_DIR, 'static', 'img', filename)):
+                return filename
+    return 'default.jpg'
 
 db.init_app(app)
 
@@ -219,17 +255,6 @@ DEFAULT_PERSONAS = {
         'icon': 'bi-person-check',
         'badge_color': '#0891b2'
     },
-    'admin': {
-        'role': 'admin',
-        'username': 'admin',
-        'full_name': 'Global Admin',
-        'contact': 'admin@trustharvest.org',
-        'route': 'admin_dashboard',
-        'title': 'System Administrator',
-        'short_title': 'Admin',
-        'icon': 'bi-shield-shaded',
-        'badge_color': '#ea580c'
-    },
 }
 
 def login_required(f):
@@ -353,8 +378,6 @@ def login():
                 return redirect(url_for('transporter_dashboard'))
             elif user.role == 'retailer':
                 return redirect(url_for('retailer_dashboard'))
-            elif user.role == 'admin':
-                return redirect(url_for('admin_dashboard'))
             else:
                 return redirect(url_for('customer_dashboard'))
 
@@ -723,9 +746,9 @@ def _register_harvest_batch(user, form_data, image_file):
     if existing_chain.get("status") == "ok":
         return None, f'Batch ID collision on blockchain for {batch_id}. Please resubmit.'
 
-    image_filename = 'default.jpg'
+    image_filename = auto_select_product_image(name)
     image_preset = (form_data.get('image_preset') or '').strip()
-    if image_preset in ALLOWED_STATIC_IMAGE_NAMES:
+    if image_preset in ALLOWED_STATIC_IMAGE_NAMES and image_preset != 'default.jpg':
         image_filename = image_preset
 
     if allow_image_uploads() and image_file and image_file.filename:
@@ -1147,13 +1170,38 @@ def workflow_retail():
 # STAKEHOLDER DASHBOARDS
 # ═══════════════════════════════════════════════════════════════════
 
+def _sum_quantity_label(items, attr='quantity'):
+    """Best-effort sum of numeric weights (e.g. '500 kg' + '300 kg' -> '800 kg')."""
+    total = 0.0
+    unit = "kg"
+    for item in items:
+        raw = str(getattr(item, attr, '') or '').strip()
+        m = re.search(r'(\d+(?:\.\d+)?)', raw)
+        if m:
+            total += float(m.group(1))
+            u = re.sub(r'[\d.\s,]+', '', raw).strip()
+            if u:
+                unit = u
+    if total == int(total):
+        return f"{int(total)} {unit}"
+    return f"{total:.1f} {unit}"
+
+
 @app.route('/farmer')
 @role_required('farmer')
 def farmer_dashboard():
     farmer_id = session['user_id']
     products = Product.query.filter_by(farmer_id=farmer_id).order_by(Product.created_at.desc()).all()
     today_str = datetime.now(timezone.utc).strftime('%Y-%m-%d')
-    return render_template('farmer.html', products=products, today_str=today_str)
+    recorded_count = sum(1 for p in products if p.on_chain_hash)
+    total_harvested_label = _sum_quantity_label(products, 'quantity') if products else "0 kg"
+    return render_template(
+        'farmer.html',
+        products=products,
+        today_str=today_str,
+        recorded_count=recorded_count,
+        total_harvested_label=total_harvested_label,
+    )
 
 @app.route('/farmer/add_product', methods=['POST'])
 @role_required('farmer')
@@ -1172,7 +1220,13 @@ def add_product():
 def transporter_dashboard():
     products = Product.query.order_by(Product.created_at.desc()).all()
     transport_entries = TransportData.query.filter_by(transporter_id=session['user_id']).order_by(TransportData.timestamp.desc()).all()
-    return render_template('transporter.html', products=products, transport_entries=transport_entries)
+    recorded_count = sum(1 for t in transport_entries if t.on_chain_hash)
+    return render_template(
+        'transporter.html',
+        products=products,
+        transport_entries=transport_entries,
+        recorded_count=recorded_count,
+    )
 
 @app.route('/transporter/add', methods=['POST'])
 @role_required('transporter')
@@ -1198,7 +1252,16 @@ def retailer_dashboard():
     products = Product.query.order_by(Product.created_at.desc()).all()
     retail_entries = RetailData.query.filter_by(retailer_id=session['user_id']).all()
     today_str = datetime.now(timezone.utc).strftime('%Y-%m-%d')
-    return render_template('retailer.html', products=products, retail_entries=retail_entries, today_str=today_str)
+    recorded_count = sum(1 for r in retail_entries if r.on_chain_hash)
+    total_stock_label = _sum_quantity_label(retail_entries, 'stock_quantity') if retail_entries else "0 kg"
+    return render_template(
+        'retailer.html',
+        products=products,
+        retail_entries=retail_entries,
+        today_str=today_str,
+        recorded_count=recorded_count,
+        total_stock_label=total_stock_label,
+    )
 
 @app.route('/retailer/add', methods=['POST'])
 @role_required('retailer')
@@ -2166,81 +2229,6 @@ def api_verify_batch(batch_id):
         },
     })
 
-
-# ═══════════════════════════════════════════════════════════════════
-# ADMIN OVERVIEW & DEMO-GATED EVM AUDIT
-# ═══════════════════════════════════════════════════════════════════
-
-@app.route('/admin')
-@role_required('admin')
-def admin_dashboard():
-    total_users = User.query.count()
-    total_products = Product.query.count()
-    total_transports = TransportData.query.count()
-
-    users = User.query.order_by(User.id.asc()).all()
-    products = Product.query.order_by(Product.created_at.desc()).all()
-
-    farmers = User.query.filter_by(role='farmer').all()
-    farmer_labels = []
-    farmer_counts = []
-    for f in farmers:
-        farmer_labels.append(f.full_name or f.username)
-        farmer_counts.append(Product.query.filter_by(farmer_id=f.id).count())
-
-    farmer_chart_data = {
-        'labels': farmer_labels or ['No Farmers'],
-        'counts': farmer_counts or [0]
-    }
-
-    status_dict = {}
-    for p in products:
-        status_dict[p.status] = status_dict.get(p.status, 0) + 1
-    status_chart_data = {
-        'labels': list(status_dict.keys()) or ['Harvested'],
-        'counts': list(status_dict.values()) or [0]
-    }
-
-    batch_verifications = {}
-    outcome_counts = {"verified": 0, "tampered": 0, "cannot_verify": 0}
-    for p in products:
-        vctx = _build_verification_context(p, simulate_tamper=False)
-        vst = vctx["verification_status"]
-        outcome_counts[vst] = outcome_counts.get(vst, 0) + 1
-        batch_verifications[p.batch_id] = {
-            "status": vst,
-            "label": vctx["result_label"],
-            "reason": vctx["result_reason"],
-            "pending": vctx["has_pending_stages"],
-        }
-
-    chain_overview = get_admin_blockchain_overview(products) if is_demo_mode() else None
-
-    return render_template(
-        'admin.html',
-        total_users=total_users,
-        total_products=total_products,
-        total_transports=total_transports,
-        users=users,
-        products=products,
-        farmer_chart_data=farmer_chart_data,
-        status_chart_data=status_chart_data,
-        batch_verifications=batch_verifications,
-        outcome_counts=outcome_counts,
-        chain_overview=chain_overview,
-    )
-
-@app.route('/admin/users/<int:user_id>/delete', methods=['POST'])
-@role_required('admin')
-def delete_user(user_id):
-    if user_id == session.get('user_id'):
-        flash('Cannot delete your own admin account.', 'danger')
-        return redirect(url_for('admin_dashboard'))
-    user = db.get_or_404(User, user_id)
-    db.session.delete(user)
-    db.session.commit()
-    flash(f'User "{user.username}" deleted.', 'info')
-    return redirect(url_for('admin_dashboard'))
 
 if __name__ == '__main__':
     with app.app_context():

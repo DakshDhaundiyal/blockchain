@@ -1,4 +1,4 @@
-{# Reusable Guided Supply-Chain Workflow Stepper Component #}
+{# Reusable Guided Supply-Chain Workflow Stepper Component (Dark Forest + Lime Theme) #}
 {% set raw_step = current_step|default(1)|int %}
 {% set active_step = 1 if raw_step < 1 else (5 if raw_step > 5 else raw_step) %}
 {% set active_batch = batch_id or (product.batch_id if product else none) %}
@@ -6,22 +6,22 @@
 <div class="workflow-stepper-container">
     <div class="workflow-stepper-header">
         <div>
-            <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1 mb-1" style="font-size: 11px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;">
-                <i class="bi bi-diagram-3-fill me-1" aria-hidden="true"></i> Farm to Shop Journey
+            <span class="th-stepper-eyebrow">
+                <i class="bi bi-diagram-3-fill" aria-hidden="true"></i> Farm to Shop Journey
             </span>
-            <h2 class="h5 fw-bold mb-0 text-dark">Supply-Chain Stepper</h2>
+            <h2 class="th-stepper-title">Supply-Chain Stepper</h2>
         </div>
         <div class="d-flex align-items-center gap-2 flex-wrap">
             {% if active_batch %}
-                <span class="badge bg-light text-dark border font-monospace px-2 py-1" style="font-size: 12px;">
-                    <i class="bi bi-qr-code me-1 text-success"></i> Batch: <strong>{{ active_batch }}</strong>
+                <span class="th-stepper-batch-pill font-monospace">
+                    <i class="bi bi-qr-code" aria-hidden="true"></i> Batch: <strong>{{ active_batch }}</strong>
                 </span>
             {% else %}
-                <span class="badge bg-light text-muted border px-2 py-1" style="font-size: 11px;">
-                    <i class="bi bi-clock-history me-1"></i> New Batch
+                <span class="th-stepper-batch-pill">
+                    <i class="bi bi-clock-history" aria-hidden="true"></i> New Batch
                 </span>
             {% endif %}
-            <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-2 py-1" style="font-size: 11px; font-weight: 600;">
+            <span class="th-stepper-step-pill">
                 Step {{ active_step }} of 5
             </span>
         </div>
@@ -38,15 +38,15 @@
             <div class="workflow-step {% if active_step > 1 %}completed{% elif active_step == 1 %}active{% else %}pending{% endif %}">
                 <div class="workflow-step-node">
                     {% if active_step > 1 %}
-                        <i class="bi bi-check-lg"></i>
+                        <i class="bi bi-check-lg" aria-hidden="true"></i>
                     {% else %}
-                        <i class="bi bi-person-badge"></i>
+                        <i class="bi bi-person-badge" aria-hidden="true"></i>
                     {% endif %}
                 </div>
                 <div class="workflow-step-title">1. Sign In</div>
                 <div class="workflow-step-desc">
                     {% if session.get('username') %}
-                        <span class="text-success fw-semibold">{{ session.get('username') }}</span> ({{ session.get('role', '').capitalize() }})
+                        <span class="th-step-highlight">{{ session.get('username') }}</span> ({{ session.get('role', '').capitalize() }})
                     {% else %}
                         Authorized Account
                     {% endif %}
@@ -57,15 +57,15 @@
             <div class="workflow-step {% if active_step > 2 or (product and product.on_chain_hash) %}completed{% elif active_step == 2 %}active{% else %}pending{% endif %}">
                 <div class="workflow-step-node">
                     {% if active_step > 2 or (product and product.on_chain_hash) %}
-                        <i class="bi bi-check-lg"></i>
+                        <i class="bi bi-check-lg" aria-hidden="true"></i>
                     {% else %}
-                        <i class="bi bi-flower1"></i>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></svg>
                     {% endif %}
                 </div>
                 <div class="workflow-step-title">2. Farm</div>
                 <div class="workflow-step-desc">
                     {% if product and product.on_chain_hash %}
-                        <span class="text-success fw-semibold">Harvest Recorded</span>
+                        <span class="th-step-highlight">Harvest Recorded</span>
                     {% else %}
                         Origin &amp; Crop Details
                     {% endif %}
@@ -76,15 +76,15 @@
             <div class="workflow-step {% if active_step > 3 or (product and product.transport_data|length > 0) %}completed{% elif active_step == 3 %}active{% else %}pending{% endif %}">
                 <div class="workflow-step-node">
                     {% if active_step > 3 or (product and product.transport_data|length > 0) %}
-                        <i class="bi bi-check-lg"></i>
+                        <i class="bi bi-check-lg" aria-hidden="true"></i>
                     {% else %}
-                        <i class="bi bi-truck"></i>
+                        <i class="bi bi-truck" aria-hidden="true"></i>
                     {% endif %}
                 </div>
                 <div class="workflow-step-title">3. Transport</div>
                 <div class="workflow-step-desc">
                     {% if product and product.transport_data|length > 0 %}
-                        <span class="text-primary fw-semibold">{{ product.transport_data|length }} Checkpoint(s)</span>
+                        <span class="th-step-highlight">{{ product.transport_data|length }} Checkpoint(s)</span>
                     {% else %}
                         Cold-Chain Checkpoints
                     {% endif %}
@@ -95,15 +95,15 @@
             <div class="workflow-step {% if active_step > 4 or (product and product.retail_data) %}completed{% elif active_step == 4 %}active{% else %}pending{% endif %}">
                 <div class="workflow-step-node">
                     {% if active_step > 4 or (product and product.retail_data) %}
-                        <i class="bi bi-check-lg"></i>
+                        <i class="bi bi-check-lg" aria-hidden="true"></i>
                     {% else %}
-                        <i class="bi bi-shop"></i>
+                        <i class="bi bi-shop" aria-hidden="true"></i>
                     {% endif %}
                 </div>
                 <div class="workflow-step-title">4. Shop</div>
                 <div class="workflow-step-desc">
                     {% if product and product.retail_data %}
-                        <span class="text-warning-emphasis fw-semibold">${{ '%.2f'|format(product.retail_data.price) if product.retail_data.price else 'Listed' }}</span>
+                        <span class="th-step-highlight">${{ '%.2f'|format(product.retail_data.price) if product.retail_data.price else 'Listed' }}</span>
                     {% else %}
                         Store &amp; Shelf Price
                     {% endif %}
@@ -114,9 +114,9 @@
             <div class="workflow-step {% if active_step == 5 and (product and product.retail_data and product.transport_data|length > 0) %}completed{% elif active_step == 5 %}active{% else %}pending{% endif %}">
                 <div class="workflow-step-node">
                     {% if active_step == 5 and (product and product.retail_data and product.transport_data|length > 0) %}
-                        <i class="bi bi-shield-fill-check text-success"></i>
+                        <i class="bi bi-shield-fill-check" aria-hidden="true"></i>
                     {% else %}
-                        <i class="bi bi-shield-check"></i>
+                        <i class="bi bi-shield-check" aria-hidden="true"></i>
                     {% endif %}
                 </div>
                 <div class="workflow-step-title">5. Verify</div>

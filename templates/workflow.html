@@ -4,13 +4,18 @@
 
 {% block content %}
 <div>
-    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
-        <div>
-            <h1 class="h3 fw-bold mb-1">Guided Supply-Chain Workflow</h1>
-            <p class="text-muted small mb-0">Follow a batch step by step from Farm through Transport checkpoints to the Shop.</p>
+    <div class="th-portal-header mb-3">
+        <div class="th-portal-heading-wrap">
+            <div class="th-portal-icon" aria-hidden="true">
+                <i class="bi bi-diagram-3"></i>
+            </div>
+            <div>
+                <h1 class="th-portal-title">Guided Supply-Chain Workflow</h1>
+                <p class="th-portal-sub">Follow a batch step by step from Farm through Transport checkpoints to the Shop.</p>
+            </div>
         </div>
-        <a href="{{ url_for('customer_dashboard') }}" class="btn btn-sm btn-outline-success fw-semibold">
-            <i class="bi bi-qr-code-scan me-1" aria-hidden="true"></i> Skip to Customer Verification
+        <a href="{{ url_for('customer_dashboard') }}" class="th-btn-outline">
+            <i class="bi bi-qr-code-scan" aria-hidden="true"></i> Skip to Customer Verification
         </a>
     </div>
 

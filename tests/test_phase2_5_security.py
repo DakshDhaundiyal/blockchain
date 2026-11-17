@@ -97,45 +97,11 @@ def test_public_verify_hides_wallets_contracts_and_tx_hashes(client, app, monkey
     assert "TH-PRIV-001" in html
 
 
-def test_admin_blockchain_explorer_gated_by_admin_and_demo_mode(client, app, monkeypatch):
-    # Non-admin customer redirected away from /admin
-    with client.session_transaction() as sess:
-        sess["user_id"] = 4
-        sess["username"] = "customer_test"
-        sess["role"] = "customer"
-    assert client.get("/admin", follow_redirects=False).status_code == 302
-
-    # Admin with DEMO_MODE off does not see Demo Blockchain Explorer
-    with app.app_context():
-        admin_u = User.query.filter_by(role="admin").first()
-        admin_id = admin_u.id
-    with client.session_transaction() as sess:
-        sess["user_id"] = admin_id
-        sess["username"] = "admin_test"
-        sess["role"] = "admin"
-
+def test_admin_panel_routes_removed(client, app, monkeypatch):
     monkeypatch.setenv("DEMO_MODE", "false")
-    res_off = client.get("/admin")
-    assert res_off.status_code == 200
-    assert b"Demo Blockchain Explorer" not in res_off.data
-
+    assert client.get("/admin", follow_redirects=False).status_code == 404
     monkeypatch.setenv("DEMO_MODE", "true")
-    monkeypatch.setattr(
-        "app.get_admin_blockchain_overview",
-        lambda prods: {
-            "online": False,
-            "chain_id": None,
-            "block_number": None,
-            "contract_address": "0x1234",
-            "contract_version": "V2",
-            "wallets": [],
-            "events": [],
-            "audit_map": {},
-        },
-    )
-    res_on = client.get("/admin")
-    assert res_on.status_code == 200
-    assert b"Demo Blockchain Explorer" in res_on.data
+    assert client.get("/admin", follow_redirects=False).status_code == 404
 
 
 def test_sanitize_error_text_masks_secrets(monkeypatch):
