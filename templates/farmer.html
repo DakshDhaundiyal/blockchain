@@ -1,220 +1,193 @@
 {% extends "base.html" %}
+{% block title %}Farmer Portal — TrustHarvest{% endblock %}
 
-{% block title %}Farmer Portal - TrustHarvest{% endblock %}
-
-{% block content %}
-<!-- Portal Header + KPI Stat Cards -->
-<div class="th-portal-header">
-    <div class="th-portal-heading-wrap">
-        <div class="th-portal-icon" aria-hidden="true">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></svg>
-        </div>
-        <div>
-            <h1 class="th-portal-title">Farm Harvest Portal</h1>
-            <p class="th-portal-sub">Record a new harvest batch and download its QR label for packaging.</p>
-        </div>
+{% block main_inner %}
+<!-- ============ SIMPLE HEADER BAND ============ -->
+<section class="farmband" aria-label="Farmer portal header" style="min-height:132px">
+  <img src="{{ url_for('static', filename='img/genspark/tomato-field.jpg') }}" alt="Crop field" width="1600" height="400">
+  <div class="farmband__veil" aria-hidden="true"></div>
+  <div class="farmband__in" style="min-height:132px;padding-top:20px">
+    <div>
+      <div class="farmband__eyebrow">Farmer Portal</div>
+      <h1 class="farmband__title">Add a harvest batch</h1>
+      <div class="farmband__meta">
+        <span>Signed in as <strong>{{ current_username or 'Farmer' }}</strong></span>
+        <span class="sep-dot">/</span>
+        <span>Save your harvest to get a printable QR label</span>
+      </div>
     </div>
-
-    <div class="th-kpi-group">
-        <div class="th-kpi-card">
-            <span class="th-kpi-value">{{ products|length }}</span>
-            <span class="th-kpi-label">Batches</span>
-        </div>
-        <div class="th-kpi-card">
-            <span class="th-kpi-value">{{ total_harvested_label|default('0 kg') }}</span>
-            <span class="th-kpi-label">Total harvested</span>
-        </div>
-        <div class="th-kpi-card">
-            <span class="th-kpi-value">{{ recorded_count|default(0) }} / {{ products|length }}</span>
-            <span class="th-kpi-label">Recorded</span>
-        </div>
+    <div class="farmband__aside">
+      <a href="{{ url_for('workflow_entry', stage='harvest') }}" class="farmband__chip" style="text-decoration:none">
+        Guided Workflow &rarr;
+      </a>
     </div>
-</div>
+  </div>
+</section>
 
-<div class="row g-4 align-items-stretch">
-    <!-- Left Column: Record Harvest Batch Form -->
+<div class="shell" style="padding-bottom:56px">
+
+  <!-- ============ 3 SIMPLE STATS ============ -->
+  <div class="statline" role="region" aria-label="Farmer summary">
+    <div>
+      <div class="k">Total batches</div>
+      <div class="v">{{ products|length }}</div>
+    </div>
+    <div>
+      <div class="k">Total harvested</div>
+      <div class="v">{{ total_harvested_label|default('0 kg') }}</div>
+    </div>
+    <div>
+      <div class="k">Recorded</div>
+      <div class="v">{{ recorded_count|default(0) }} <span class="mono">/ {{ products|length }}</span></div>
+    </div>
+  </div>
+
+  <!-- ============ CLEAN 2-COLUMN WORKSPACE ============ -->
+  <div class="row g-4" style="margin-top:8px;align-items:flex-start">
+
+    <!-- LEFT: SIMPLE FORM -->
     <div class="col-lg-5">
-        <div class="th-panel-card h-100">
-            <div class="th-panel-head">
-                <div class="th-panel-head-left">
-                    <div class="th-panel-head-icon" aria-hidden="true">
-                        <i class="bi bi-plus-circle"></i>
-                    </div>
-                    <div>
-                        <h2 class="th-panel-title">Record Harvest Batch</h2>
-                        <p class="th-panel-sub">Origin &amp; crop details</p>
-                    </div>
-                </div>
-            </div>
-            <div class="th-panel-body">
-                <form method="POST" action="{{ url_for('add_product') }}" enctype="multipart/form-data">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+      <form class="panel" method="POST" action="{{ url_for('add_product') }}" enctype="multipart/form-data">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
 
-                    <div class="mb-3">
-                        <label for="farmer-name" class="form-label">Crop / Produce Name</label>
-                        <input id="farmer-name" type="text" name="name" class="form-control" placeholder="e.g. Organic Honeycrisp Apples" required>
-                    </div>
-
-                    <div class="row g-3 mb-3">
-                        <div class="col-sm-6">
-                            <label for="farmer-qty" class="form-label">Quantity / Weight</label>
-                            <input id="farmer-qty" type="text" name="quantity" class="form-control" placeholder="e.g. 500 kg" required>
-                        </div>
-                        <div class="col-sm-6">
-                            <label for="farmer-date" class="form-label">Harvest / Pack Date</label>
-                            <input id="farmer-date" type="date" name="packaging_date" class="form-control" required value="{{ today_str }}">
-                        </div>
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="farmer-method" class="form-label">Farming Method</label>
-                        <select id="farmer-method" name="farming_method" class="form-select" required>
-                            <option value="100% Certified Organic">100% Certified Organic</option>
-                            <option value="Hydroponic Controlled">Hydroponic Controlled</option>
-                            <option value="Regenerative Agriculture">Regenerative Agriculture</option>
-                            <option value="Traditional Natural">Traditional Natural</option>
-                            <option value="Greenhouse Solar">Greenhouse Solar</option>
-                        </select>
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="farmer-location" class="form-label">Farm Location / Origin</label>
-                        <input id="farmer-location" type="text" name="farm_location" class="form-control" placeholder="e.g. Yakima Valley, Washington" required>
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="farmer-certs" class="form-label">Certifications</label>
-                        <input id="farmer-certs" type="text" name="certifications" class="form-control" placeholder="e.g. USDA Organic" value="USDA Organic Certified">
-                    </div>
-
-                    {% if allow_uploads %}
-                    <div class="mb-4">
-                        <label for="farmer-image" class="form-label">Produce Photo</label>
-                        <label class="th-dropzone w-100" for="farmer-image">
-                            <span class="th-dropzone-icon" aria-hidden="true">
-                                <i class="bi bi-upload"></i>
-                            </span>
-                            <span>
-                                <span class="th-dropzone-title d-block">Choose file</span>
-                                <span class="th-dropzone-sub d-block" id="farmer-file-label">No file chosen</span>
-                            </span>
-                            <input id="farmer-image" type="file" name="image" accept="image/*">
-                        </label>
-                        <div class="form-text mt-2">Optional &mdash; a matching produce photo is auto-selected from the crop name if left blank.</div>
-                    </div>
-                    {% else %}
-                    <div class="mb-4">
-                        <label for="farmer-image-preset" class="form-label">Produce Visual</label>
-                        <select id="farmer-image-preset" name="image_preset" class="form-select">
-                            {% for img_file, img_label in STATIC_PRODUCE_IMAGES %}
-                            <option value="{{ img_file }}">{{ img_label }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    {% endif %}
-
-                    <button type="submit" class="th-btn-forest w-100">
-                        <i class="bi bi-check-circle" aria-hidden="true"></i>
-                        <span>Record Harvest Batch</span>
-                    </button>
-                </form>
-            </div>
+        <div class="panel__hd">
+          <span class="panel__title">New harvest batch</span>
         </div>
+
+        <div class="panel__bd">
+          <div class="field">
+            <label class="label" for="farmer-name">Crop name</label>
+            <input id="farmer-name" type="text" name="name" class="input" placeholder="e.g. Organic Honeycrisp Apples" required>
+          </div>
+
+          <div class="field-row">
+            <div class="field">
+              <label class="label" for="farmer-qty">Quantity</label>
+              <input id="farmer-qty" type="text" name="quantity" class="input" placeholder="e.g. 500 kg" required>
+            </div>
+            <div class="field">
+              <label class="label" for="farmer-date">Pack date</label>
+              <input id="farmer-date" type="date" name="packaging_date" class="input" required value="{{ today_str }}">
+            </div>
+          </div>
+
+          <div class="field">
+            <label class="label" for="farmer-method">Growing method</label>
+            <select id="farmer-method" name="farming_method" class="select" required>
+              <option value="100% Certified Organic">100% Certified Organic</option>
+              <option value="Hydroponic Controlled">Hydroponic Controlled</option>
+              <option value="Regenerative Agriculture">Regenerative Agriculture</option>
+              <option value="Traditional Natural">Traditional Natural</option>
+              <option value="Greenhouse Solar">Greenhouse Solar</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label class="label" for="farmer-location">Farm location</label>
+            <input id="farmer-location" type="text" name="farm_location" class="input" placeholder="e.g. Yakima Valley, Washington" required>
+          </div>
+
+          <div class="field">
+            <label class="label" for="farmer-certs">Certifications</label>
+            <input id="farmer-certs" type="text" name="certifications" class="input" placeholder="e.g. USDA Organic Certified" value="USDA Organic Certified">
+          </div>
+
+          {% if allow_uploads %}
+          <div class="field" style="margin-bottom:4px">
+            <label class="label" for="farmer-image">Photo (optional)</label>
+            <label class="upload" for="farmer-image" style="padding:10px 12px">
+              <span style="min-width:0;flex:1">
+                <span class="upload__title d-block" id="farmer-file-label">Choose a photo</span>
+                <span class="upload__meta d-block">Leave blank to auto-pick a produce photo</span>
+              </span>
+              <span class="btn btn--sm">Browse</span>
+              <input id="farmer-image" type="file" name="image" accept="image/*">
+            </label>
+          </div>
+          {% else %}
+          <div class="field" style="margin-bottom:4px">
+            <label class="label" for="farmer-image-preset">Produce photo</label>
+            <select id="farmer-image-preset" name="image_preset" class="select">
+              {% for img_file, img_label in STATIC_PRODUCE_IMAGES %}
+              <option value="{{ img_file }}">{{ img_label }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          {% endif %}
+        </div>
+
+        <div class="panel__ft">
+          <span class="t-xs">QR code created on save</span>
+          <button type="submit" class="btn btn--primary">Save harvest</button>
+        </div>
+      </form>
     </div>
 
-    <!-- Right Column: My Harvest Batches Cards -->
+    <!-- RIGHT: SIMPLE BATCH LIST -->
     <div class="col-lg-7">
-        <div class="th-panel-card h-100">
-            <div class="th-panel-head">
-                <div class="th-panel-head-left">
-                    <div class="th-panel-head-icon" aria-hidden="true">
-                        <i class="bi bi-box-seam"></i>
-                    </div>
-                    <h2 class="th-panel-title">My Harvest Batches</h2>
-                </div>
-                <span class="th-count-pill">{{ products|length }} Total</span>
-            </div>
-
-            <div class="th-panel-body">
-                <div class="th-batch-list">
-                    {% for p in products %}
-                    {% set is_warn_method = ('Non-Organic' in p.farming_method or 'Chemically' in p.farming_method or 'Tamper' in p.farming_method) %}
-                    {% set tile_tone = 'is-peach' if loop.index0 % 2 == 0 else 'is-mint' %}
-                    <article class="th-batch-card">
-                        <div class="th-batch-top">
-                            <div class="th-batch-ident">
-                                <div class="th-crop-tile {{ tile_tone }}">
-                                    <img src="{{ product_image_url(p.image) }}" alt="{{ p.name }}" loading="lazy">
-                                </div>
-                                <div class="min-w-0">
-                                    <span class="th-badge-batch">{{ p.batch_id }}</span>
-                                    <div class="th-batch-name text-truncate">{{ p.name }}</div>
-                                    <div class="th-batch-meta">Packed: {{ p.packaging_date }}</div>
-                                </div>
-                            </div>
-
-                            {% if p.on_chain_hash %}
-                            <span class="th-badge-recorded">
-                                <i class="bi bi-check2-circle" aria-hidden="true"></i> Recorded
-                            </span>
-                            {% else %}
-                            <span class="th-badge-pending">Pending</span>
-                            {% endif %}
-                        </div>
-
-                        <div class="th-batch-bottom">
-                            <div class="th-qty-group">
-                                <div>
-                                    <div class="th-micro-label">Quantity</div>
-                                    <div class="th-qty-value">{{ p.quantity }}</div>
-                                </div>
-                                <span class="th-badge-method {% if is_warn_method %}is-warn{% endif %}">
-                                    {{ p.farming_method }}
-                                </span>
-                            </div>
-
-                            <div class="th-batch-actions">
-                                <a href="{{ url_for('verify_batch', batch_id=p.batch_id) }}" title="Open verification page for {{ p.batch_id }}">
-                                    <img src="{{ url_for('batch_qr_png', batch_id=p.batch_id) }}" alt="QR code for {{ p.batch_id }}" width="42" height="42" class="th-qr-thumb">
-                                </a>
-                                <a href="{{ url_for('batch_qr_png', batch_id=p.batch_id, download=1) }}" download="qr_{{ p.batch_id }}.png" class="th-btn-icon" title="Download QR PNG" aria-label="Download QR PNG for {{ p.batch_id }}">
-                                    <i class="bi bi-download" aria-hidden="true"></i>
-                                </a>
-                                <a href="{{ url_for('workflow_entry', batch_id=p.batch_id, stage='harvest') }}" class="th-btn-outline" title="Open in Guided Workflow">
-                                    <i class="bi bi-diagram-3" aria-hidden="true"></i> Workflow
-                                </a>
-                                <a href="{{ url_for('verify_batch', batch_id=p.batch_id) }}" class="th-btn-outline">
-                                    <i class="bi bi-eye" aria-hidden="true"></i> View
-                                </a>
-                            </div>
-                        </div>
-                    </article>
-                    {% else %}
-                    <div class="text-center py-5 text-muted">
-                        <i class="bi bi-inbox fs-1 d-block mb-2 opacity-50" aria-hidden="true"></i>
-                        <div class="fw-semibold text-dark mb-1">No harvest batches yet</div>
-                        <div class="small">Use the form on the left to record your first crop batch and generate its QR label.</div>
-                    </div>
-                    {% endfor %}
-                </div>
-            </div>
+      <div class="panel">
+        <div class="panel__hd">
+          <span class="panel__title">Your harvest batches</span>
+          <span class="chip chip--neutral chip--sm">{{ products|length }} total</span>
         </div>
+
+        <div class="panel__bd">
+          {% if products %}
+          <div class="shiplist" style="margin-top:0">
+            {% for p in products %}
+            <article class="shipcard" style="cursor:default">
+              <img class="shipcard__img" src="{{ product_image_url(p.image) }}" alt="{{ p.name }}" width="46" height="46" loading="lazy">
+              <div class="shipcard__body">
+                <div class="shipcard__top">
+                  <span class="shipcard__name">{{ p.name }}</span>
+                  <span class="shipcard__id">{{ p.batch_id }}</span>
+                </div>
+                <div class="shipcard__meta">
+                  <span>{{ p.quantity }}</span>
+                  <span>&middot; {{ p.farming_method }}</span>
+                  <span>&middot; Packed {{ p.packaging_date }}</span>
+                </div>
+              </div>
+              <div class="shipcard__right">
+                {% if p.retail_data %}
+                  <span class="chip chip--ok chip--sm"><span class="chip__dot"></span>In store</span>
+                {% elif p.transport_data and p.transport_data|length > 0 %}
+                  <span class="chip chip--neutral chip--sm"><span class="chip__dot"></span>Shipped</span>
+                {% else %}
+                  <span class="chip chip--pending chip--sm">Ready to ship</span>
+                {% endif %}
+                <div class="shipcard__links">
+                  <a href="{{ url_for('batch_qr_png', batch_id=p.batch_id, download=1) }}" download="qr_{{ p.batch_id }}.png">QR</a>
+                  <a href="{{ url_for('workflow_entry', batch_id=p.batch_id, stage='harvest') }}">Workflow</a>
+                  <a href="{{ url_for('verify_batch', batch_id=p.batch_id) }}">View &rarr;</a>
+                </div>
+              </div>
+            </article>
+            {% endfor %}
+          </div>
+          {% else %}
+          <div style="padding:32px 16px;text-align:center" class="t-sm muted">
+            No harvests yet. Fill out the form on the left to record your first batch.
+          </div>
+          {% endif %}
+        </div>
+      </div>
     </div>
+
+  </div>
 </div>
 {% endblock %}
 
 {% block scripts %}
 <script>
 document.addEventListener("DOMContentLoaded", function () {
-    const fileInput = document.getElementById("farmer-image");
-    const fileLabel = document.getElementById("farmer-file-label");
-    if (fileInput && fileLabel) {
-        fileInput.addEventListener("change", function () {
-            fileLabel.textContent = (fileInput.files && fileInput.files[0])
-                ? fileInput.files[0].name
-                : "No file chosen";
-        });
-    }
+  var fileInput = document.getElementById("farmer-image");
+  var fileLabel = document.getElementById("farmer-file-label");
+  if (fileInput && fileLabel) {
+    fileInput.addEventListener("change", function () {
+      fileLabel.textContent = (fileInput.files && fileInput.files[0]) ? fileInput.files[0].name : "Choose a photo";
+    });
+  }
 });
 </script>
 {% endblock %}

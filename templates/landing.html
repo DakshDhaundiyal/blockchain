@@ -1,267 +1,147 @@
 {% extends "base.html" %}
-{% block title %}TrustHarvest – Blockchain Food Traceability{% endblock %}
+{% block title %}TrustHarvest — Know Where Your Food Came From{% endblock %}
 
 {% block main_inner %}
-<!-- ══════════════════════════ HERO SECTION ══════════════════ -->
-<section class="hero-section">
-  <!-- Decorative Watermark (Left side) -->
-  <div class="hero-watermark d-none d-xl-flex">
-    <div class="watermark-quote">
-      <span>Same food.</span>
-      <span>A safer</span>
-      <span>tomorrow.</span>
-      <div class="watermark-line"></div>
-    </div>
-    <svg class="watermark-svg" viewBox="0 0 160 300" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M40 280 C50 180 80 120 140 20" stroke="#2d6a4f" stroke-width="1.2" stroke-linecap="round" opacity="0.25"/>
-      <path d="M52 220 C20 205 10 170 25 140 C45 150 55 180 52 220 Z" fill="#2d6a4f" fill-opacity="0.06" stroke="#2d6a4f" stroke-width="1" opacity="0.3"/>
-      <path d="M68 175 C100 160 115 130 105 100 C85 110 75 140 68 175 Z" fill="#2d6a4f" fill-opacity="0.06" stroke="#2d6a4f" stroke-width="1" opacity="0.3"/>
-      <path d="M85 130 C60 110 55 80 70 55 C90 65 95 95 85 130 Z" fill="#2d6a4f" fill-opacity="0.06" stroke="#2d6a4f" stroke-width="1" opacity="0.3"/>
-      <path d="M105 85 C130 75 138 50 130 30 C115 38 110 60 105 85 Z" fill="#2d6a4f" fill-opacity="0.06" stroke="#2d6a4f" stroke-width="1" opacity="0.3"/>
-    </svg>
-  </div>
+<!-- ============ SIMPLE HERO ============ -->
+<section class="hero" aria-labelledby="hero-title">
+  <div class="hero__in">
+    <div class="hero__copy">
+      <div class="hero__kicker"><i></i>Farm-to-table food check</div>
+      <h1 id="hero-title">Know where your food came from.</h1>
+      <p class="hero__sub">Enter the Batch ID on your package or scan its QR code to see which farm grew it, how it stayed fresh in transit, and confirm the record hasn&rsquo;t been altered.</p>
 
-  <div class="container position-relative">
-    <div class="row align-items-center g-4 g-xl-5">
-
-      <!-- LEFT COLUMN: Headline & Verification Action -->
-      <div class="col-lg-7">
-        <div class="hero-eyebrow">
-          FARM-TO-TABLE FOOD AUTHENTICITY CHECK
+      <form class="hero__form" action="{{ url_for('customer_dashboard') }}" method="GET">
+        <label class="label" for="batch-id-input">Batch ID <span>Printed under the QR code</span></label>
+        <div class="hero__actions">
+          <input
+            class="input input--lg input--mono"
+            id="batch-id-input"
+            name="batch_id"
+            type="text"
+            placeholder="e.g. {{ recent_products[0].batch_id if recent_products else 'TH-APPLES-001' }}"
+            autocomplete="off"
+            spellcheck="false"
+            required
+          >
+          <button class="btn btn--primary btn--lg" type="submit">Check Food</button>
         </div>
-
-        <h1 class="hero-headline">
-          Know where your<br><span class="hero-title-accent">food came from.</span>
-        </h1>
-
-        <p class="hero-sub">
-          Scan any package QR code or enter a Batch ID to see which farm grew it, whether it stayed cold on the truck, and confirm no labels were tampered with.
-        </p>
-
-        <!-- Search / Verification Input Bar -->
-        <form action="{{ url_for('customer_dashboard') }}" method="GET" class="hero-search-form">
-          <label for="batch-id-input" class="visually-hidden">Enter Batch ID to verify</label>
-          <div class="hero-verify-bar">
-            <i class="bi bi-qr-code-scan hero-verify-icon" aria-hidden="true"></i>
-            <input
-              type="text"
-              name="batch_id"
-              id="batch-id-input"
-              placeholder="Enter Batch ID (e.g. TH-APPLES-001)"
-              autocomplete="off"
-              spellcheck="false"
-            >
-            <button type="submit" class="hero-verify-btn">
-              Check Food <i class="bi bi-arrow-right" aria-hidden="true"></i>
-            </button>
-          </div>
-        </form>
-
-        <!-- Quick Links (Dynamic based on existing batches) -->
-        <div class="d-flex align-items-center flex-wrap gap-2 mb-3 small">
+        <div class="hero__alt">
+          <a class="link" href="{{ url_for('customer_dashboard') }}#scan">Scan QR code instead &rarr;</a>
           {% if recent_products %}
-          <span class="text-muted fw-medium">Recent batches:</span>
-          {% for sample in recent_products[:2] %}
-          <a href="{{ url_for('verify_batch', batch_id=sample.batch_id) }}" class="badge rounded-pill text-bg-light border text-decoration-none px-3 py-2 text-success fw-semibold">
-            <i class="bi bi-patch-check me-1"></i> {{ sample.batch_id }} ({{ sample.name }})
-          </a>
-          {% endfor %}
+          <span>or try <a class="link link--quiet mono" href="{{ url_for('verify_batch', batch_id=recent_products[0].batch_id) }}">{{ recent_products[0].batch_id }}</a></span>
           {% endif %}
-          <a href="{{ url_for('customer_dashboard') }}#scan" class="badge rounded-pill text-bg-light border text-decoration-none px-3 py-2 text-dark fw-semibold">
-            <i class="bi bi-qr-code-scan me-1"></i> Scan QR Code
-          </a>
         </div>
+      </form>
+    </div>
 
-        <!-- Trust Indicators -->
-        <div class="hero-trust-row">
-          <span class="trust-badge-item">
-            <i class="bi bi-shield-check"></i>
-            Verified Farm Origin
-          </span>
-          <span class="trust-badge-item">
-            <i class="bi bi-snow2 text-success"></i>
-            Cold-Storage Checked
-          </span>
-          <span class="trust-badge-item">
-            <i class="bi bi-lock-fill"></i>
-            Tamper-Proof Records
-          </span>
-        </div>
+    <div class="hero__media">
+      <img src="{{ url_for('static', filename='img/genspark/tomato-vine.jpg') }}" alt="Fresh tomatoes on the vine" width="900" height="1200">
+      {% if recent_products %}
+      {% set feat = recent_products[0] %}
+      <div class="hero__tag">
+        <span><b>{{ feat.name }}</b> &middot; {{ feat.batch_id }}</span>
+        <span>{{ feat.farmer_data.farm_location if feat.farmer_data and feat.farmer_data.farm_location else (feat.farmer.full_name or feat.farmer.username) }}</span>
       </div>
-
-      <!-- RIGHT COLUMN: From Farm to Table Interactive Card -->
-      <div class="col-lg-5">
-        <div class="farm-table-card">
-          <div class="ft-header">
-            <h2 class="ft-title">From Farm to Table</h2>
-            <p class="ft-subtitle">
-              {% if demo_mode %}
-                Every stage checked &amp; recorded. Use <strong>Switch Role</strong> above to try each step.
-              {% else %}
-                Every harvest, shipment, and store check is easy for shoppers to verify.
-              {% endif %}
-            </p>
-          </div>
-
-          <div class="ft-timeline">
-
-            <!-- Stage 1: Farm -->
-            <div class="ft-step">
-              <div class="ft-node-col">
-                <div class="ft-step-index idx-green">01</div>
-                <div class="ft-step-icon icon-green" aria-hidden="true"><i class="bi bi-flower1"></i></div>
-                <div class="ft-vertical-line"></div>
-              </div>
-              <div class="ft-thumb">
-                <img src="{{ url_for('static', filename='img/farm.jpg') }}" alt="Farm harvest field" loading="lazy">
-              </div>
-              <div class="ft-body">
-                <div class="ft-step-label">FARM</div>
-                <div class="ft-step-desc">Farmer logs crop details, harvest method, and prints QR label.</div>
-                <div class="ft-step-time">Step 1 &bull; Origin Sealed</div>
-              </div>
-              <div class="ft-status">
-                <span class="badge-pill-verified"><i class="bi bi-check-circle-fill" aria-hidden="true"></i> Verified</span>
-              </div>
-            </div>
-
-            <!-- Stage 2: Transport -->
-            <div class="ft-step">
-              <div class="ft-node-col">
-                <div class="ft-step-index idx-blue">02</div>
-                <div class="ft-step-icon icon-blue" aria-hidden="true"><i class="bi bi-truck"></i></div>
-                <div class="ft-vertical-line"></div>
-              </div>
-              <div class="ft-thumb">
-                <img src="{{ url_for('static', filename='img/transport.jpg') }}" alt="Cold-chain transport truck" loading="lazy">
-              </div>
-              <div class="ft-body">
-                <div class="ft-step-label">TRANSPORT</div>
-                <div class="ft-step-desc">Carrier records route checkpoints and cold-chain temperature.</div>
-                <div class="ft-step-time">Step 2 &bull; Transit Tracked</div>
-              </div>
-              <div class="ft-status">
-                <span class="badge-pill-transit"><span class="dot-transit" aria-hidden="true"></span> In Transit</span>
-              </div>
-            </div>
-
-            <!-- Stage 3: Retail -->
-            <div class="ft-step">
-              <div class="ft-node-col">
-                <div class="ft-step-index idx-orange">03</div>
-                <div class="ft-step-icon icon-orange" aria-hidden="true"><i class="bi bi-shop"></i></div>
-                <div class="ft-vertical-line"></div>
-              </div>
-              <div class="ft-thumb">
-                <img src="{{ url_for('static', filename='img/retail.jpg') }}" alt="Retail produce market" loading="lazy">
-              </div>
-              <div class="ft-body">
-                <div class="ft-step-label">RETAIL</div>
-                <div class="ft-step-desc">Store confirms stock arrival, shelf life, and retail price.</div>
-                <div class="ft-step-time">Step 3 &bull; Store Ready</div>
-              </div>
-              <div class="ft-status">
-                <span class="badge-pill-verified"><i class="bi bi-check-circle-fill" aria-hidden="true"></i> Verified</span>
-              </div>
-            </div>
-
-            <!-- Stage 4: Consumer -->
-            <div class="ft-step">
-              <div class="ft-node-col">
-                <div class="ft-step-index idx-grey">04</div>
-                <div class="ft-step-icon icon-grey" aria-hidden="true"><i class="bi bi-person"></i></div>
-              </div>
-              <div class="ft-thumb ft-thumb-consumer">
-                <img src="{{ url_for('static', filename='img/consumer.jpg') }}" alt="Consumer smartphone scan" loading="lazy">
-              </div>
-              <div class="ft-body">
-                <div class="ft-step-label">CONSUMER</div>
-                <div class="ft-step-desc">Scan QR code or enter Batch ID to verify authenticity instantly.</div>
-              </div>
-              <div class="ft-status">
-                <span class="badge-pill-ready">Ready to Verify</span>
-              </div>
-            </div>
-
-          </div>
-        </div>
-      </div>
-
+      {% endif %}
     </div>
   </div>
 </section>
 
-<!-- ══════════════════════════ METRICS STRIP ══════════════════ -->
-<div class="container">
-  <div class="metrics-bar-card">
-    <div class="metric-segment">
-      <div class="metric-val">{{ product_count }}</div>
-      <div class="metric-caption">REGISTERED BATCHES</div>
-      <div class="metric-trend text-success"><i class="bi bi-shield-check"></i> Tracked end-to-end</div>
-    </div>
-    <div class="metric-segment">
-      <div class="metric-val">{{ user_count }}</div>
-      <div class="metric-caption">STAKEHOLDERS</div>
-      <div class="metric-meta"><i class="bi bi-people-fill"></i> Farmers, Transit, Stores</div>
-    </div>
-    <div class="metric-segment">
-      <div class="metric-val">{{ transport_count }}</div>
-      <div class="metric-caption">TRANSIT CHECKPOINTS</div>
-      <div class="metric-meta text-success"><i class="bi bi-thermometer-half"></i> Temperature logged</div>
+<!-- ============ 4 SIMPLE STEPS ============ -->
+<section class="journey" aria-label="How TrustHarvest works">
+  <div class="journey__in">
+    <div class="journey__grid">
+      <div class="jstep jstep--now">
+        <div class="jstep__n">Step 1</div>
+        <div class="jstep__t"><i></i>Farm</div>
+        <p class="jstep__d">The farmer logs the harvest and prints a QR label.</p>
+      </div>
+      <div class="jstep jstep--now">
+        <div class="jstep__n">Step 2</div>
+        <div class="jstep__t"><i></i>Transport</div>
+        <p class="jstep__d">The driver logs stops and cold-storage temperatures.</p>
+      </div>
+      <div class="jstep">
+        <div class="jstep__n">Step 3</div>
+        <div class="jstep__t"><i></i>Shop</div>
+        <p class="jstep__d">The store confirms arrival, shelf life, and price.</p>
+      </div>
+      <div class="jstep">
+        <div class="jstep__n">Step 4</div>
+        <div class="jstep__t"><i></i>You Check</div>
+        <p class="jstep__d">Scan the label anytime to confirm nothing was altered.</p>
+      </div>
     </div>
   </div>
+</section>
+
+<!-- ============ RECENTLY RECORDED BATCHES ============ -->
+<div class="shell">
+  <section class="sec" aria-labelledby="recent-title">
+    <div class="sec__hd">
+      <div>
+        <p class="eyebrow">{{ product_count }} tracked batch{{ '' if product_count == 1 else 'es' }}</p>
+        <h2 class="sec__title" id="recent-title" style="margin-top:6px">Recently recorded batches</h2>
+      </div>
+      <p class="sec__lede">Click any item to see its full farm-to-store history.</p>
+    </div>
+
+    {% if recent_products %}
+    <div class="table-wrap">
+      <table class="ledger recent">
+        <thead>
+          <tr>
+            <th style="width:46px"></th>
+            <th>Food</th>
+            <th>Batch ID</th>
+            <th>Farm</th>
+            <th style="text-align:right">Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in recent_products %}
+          <tr data-href="{{ url_for('verify_batch', batch_id=p.batch_id) }}">
+            <td>
+              <img class="ledger__thumb" src="{{ product_image_url(p.image) }}" alt="{{ p.name }}" width="38" height="38" loading="lazy">
+            </td>
+            <td>
+              <a href="{{ url_for('verify_batch', batch_id=p.batch_id) }}" class="ledger__name d-block">{{ p.name }}</a>
+              <span class="t-xs">{{ p.quantity }} &middot; Packed {{ p.packaging_date }}</span>
+            </td>
+            <td class="mono" style="font-size:13px">{{ p.batch_id }}</td>
+            <td class="t-sm">{{ p.farmer_data.farm_location if p.farmer_data and p.farmer_data.farm_location else (p.farmer.full_name or p.farmer.username) }}</td>
+            <td>
+              <div class="st">
+                {% if p.retail_data %}
+                  <span class="chip chip--ok chip--sm"><span class="chip__dot"></span>In store</span>
+                {% elif p.transport_data and p.transport_data|length > 0 %}
+                  <span class="chip chip--neutral chip--sm"><span class="chip__dot"></span>In transit</span>
+                {% else %}
+                  <span class="chip chip--pending chip--sm"><span class="chip__dot"></span>At farm</span>
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="panel" style="margin-top:12px">
+      <div class="panel__bd t-sm muted">
+        No batches yet. <a class="link" href="{{ url_for('workflow_entry') }}">Record the first batch &rarr;</a>
+      </div>
+    </div>
+    {% endif %}
+  </section>
+
+  <!-- ============ SIMPLE CLOSING CTA ============ -->
+  <section class="closing" aria-label="Guided workflow">
+    <div>
+      <div class="closing__t">Want to see how a batch moves from farm to store?</div>
+      <p class="closing__d">Use the step-by-step Guided Workflow to walk through Farmer, Transporter, Retailer, and Customer verification.</p>
+    </div>
+    <a class="btn btn--primary" href="{{ url_for('workflow_entry') }}">Open Guided Workflow</a>
+  </section>
 </div>
-
-<!-- ══════════════════════ HOW IT WORKS ══════════════════════ -->
-<div class="container hiw-section-wrap" id="how-it-works">
-  <h2 class="hiw-heading">How TrustHarvest Protects Your Food</h2>
-  <p class="hiw-subheading">Three simple checks follow every harvest from soil to store so you know what is really in your basket.</p>
-
-  <div class="hiw-horizontal-row">
-
-    <!-- Step 1 -->
-    <div class="hiw-flow-step">
-      <div class="hiw-circle-icon"><i class="bi bi-flower1" aria-hidden="true"></i></div>
-      <div class="hiw-step-content">
-        <div class="hiw-step-tag">01 &nbsp;AT THE FARM</div>
-        <div class="hiw-step-text">Farmer logs harvest details, method, and prints a package QR label.</div>
-      </div>
-    </div>
-
-    <div class="hiw-flow-arrow d-none d-lg-flex"><i class="bi bi-arrow-right" aria-hidden="true"></i></div>
-
-    <!-- Step 2 -->
-    <div class="hiw-flow-step">
-      <div class="hiw-circle-icon"><i class="bi bi-lock" aria-hidden="true"></i></div>
-      <div class="hiw-step-content">
-        <div class="hiw-step-tag">02 &nbsp;DIGITAL SEAL</div>
-        <div class="hiw-step-text">Each update locks an unchangeable digital seal nobody can secretly alter.</div>
-      </div>
-    </div>
-
-    <div class="hiw-flow-arrow d-none d-lg-flex"><i class="bi bi-arrow-right" aria-hidden="true"></i></div>
-
-    <!-- Step 3 -->
-    <div class="hiw-flow-step">
-      <div class="hiw-circle-icon"><i class="bi bi-truck" aria-hidden="true"></i></div>
-      <div class="hiw-step-content">
-        <div class="hiw-step-tag">03 &nbsp;COLD TRANSIT &amp; STORE</div>
-        <div class="hiw-step-text">Drivers log cold-storage temperatures and stores confirm shelf arrival.</div>
-      </div>
-    </div>
-
-    <div class="hiw-flow-arrow d-none d-lg-flex"><i class="bi bi-arrow-right" aria-hidden="true"></i></div>
-
-    <!-- Step 4 -->
-    <div class="hiw-flow-step">
-      <div class="hiw-circle-icon"><i class="bi bi-qr-code-scan" aria-hidden="true"></i></div>
-      <div class="hiw-step-content">
-        <div class="hiw-step-tag">04 &nbsp;YOU SCAN &amp; CHECK</div>
-        <div class="hiw-step-text">Scan in seconds to verify safety, freshness, and spot any tampering.</div>
-      </div>
-    </div>
-
-  </div>
-</div>
-
 {% endblock %}

@@ -1,206 +1,140 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="TrustHarvest — simple farm-to-table food traceability powered by Ethereum smart contracts and QR verification.">
-    <title>{% block title %}TrustHarvest – Farm-to-Table Food Verification{% endblock %}</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="TrustHarvest — follow food from farm to store and verify that records have not been altered.">
+  <title>{% block title %}TrustHarvest — Farm-to-Table Food Verification{% endblock %}</title>
 
-    <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@1,400;1,600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,500;0,600;1,500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 
-    <!-- Bootstrap 5 CSS & Icons -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <!-- Custom Design System -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    {% block extra_head %}{% endblock %}
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  {% block extra_head %}{% endblock %}
 </head>
 <body>
 
-<!-- ═══════════════════════════════════════ CLEAN NAVBAR ══ -->
-<header class="position-relative">
-    <a href="#main-content" class="visually-hidden-focusable position-absolute top-0 start-0 m-2 px-3 py-2 bg-dark text-white rounded text-decoration-none z-3">Skip to main content</a>
-    <nav class="navbar-trust sticky-top" aria-label="Main navigation">
-        <div class="container d-flex align-items-center justify-content-between gap-3">
+<a href="#main-content" class="visually-hidden-focusable position-absolute top-0 start-0 m-2 px-3 py-2 bg-dark text-white rounded text-decoration-none z-3">Skip to main content</a>
 
-            <!-- Brand -->
-            <a href="{{ url_for('landing') }}" class="navbar-brand-th flex-shrink-0">
-                <div class="brand-icon" aria-hidden="true">
-                    <i class="bi bi-shield-check" style="font-size:15px;"></i>
-                </div>
-                <span class="brand-name">Trust<span>Harvest</span></span>
-            </a>
+<!-- ============ SIMPLE TOP NAV ============ -->
+<header class="nav no-print">
+  <div class="nav__in">
+    <a class="brand" href="{{ url_for('landing') }}" aria-label="TrustHarvest home">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M12 21V10" stroke="#143A29" stroke-width="1.5" stroke-linecap="round"/>
+        <path d="M12 13c0-3.9 3.1-7 7-7 0 3.9-3.1 7-7 7Z" fill="#266144"/>
+        <path d="M12 16c0-3.3-2.7-6-6-6 0 3.3 2.7 6 6 6Z" fill="#84CC16"/>
+      </svg>
+      <span class="brand__name"><b>Trust</b>Harvest</span>
+    </a>
 
-            <!-- Core Links (Max 3 clear destinations; all roles live inside Switch Role dropdown) -->
-            <ul class="nav-links d-none d-lg-flex">
-                <li><a href="{{ url_for('landing') }}" class="{% if request.endpoint == 'landing' %}active{% endif %}" {% if request.endpoint == 'landing' %}aria-current="page"{% endif %}>Home</a></li>
-                <li><a href="{{ url_for('workflow_entry') }}" class="{% if request.endpoint == 'workflow_entry' %}active{% endif %}" {% if request.endpoint == 'workflow_entry' %}aria-current="page"{% endif %}>Guided Workflow</a></li>
-                <li><a href="{{ url_for('customer_dashboard') }}" class="{% if request.endpoint == 'customer_dashboard' %}active{% endif %}" {% if request.endpoint == 'customer_dashboard' %}aria-current="page"{% endif %}>Verify Produce</a></li>
-            </ul>
-
-            <!-- Right Controls: Guided Workflow pill + Status + Demo Role Switcher (if DEMO_MODE) or Account Link -->
-            <div class="nav-actions flex-shrink-0">
-                <a href="{{ url_for('workflow_entry') }}" class="th-nav-pill-btn d-none d-sm-inline-flex">
-                    <i class="bi bi-diagram-3" aria-hidden="true"></i>
-                    <span>Guided Workflow</span>
-                </a>
-
-                <div class="nav-status-pill d-none d-xl-inline-flex {% if blockchain_online %}is-online{% else %}is-offline{% endif %}" title="Verification Service Status">
-                    <span class="nav-status-dot" aria-hidden="true"></span>
-                    <span>
-                        {% if blockchain_online %}
-                            Verification Live
-                        {% else %}
-                            Verification Offline
-                        {% endif %}
-                    </span>
-                </div>
-
-                {% if demo_mode %}
-                <!-- DEMO-ONLY ROLE SWITCHER DROPDOWN -->
-                <div class="dropdown">
-                    {% set uname = session.get('username') %}
-                    {% set u_parts = (uname.split('_') if uname else []) %}
-                    {% set initials = ((u_parts[0][0] ~ u_parts[1][0]) if u_parts|length >= 2 else (uname[:2] if uname else 'TH'))|upper %}
-                    <button class="btn btn-dashboard-switch dropdown-toggle d-flex align-items-center gap-2" type="button" id="dashboardSwitcherDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                        {% if uname %}
-                            <span class="th-user-avatar" aria-hidden="true">{{ initials }}</span>
-                            <span class="fw-semibold">{{ uname }}</span>
-                        {% elif current_persona %}
-                            <span class="th-user-avatar" aria-hidden="true">{{ current_persona.short_title[:2]|upper }}</span>
-                            <span class="fw-semibold">{{ current_persona.short_title }}</span>
-                        {% else %}
-                            <span class="th-user-avatar" aria-hidden="true"><i class="bi bi-grid-fill" style="font-size:11px;"></i></span>
-                            <span class="fw-semibold">Switch Role</span>
-                        {% endif %}
-                    </button>
-
-                    <ul class="dropdown-menu dropdown-menu-end shadow-lg py-2 border-0 persona-dropdown-menu" aria-labelledby="dashboardSwitcherDropdown">
-                        <li class="d-lg-none dropdown-header px-3 py-1 text-uppercase fw-bold text-muted" style="font-size:11px;letter-spacing:0.06em;">Navigation</li>
-                        <li class="d-lg-none"><a class="dropdown-item py-1.5 px-3 fw-medium" href="{{ url_for('landing') }}" {% if request.endpoint == 'landing' %}aria-current="page"{% endif %}><i class="bi bi-house me-2 text-success" aria-hidden="true"></i>Home</a></li>
-                        <li class="d-lg-none"><a class="dropdown-item py-1.5 px-3 fw-medium" href="{{ url_for('workflow_entry') }}" {% if request.endpoint == 'workflow_entry' %}aria-current="page"{% endif %}><i class="bi bi-diagram-3 me-2 text-success" aria-hidden="true"></i>Guided Workflow</a></li>
-                        <li class="d-lg-none"><a class="dropdown-item py-1.5 px-3 fw-medium" href="{{ url_for('customer_dashboard') }}" {% if request.endpoint == 'customer_dashboard' %}aria-current="page"{% endif %}><i class="bi bi-qr-code-scan me-2 text-success" aria-hidden="true"></i>Verify Produce</a></li>
-                        <li class="d-lg-none"><hr class="dropdown-divider my-1"></li>
-
-                        <li class="dropdown-header px-3 py-2 text-uppercase fw-bold text-muted" style="font-size:11px;letter-spacing:0.06em;">
-                            <i class="bi bi-people me-1" aria-hidden="true"></i> Demo Role Switcher
-                        </li>
-                        <li><hr class="dropdown-divider my-1"></li>
-
-                        <li>
-                            <a class="dropdown-item persona-item d-flex align-items-center py-2 px-3 {% if current_role == 'farmer' %}active-persona{% endif %}" href="{{ url_for('switch_role', role='farmer') }}">
-                                <div class="persona-icon-box bg-success-subtle text-success me-3" aria-hidden="true"><i class="bi bi-tree-fill"></i></div>
-                                <div class="flex-grow-1">
-                                    <div class="persona-name fw-semibold">Farmer</div>
-                                    <div class="persona-sub text-muted">Register harvest &amp; print QR</div>
-                                </div>
-                                {% if current_role == 'farmer' %}<span class="badge bg-success rounded-pill ms-2" style="font-size:10px;">Active</span>{% endif %}
-                            </a>
-                        </li>
-                        <li>
-                            <a class="dropdown-item persona-item d-flex align-items-center py-2 px-3 {% if current_role == 'transporter' %}active-persona{% endif %}" href="{{ url_for('switch_role', role='transporter') }}">
-                                <div class="persona-icon-box bg-primary-subtle text-primary me-3" aria-hidden="true"><i class="bi bi-truck"></i></div>
-                                <div class="flex-grow-1">
-                                    <div class="persona-name fw-semibold">Transporter</div>
-                                    <div class="persona-sub text-muted">Log location &amp; cold-chain temp</div>
-                                </div>
-                                {% if current_role == 'transporter' %}<span class="badge bg-primary rounded-pill ms-2" style="font-size:10px;">Active</span>{% endif %}
-                            </a>
-                        </li>
-                        <li>
-                            <a class="dropdown-item persona-item d-flex align-items-center py-2 px-3 {% if current_role == 'retailer' %}active-persona{% endif %}" href="{{ url_for('switch_role', role='retailer') }}">
-                                <div class="persona-icon-box me-3" style="background:#f3e8ff;color:#9333ea;" aria-hidden="true"><i class="bi bi-shop"></i></div>
-                                <div class="flex-grow-1">
-                                    <div class="persona-name fw-semibold">Retailer</div>
-                                    <div class="persona-sub text-muted">Update store stock &amp; price</div>
-                                </div>
-                                {% if current_role == 'retailer' %}<span class="badge rounded-pill ms-2" style="background:#9333ea;font-size:10px;">Active</span>{% endif %}
-                            </a>
-                        </li>
-                        <li>
-                            <a class="dropdown-item persona-item d-flex align-items-center py-2 px-3 {% if current_role == 'customer' %}active-persona{% endif %}" href="{{ url_for('switch_role', role='customer') }}">
-                                <div class="persona-icon-box bg-info-subtle text-info me-3" aria-hidden="true"><i class="bi bi-qr-code-scan"></i></div>
-                                <div class="flex-grow-1">
-                                    <div class="persona-name fw-semibold">Consumer</div>
-                                    <div class="persona-sub text-muted">Scan QR or inspect food origin</div>
-                                </div>
-                                {% if current_role == 'customer' %}<span class="badge bg-info text-dark rounded-pill ms-2" style="font-size:10px;">Active</span>{% endif %}
-                            </a>
-                        </li>
-                    </ul>
-                </div>
-                {% else %}
-                <!-- STANDARD PRODUCTION MENU -->
-                {% if current_persona %}
-                <a href="{{ url_for(current_persona.route) }}" class="btn btn-sm btn-outline-success fw-semibold d-inline-flex align-items-center" style="border-radius:8px;">
-                    <i class="bi {{ current_persona.icon }} me-1" aria-hidden="true"></i> {{ current_persona.short_title }} Portal
-                </a>
-                {% else %}
-                <a href="{{ url_for('login') }}" class="btn btn-sm btn-outline-success fw-semibold" style="border-radius:8px;">
-                    <i class="bi bi-box-arrow-in-right me-1" aria-hidden="true"></i> Sign In
-                </a>
-                {% endif %}
-                {% endif %}
-
-                {% if session.get('user_id') %}
-                <form action="{{ url_for('logout') }}" method="POST" class="d-inline m-0 p-0">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                    <button type="submit" class="btn btn-sm btn-outline-secondary" style="border-radius:8px;font-size:12px;padding:6px 10px;" title="Sign out" aria-label="Sign out">
-                        <i class="bi bi-box-arrow-right" aria-hidden="true"></i>
-                    </button>
-                </form>
-                {% endif %}
-            </div>
-        </div>
+    <nav class="nav__links" aria-label="Main">
+      <a class="nav__link" href="{{ url_for('landing') }}" {% if request.endpoint == 'landing' %}aria-current="page"{% endif %}>Home</a>
+      <a class="nav__link" href="{{ url_for('workflow_entry') }}" {% if request.endpoint == 'workflow_entry' %}aria-current="page"{% endif %}>Guided Workflow</a>
+      <a class="nav__link" href="{{ url_for('customer_dashboard') }}" {% if request.endpoint in ('customer_dashboard', 'verify_batch') %}aria-current="page"{% endif %}>Verify Produce</a>
     </nav>
+
+    <div class="nav__right">
+      {% if demo_mode %}
+      <div class="roles" id="dashboardSwitcherDropdown" role="group" aria-label="Demo role switcher">
+        <span class="roles__lbl">Demo</span>
+        <a href="{{ url_for('switch_role', role='farmer') }}" {% if current_role == 'farmer' or request.endpoint == 'farmer_dashboard' %}aria-current="true"{% endif %}>Farmer</a>
+        <a href="{{ url_for('switch_role', role='transporter') }}" {% if current_role == 'transporter' or request.endpoint == 'transporter_dashboard' %}aria-current="true"{% endif %}>Transporter</a>
+        <a href="{{ url_for('switch_role', role='retailer') }}" {% if current_role == 'retailer' or request.endpoint == 'retailer_dashboard' %}aria-current="true"{% endif %}>Retailer</a>
+        <a href="{{ url_for('switch_role', role='customer') }}" {% if current_role == 'customer' or request.endpoint in ('customer_dashboard', 'verify_batch') %}aria-current="true"{% endif %}>Customer</a>
+      </div>
+      {% else %}
+        {% if current_persona %}
+        <a href="{{ url_for(current_persona.route) }}" class="btn btn--sm btn--forest">
+          {{ current_persona.short_title }} Portal
+        </a>
+        {% else %}
+        <a href="{{ url_for('login') }}" class="btn btn--sm">Sign In</a>
+        {% endif %}
+      {% endif %}
+
+      {% if session.get('user_id') %}
+      <form action="{{ url_for('logout') }}" method="POST" class="d-inline m-0 p-0">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+        <button type="submit" class="nav__logout" title="Sign out ({{ session.get('username') }})" aria-label="Sign out">
+          <i class="bi bi-box-arrow-right" aria-hidden="true"></i>
+          <span class="d-none d-xl-inline">Sign out</span>
+        </button>
+      </form>
+      {% endif %}
+
+      <button class="nav__toggle" type="button" aria-expanded="false" aria-label="Menu">
+        <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M2 4.5h12M2 8h12M2 11.5h12"/></svg>
+      </button>
+    </div>
+  </div>
 </header>
 
-<!-- ═══════════════════════════════════ FLASH MESSAGES ═════ -->
-<div class="container mt-3 no-print">
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            {% for category, message in messages %}
-                <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show"
-                     style="border-radius:var(--radius-md);font-size:14px;font-weight:500;" role="alert">
-                    {{ message }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            {% endfor %}
-        {% endif %}
-    {% endwith %}
-</div>
+<!-- ============ NOTIFICATIONS ============ -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+  <div class="th-flash-wrap no-print" role="region" aria-label="Notifications">
+    {% for category, message in messages %}
+      {% set tone = 'danger' if category == 'error' else category %}
+      <div class="th-flash th-flash--{{ tone }} alert alert-dismissible fade show border" role="alert">
+        <span>{{ message }}</span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close" style="position:static;padding:4px;"></button>
+      </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+{% endwith %}
 
-<!-- ═══════════════════════════════════════ MAIN ═══════════ -->
-<main id="main-content" class="main-container" tabindex="-1">
-    {% block main_inner %}
-    <div class="container py-4">
-        {% block content %}{% endblock %}
-    </div>
-    {% endblock %}
+<!-- ============ MAIN ============ -->
+<main id="main-content" tabindex="-1">
+  {% block main_inner %}
+  <div class="shell" style="padding-top:22px;padding-bottom:48px">
+    {% block content %}{% endblock %}
+  </div>
+  {% endblock %}
 </main>
 
-<!-- ═══════════════════════════════════════ FOOTER ═════════ -->
-<footer class="site-footer mt-auto no-print">
-    <div class="container">
-        <div class="row align-items-center">
-            <div class="col-md-6">
-                <span class="footer-copy">&copy; 2026 TrustHarvest &mdash; Decentralized Food Traceability</span>
-            </div>
-            <div class="col-md-6">
-                <div class="footer-tags justify-content-md-end mt-2 mt-md-0">
-                    <span class="footer-tag">Farm-to-Table</span>
-                    <span class="footer-tag">SHA-256 Fingerprints</span>
-                    <span class="footer-tag">Public Traceability</span>
-                </div>
-            </div>
-        </div>
+<!-- ============ SIMPLE FOOTER ============ -->
+<footer class="foot no-print">
+  <div class="foot__in">
+    <div>
+      <div class="foot__h">TrustHarvest</div>
+      <p class="foot__note">Follow food from farm to store and check that nothing was changed along the way.</p>
     </div>
+    <div>
+      <div class="foot__h">Pages</div>
+      <div class="foot__links">
+        <a href="{{ url_for('landing') }}">Home</a>
+        <a href="{{ url_for('workflow_entry') }}">Guided Workflow</a>
+        <a href="{{ url_for('customer_dashboard') }}">Verify Produce</a>
+      </div>
+    </div>
+    <div>
+      <div class="foot__h">Portals</div>
+      <div class="foot__links">
+        {% if demo_mode %}
+        <a href="{{ url_for('switch_role', role='farmer') }}">Farmer</a>
+        <a href="{{ url_for('switch_role', role='transporter') }}">Transporter</a>
+        <a href="{{ url_for('switch_role', role='retailer') }}">Retailer</a>
+        {% else %}
+        <a href="{{ url_for('farmer_dashboard') }}">Farmer</a>
+        <a href="{{ url_for('transporter_dashboard') }}">Transporter</a>
+        <a href="{{ url_for('retailer_dashboard') }}">Retailer</a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  <div class="foot__base">
+    <span>{% if blockchain_online %}Verification live{% else %}Verification offline{% endif %}</span>
+    <span>TrustHarvest &middot; Farm-to-Table Verification</span>
+  </div>
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="{{ url_for('static', filename='js/th.js') }}"></script>
 {% block scripts %}{% endblock %}
 </body>
 </html>

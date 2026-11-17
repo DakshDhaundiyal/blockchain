@@ -1,129 +1,126 @@
-{# Reusable Guided Supply-Chain Workflow Stepper Component (Dark Forest + Lime Theme) #}
+{# Genspark Field-Ledger Guided Workflow Stepper Component #}
 {% set raw_step = current_step|default(1)|int %}
 {% set active_step = 1 if raw_step < 1 else (5 if raw_step > 5 else raw_step) %}
 {% set active_batch = batch_id or (product.batch_id if product else none) %}
+{% set fill_pct = {1: 0, 2: 20, 3: 40, 4: 60, 5: 80}[active_step] %}
+{% set mob_pct = {1: 20, 2: 40, 3: 60, 4: 80, 5: 100}[active_step] %}
+{% set step_names = {1: 'Sign In', 2: 'Farm Harvest', 3: 'Transport', 4: 'Shop Arrival', 5: 'Customer Verification'} %}
 
-<div class="workflow-stepper-container">
-    <div class="workflow-stepper-header">
-        <div>
-            <span class="th-stepper-eyebrow">
-                <i class="bi bi-diagram-3-fill" aria-hidden="true"></i> Farm to Shop Journey
-            </span>
-            <h2 class="th-stepper-title">Supply-Chain Stepper</h2>
-        </div>
-        <div class="d-flex align-items-center gap-2 flex-wrap">
-            {% if active_batch %}
-                <span class="th-stepper-batch-pill font-monospace">
-                    <i class="bi bi-qr-code" aria-hidden="true"></i> Batch: <strong>{{ active_batch }}</strong>
-                </span>
-            {% else %}
-                <span class="th-stepper-batch-pill">
-                    <i class="bi bi-clock-history" aria-hidden="true"></i> New Batch
-                </span>
-            {% endif %}
-            <span class="th-stepper-step-pill">
-                Step {{ active_step }} of 5
-            </span>
-        </div>
+{% set farm_done = active_step > 2 or (product and product.on_chain_hash) %}
+{% set tr_done = active_step > 3 or (product and product.transport_data and product.transport_data|length > 0) %}
+{% set rt_done = active_step > 4 or (product and product.retail_data) %}
+{% set vf_done = active_step == 5 and tr_done and rt_done %}
+
+<!-- Desktop horizontal ruled stepper -->
+<nav class="stepper no-print" aria-label="Guided workflow steps">
+  <div class="stepper__track" aria-hidden="true"></div>
+  <div class="stepper__fill" style="width:{{ fill_pct }}%" aria-hidden="true"></div>
+  <div class="stepper__grid">
+
+    <!-- 01 Sign In -->
+    <div class="snode {{ 'snode--done' if active_step > 1 else ('snode--now' if active_step == 1 else 'snode--upcoming') }}">
+      <div class="snode__dot" aria-hidden="true">
+        {% if active_step > 1 %}
+        <svg width="8" height="8" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 6.2 4.7 9 10 3"/></svg>
+        {% endif %}
+      </div>
+      <div class="snode__body">
+        <span class="snode__n">01</span>
+        <span class="snode__t">Sign In</span>
+        <span class="snode__s">
+          {% if session.get('username') %}
+            {{ session.get('username') }} ({{ session.get('role', '')|capitalize }})
+          {% else %}
+            Stakeholder role
+          {% endif %}
+        </span>
+      </div>
     </div>
 
-    <!-- Stepper Progress Track -->
-    <div class="workflow-stepper-track position-relative">
-        <div class="workflow-connector">
-            <div class="workflow-connector-fill step-{{ active_step }}"></div>
-        </div>
-
-        <div class="workflow-stepper">
-            <!-- Step 1: Account & Role -->
-            <div class="workflow-step {% if active_step > 1 %}completed{% elif active_step == 1 %}active{% else %}pending{% endif %}">
-                <div class="workflow-step-node">
-                    {% if active_step > 1 %}
-                        <i class="bi bi-check-lg" aria-hidden="true"></i>
-                    {% else %}
-                        <i class="bi bi-person-badge" aria-hidden="true"></i>
-                    {% endif %}
-                </div>
-                <div class="workflow-step-title">1. Sign In</div>
-                <div class="workflow-step-desc">
-                    {% if session.get('username') %}
-                        <span class="th-step-highlight">{{ session.get('username') }}</span> ({{ session.get('role', '').capitalize() }})
-                    {% else %}
-                        Authorized Account
-                    {% endif %}
-                </div>
-            </div>
-
-            <!-- Step 2: Farm Harvest -->
-            <div class="workflow-step {% if active_step > 2 or (product and product.on_chain_hash) %}completed{% elif active_step == 2 %}active{% else %}pending{% endif %}">
-                <div class="workflow-step-node">
-                    {% if active_step > 2 or (product and product.on_chain_hash) %}
-                        <i class="bi bi-check-lg" aria-hidden="true"></i>
-                    {% else %}
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></svg>
-                    {% endif %}
-                </div>
-                <div class="workflow-step-title">2. Farm</div>
-                <div class="workflow-step-desc">
-                    {% if product and product.on_chain_hash %}
-                        <span class="th-step-highlight">Harvest Recorded</span>
-                    {% else %}
-                        Origin &amp; Crop Details
-                    {% endif %}
-                </div>
-            </div>
-
-            <!-- Step 3: Transport Checkpoints -->
-            <div class="workflow-step {% if active_step > 3 or (product and product.transport_data|length > 0) %}completed{% elif active_step == 3 %}active{% else %}pending{% endif %}">
-                <div class="workflow-step-node">
-                    {% if active_step > 3 or (product and product.transport_data|length > 0) %}
-                        <i class="bi bi-check-lg" aria-hidden="true"></i>
-                    {% else %}
-                        <i class="bi bi-truck" aria-hidden="true"></i>
-                    {% endif %}
-                </div>
-                <div class="workflow-step-title">3. Transport</div>
-                <div class="workflow-step-desc">
-                    {% if product and product.transport_data|length > 0 %}
-                        <span class="th-step-highlight">{{ product.transport_data|length }} Checkpoint(s)</span>
-                    {% else %}
-                        Cold-Chain Checkpoints
-                    {% endif %}
-                </div>
-            </div>
-
-            <!-- Step 4: Shop Listing -->
-            <div class="workflow-step {% if active_step > 4 or (product and product.retail_data) %}completed{% elif active_step == 4 %}active{% else %}pending{% endif %}">
-                <div class="workflow-step-node">
-                    {% if active_step > 4 or (product and product.retail_data) %}
-                        <i class="bi bi-check-lg" aria-hidden="true"></i>
-                    {% else %}
-                        <i class="bi bi-shop" aria-hidden="true"></i>
-                    {% endif %}
-                </div>
-                <div class="workflow-step-title">4. Shop</div>
-                <div class="workflow-step-desc">
-                    {% if product and product.retail_data %}
-                        <span class="th-step-highlight">${{ '%.2f'|format(product.retail_data.price) if product.retail_data.price else 'Listed' }}</span>
-                    {% else %}
-                        Store &amp; Shelf Price
-                    {% endif %}
-                </div>
-            </div>
-
-            <!-- Step 5: Customer Verification -->
-            <div class="workflow-step {% if active_step == 5 and (product and product.retail_data and product.transport_data|length > 0) %}completed{% elif active_step == 5 %}active{% else %}pending{% endif %}">
-                <div class="workflow-step-node">
-                    {% if active_step == 5 and (product and product.retail_data and product.transport_data|length > 0) %}
-                        <i class="bi bi-shield-fill-check" aria-hidden="true"></i>
-                    {% else %}
-                        <i class="bi bi-shield-check" aria-hidden="true"></i>
-                    {% endif %}
-                </div>
-                <div class="workflow-step-title">5. Verify</div>
-                <div class="workflow-step-desc">
-                    Customer QR &amp; Check
-                </div>
-            </div>
-        </div>
+    <!-- 02 Farm -->
+    <div class="snode {{ 'snode--now' if active_step == 2 else ('snode--done' if farm_done else 'snode--upcoming') }}">
+      <div class="snode__dot" aria-hidden="true">
+        {% if farm_done and active_step != 2 %}
+        <svg width="8" height="8" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 6.2 4.7 9 10 3"/></svg>
+        {% endif %}
+      </div>
+      <div class="snode__body">
+        <span class="snode__n">02</span>
+        <span class="snode__t">Farm</span>
+        <span class="snode__s">
+          {% if active_step == 2 %}Recording harvest &mdash; you are here{% elif farm_done %}Harvest recorded{% else %}Origin &amp; crop details{% endif %}
+        </span>
+      </div>
     </div>
+
+    <!-- 03 Transport -->
+    <div class="snode {{ 'snode--now' if active_step == 3 else ('snode--done' if tr_done else 'snode--upcoming') }}">
+      <div class="snode__dot" aria-hidden="true">
+        {% if tr_done and active_step != 3 %}
+        <svg width="8" height="8" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 6.2 4.7 9 10 3"/></svg>
+        {% endif %}
+      </div>
+      <div class="snode__body">
+        <span class="snode__n">03</span>
+        <span class="snode__t">Transport</span>
+        <span class="snode__s">
+          {% if product and product.transport_data and product.transport_data|length > 0 %}
+            {{ product.transport_data|length }} checkpoint{{ '' if product.transport_data|length == 1 else 's' }}
+          {% elif active_step == 3 %}
+            Logging checkpoints
+          {% else %}
+            Awaiting handover
+          {% endif %}
+        </span>
+      </div>
+    </div>
+
+    <!-- 04 Shop -->
+    <div class="snode {{ 'snode--now' if active_step == 4 else ('snode--done' if rt_done else 'snode--upcoming') }}">
+      <div class="snode__dot" aria-hidden="true">
+        {% if rt_done and active_step != 4 %}
+        <svg width="8" height="8" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 6.2 4.7 9 10 3"/></svg>
+        {% endif %}
+      </div>
+      <div class="snode__body">
+        <span class="snode__n">04</span>
+        <span class="snode__t">Shop</span>
+        <span class="snode__s">
+          {% if product and product.retail_data %}
+            {{ product.retail_data.store_name }}
+          {% elif active_step == 4 %}
+            Store arrival &amp; pricing
+          {% else %}
+            Retail record
+          {% endif %}
+        </span>
+      </div>
+    </div>
+
+    <!-- 05 Customer Verification -->
+    <div class="snode {{ 'snode--done' if vf_done else ('snode--now' if active_step == 5 else 'snode--upcoming') }}">
+      <div class="snode__dot" aria-hidden="true">
+        {% if vf_done %}
+        <svg width="8" height="8" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 6.2 4.7 9 10 3"/></svg>
+        {% endif %}
+      </div>
+      <div class="snode__body">
+        <span class="snode__n">05</span>
+        <span class="snode__t">Customer Verification</span>
+        <span class="snode__s">QR scan &amp; integrity check</span>
+      </div>
+    </div>
+
+  </div>
+</nav>
+
+<!-- Mobile compact stepper -->
+<div class="mobstep no-print" aria-label="Workflow progress">
+  <div class="mobstep__top">
+    <span class="mobstep__lab">Step {{ active_step }} of 5 &mdash; {{ step_names[active_step] }}</span>
+    {% if active_batch %}
+    <span class="mono t-xs">{{ active_batch }}</span>
+    {% endif %}
+  </div>
+  <div class="mobstep__bar"><div class="mobstep__fill" style="width:{{ mob_pct }}%"></div></div>
 </div>

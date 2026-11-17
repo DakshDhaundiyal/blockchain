@@ -1,1117 +1,734 @@
 {% extends "base.html" %}
+{% block title %}{{ product.name }} ({{ product.batch_id }}) — TrustHarvest{% endblock %}
 
-{% block title %}Verification: {{ product.batch_id }} - TrustHarvest{% endblock %}
-
-{% block content %}
+{% block main_inner %}
 {% if from_workflow %}
-<!-- Guided Supply-Chain Workflow Completion Header & Progress Indicator -->
-<div class="mb-4 no-print">
-    {% with current_step=5, batch_id=product.batch_id, product=product %}
-        {% include "workflow_stepper.html" %}
-    {% endwith %}
-
-    {% set has_harvest = product and product.farmer_data %}
-    {% set has_transport = product and product.transport_data|length > 0 %}
-    {% set has_retail = product and product.retail_data %}
-    {% set is_journey_complete = has_harvest and has_transport and has_retail %}
-
-    <div class="card shadow-sm border-0 mb-4" style="border-radius:14px;background:linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);border:1px solid #bbf7d0 !important;">
-        <div class="card-body p-4">
-            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
-                <div class="d-flex align-items-center">
-                    <span class="badge rounded-circle bg-success text-white p-2.5 me-3 d-inline-flex align-items-center justify-content-center" style="width:42px;height:42px;">
-                        <i class="bi bi-check2-all fs-4"></i>
-                    </span>
-                    <div>
-                        <h5 class="fw-bold text-success-emphasis mb-0">
-                            {% if is_journey_complete %}
-                            Guided Supply-Chain Workflow: Complete Lifecycle Traced
-                            {% else %}
-                            Guided Supply-Chain Workflow: Intermediate Milestone Traced
-                            {% endif %}
-                        </h5>
-                        <span class="small text-muted">
-                            Batch <strong>{{ product.batch_id }}</strong> &bull; Journey stages recorded
-                        </span>
-                    </div>
-                </div>
-                <div class="d-flex gap-2 flex-wrap">
-                    <button type="button" class="btn btn-sm btn-outline-dark fw-semibold" onclick="window.print()">
-                        <i class="bi bi-printer me-1" aria-hidden="true"></i> Print Report
-                    </button>
-                    <a href="{{ url_for('batch_qr_png', batch_id=product.batch_id, download=1) }}" download="qr_{{ product.batch_id }}.png" class="btn btn-sm btn-outline-success fw-semibold">
-                        <i class="bi bi-download me-1" aria-hidden="true"></i> QR PNG
-                    </a>
-                    <a href="{{ url_for('workflow_entry') }}" class="btn btn-sm btn-outline-success fw-semibold">
-                        <i class="bi bi-plus-circle me-1" aria-hidden="true"></i> Start New Batch
-                    </a>
-                    <a href="{{ url_for('workflow_entry', stage='retail', batch_id=product.batch_id) }}" class="btn btn-sm btn-outline-secondary">
-                        <i class="bi bi-arrow-left me-1" aria-hidden="true"></i> Previous (Shop)
-                    </a>
-                </div>
-            </div>
-
-            <!-- Milestone Completion Status Strip -->
-            <div class="row g-2 text-start small pt-2 border-top border-success-subtle">
-                <div class="col-md-4">
-                    <div class="p-2.5 rounded bg-white border border-success-subtle">
-                        <div class="d-flex align-items-center justify-content-between mb-1">
-                            <strong class="text-dark"><i class="bi bi-flower1 text-success me-1" aria-hidden="true"></i> Farm Harvest</strong>
-                            {% if has_harvest %}
-                            <span class="badge bg-success-subtle text-success border border-success-subtle" style="font-size:10px;">Recorded</span>
-                            {% else %}
-                            <span class="badge bg-secondary-subtle text-secondary" style="font-size:10px;">Pending</span>
-                            {% endif %}
-                        </div>
-                        <div class="text-muted smaller">
-                            {{ product.name }} ({{ product.quantity }})<br>
-                            Origin: {{ product.farmer_data.farm_location if product.farmer_data else 'Registered Farm' }}
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-md-4">
-                    <div class="p-2.5 rounded bg-white border border-success-subtle">
-                        <div class="d-flex align-items-center justify-content-between mb-1">
-                            <strong class="text-dark"><i class="bi bi-truck text-primary me-1" aria-hidden="true"></i> Logistics Custody</strong>
-                            {% if has_transport %}
-                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle" style="font-size:10px;">{{ product.transport_data|length }} Checkpoint(s)</span>
-                            {% else %}
-                            <span class="badge bg-warning-subtle text-warning-emphasis" style="font-size:10px;">Awaiting Transport</span>
-                            {% endif %}
-                        </div>
-                        <div class="text-muted smaller">
-                            {% if has_transport %}
-                            Latest: {{ product.transport_data[-1].status }}<br>
-                            At: {{ product.transport_data[-1].current_location }}
-                            {% else %}
-                            No checkpoints logged yet.
-                            {% endif %}
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-md-4">
-                    <div class="p-2.5 rounded bg-white border border-success-subtle">
-                        <div class="d-flex align-items-center justify-content-between mb-1">
-                            <strong class="text-dark"><i class="bi bi-shop text-warning-emphasis me-1" aria-hidden="true"></i> Retail Stocking</strong>
-                            {% if has_retail %}
-                            <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle" style="font-size:10px;">In Stock</span>
-                            {% else %}
-                            <span class="badge bg-secondary-subtle text-secondary" style="font-size:10px;">Pending Retail</span>
-                            {% endif %}
-                        </div>
-                        <div class="text-muted smaller">
-                            {% if has_retail %}
-                            Store: {{ product.retail_data.store_name }}<br>
-                            Price: ${{ '%.2f'|format(product.retail_data.price) if product.retail_data.price else 'N/A' }} (Stock: {{ product.retail_data.stock_quantity }})
-                            {% else %}
-                            Produce not yet listed in retail store.
-                            {% endif %}
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-{% else %}
-<div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4 no-print">
-    <div>
-        <a href="{{ url_for('customer_dashboard') }}" class="text-decoration-none text-muted small d-inline-block mb-1">
-            <i class="bi bi-arrow-left me-1" aria-hidden="true"></i> Back to Food Lookup
-        </a>
-        <h1 class="h3 fw-bold mb-0 d-flex align-items-center flex-wrap gap-2">
-            {{ product.name }}
-            <span class="badge bg-light text-success border font-monospace fs-6">{{ product.batch_id }}</span>
-        </h1>
-    </div>
-    <div class="d-flex gap-2 flex-wrap">
-        <button type="button" class="btn btn-sm btn-outline-dark fw-semibold" onclick="window.print()">
-            <i class="bi bi-printer me-1" aria-hidden="true"></i> Print Certificate
-        </button>
-        <a href="{{ url_for('batch_qr_png', batch_id=product.batch_id, download=1) }}" download="qr_{{ product.batch_id }}.png" class="btn btn-sm btn-outline-success fw-semibold">
-            <i class="bi bi-download me-1" aria-hidden="true"></i> Download QR PNG
-        </a>
-    </div>
+<div class="shell no-print" style="padding-top:14px;padding-bottom:14px">
+  {% with current_step=5, batch_id=product.batch_id, product=product %}
+    {% include "workflow_stepper.html" %}
+  {% endwith %}
 </div>
 {% endif %}
 
-{% if from_workflow %}
-<h1 class="h3 fw-bold mb-3">{{ product.name }} <span class="badge bg-light text-success border font-monospace ms-1 fs-6">{{ product.batch_id }}</span></h1>
-{% endif %}
+<!-- ============ CLEAR TOP VERDICT BAND ============ -->
+{% set band_cls = 'band--ok' if is_verified else ('band--bad' if is_tampered else 'band--wait') %}
+<section class="band {{ band_cls }}" aria-labelledby="verdict-heading">
+  <div class="band__in">
+    <div class="band__copy">
+      <p class="eyebrow band__eyebrow">
+        <b>{{ product.name }}</b> <span class="sep-dot">/</span> <span class="mono">{{ product.batch_id }}</span>
+      </p>
+      <h1 class="band__title" id="verdict-heading">{{ result_label }}</h1>
+      <p class="band__sub">{{ result_reason }}</p>
 
-<!-- Honest Three-Outcome Verification Status Banner -->
-<div class="card card-custom shadow-sm mb-4 text-center overflow-hidden border">
-    {% if is_verified %}
-    <div class="py-4 px-3 bg-success bg-opacity-10 position-relative">
-        <div class="d-inline-flex align-items-center badge-verified mb-2">
-            <i class="bi bi-shield-fill-check fs-2 me-2" aria-hidden="true"></i>
-            <span class="fs-3 fw-bold">{{ result_label }}</span>
+      <!-- 3-Step At-a-Glance Strip -->
+      <div class="vcheck-strip" role="list" aria-label="At-a-glance food check">
+        <div class="vcheck-pill {{ 'is-alert' if harvest_status == 'tampered' else '' }}" role="listitem">
+          <div>
+            <b>1. Farm Origin</b>
+            <span>{{ 'Record Altered' if harvest_status == 'tampered' else (product.farmer_data.farm_location if (product.farmer_data and product.farmer_data.farm_location) else 'Registered Farm') }}</span>
+          </div>
         </div>
-        <div class="mb-2">
-            <span class="badge rounded-pill bg-{{ trust_score.color }} px-3 py-1">
-                <i class="bi bi-award me-1" aria-hidden="true"></i> Integrity Score: {{ trust_score.score }}/100 ({{ trust_score.tier }})
-            </span>
-        </div>
-        <p class="text-success fw-semibold mt-2 mb-3 fs-6 mx-auto" style="max-width: 680px;">
-            <i class="bi bi-check-circle-fill me-1" aria-hidden="true"></i> {{ result_reason }}
-        </p>
+        {% if transport_verifications %}
+          {% set latest_t = transport_verifications[-1] %}
+          <div class="vcheck-pill {{ 'is-alert' if (transport_tampered or latest_t.temp_eval.status == 'breach') else '' }}" role="listitem">
+            <div>
+              <b>2. Cold Storage</b>
+              <span>{{ 'Tampered: ' if transport_tampered else '' }}{{ latest_t.temp_eval.label }}</span>
+            </div>
+          </div>
+        {% else %}
+          <div class="vcheck-pill" role="listitem">
+            <div>
+              <b>2. Cold Storage</b>
+              <span>Not shipped yet</span>
+            </div>
+          </div>
+        {% endif %}
+        {% if retail_verification %}
+          <div class="vcheck-pill {{ 'is-alert' if retail_verification.status == 'tampered' else '' }}" role="listitem">
+            <div>
+              <b>3. Store Shelf</b>
+              <span>{{ 'Record Altered' if retail_verification.status == 'tampered' else retail_verification.record.store_name }}{% if retail_verification.status != 'tampered' and retail_verification.record.price %} &middot; ${{ '%.2f'|format(retail_verification.record.price) }}{% endif %}</span>
+            </div>
+          </div>
+        {% else %}
+          <div class="vcheck-pill" role="listitem">
+            <div>
+              <b>3. Store Shelf</b>
+              <span>Not in store yet</span>
+            </div>
+          </div>
+        {% endif %}
+      </div>
 
-        <!-- 3-Step Plain-English Consumer Safety Strip -->
-        <div class="consumer-check-strip" role="list" aria-label="At-a-glance food check">
-            <div class="consumer-check-pill is-ok" role="listitem">
-                <span class="consumer-check-icon" aria-hidden="true"><i class="bi bi-check-lg"></i></span>
-                <div class="small lh-sm">
-                    <div class="fw-bold text-dark">1. Farm Origin</div>
-                    <div class="text-muted">{{ product.farmer_data.farm_location if (product.farmer_data and product.farmer_data.farm_location) else 'Registered Farm' }}</div>
-                </div>
-            </div>
-            {% if transport_verifications %}
-            {% set latest_t = transport_verifications[-1] %}
-            <div class="consumer-check-pill {{ 'is-alert' if latest_t.temp_eval.status == 'breach' else 'is-ok' }}" role="listitem">
-                <span class="consumer-check-icon" aria-hidden="true"><i class="bi {{ 'bi-thermometer-high' if latest_t.temp_eval.status == 'breach' else 'bi-snow2' }}"></i></span>
-                <div class="small lh-sm">
-                    <div class="fw-bold text-dark">2. Cold Storage</div>
-                    <div class="text-muted">{{ latest_t.temp_eval.label }}</div>
-                </div>
-            </div>
-            {% else %}
-            <div class="consumer-check-pill is-pending" role="listitem">
-                <span class="consumer-check-icon" aria-hidden="true"><i class="bi bi-truck"></i></span>
-                <div class="small lh-sm">
-                    <div class="fw-bold text-dark">2. Cold Storage</div>
-                    <div class="text-muted">Not shipped yet</div>
-                </div>
-            </div>
-            {% endif %}
-            {% if retail_verification %}
-            <div class="consumer-check-pill is-ok" role="listitem">
-                <span class="consumer-check-icon" aria-hidden="true"><i class="bi bi-shop"></i></span>
-                <div class="small lh-sm">
-                    <div class="fw-bold text-dark">3. Store Shelf</div>
-                    <div class="text-muted">{{ retail_verification.record.store_name }}{% if retail_verification.record.price %} &bull; ${{ '%.2f'|format(retail_verification.record.price) }}{% endif %}</div>
-                </div>
-            </div>
-            {% else %}
-            <div class="consumer-check-pill is-pending" role="listitem">
-                <span class="consumer-check-icon" aria-hidden="true"><i class="bi bi-shop"></i></span>
-                <div class="small lh-sm">
-                    <div class="fw-bold text-dark">3. Store Shelf</div>
-                    <div class="text-muted">Not listed at store yet</div>
-                </div>
-            </div>
-            {% endif %}
-        </div>
+      <!-- Simple Action Row -->
+      <div class="verify-links no-print">
+        <a class="btn btn--sm" href="{{ url_for('customer_dashboard') }}">&larr; Check another</a>
+        <a href="{{ url_for('batch_qr_png', batch_id=product.batch_id, download=1) }}" download="qr_{{ product.batch_id }}.png" class="btn btn--sm">Download QR</a>
+        <button type="button" class="btn btn--sm" onclick="window.print()">Print</button>
 
         {% if demo_mode %}
-        <div class="d-flex justify-content-center align-items-center gap-2 flex-wrap no-print mt-3">
-            <span class="small text-muted me-1 fw-medium">Presentation Demo:</span>
-            <form action="{{ url_for('toggle_demo_tamper', batch_id=product.batch_id) }}" method="POST" class="d-inline m-0">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                <button type="submit" class="btn btn-sm btn-outline-danger fw-semibold bg-white" style="border-radius:20px;font-size:12.5px;padding:4px 14px;" title="Simulate an unauthorized harvest edit">
-                    <i class="bi bi-radioactive me-1" aria-hidden="true"></i> Simulate Harvest Tamper
-                </button>
-            </form>
-            {% if product.transport_data %}
-            <form action="{{ url_for('toggle_transport_tamper', batch_id=product.batch_id) }}" method="POST" class="d-inline m-0">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                <button type="submit" class="btn btn-sm btn-outline-warning text-dark fw-semibold bg-white" style="border-radius:20px;font-size:12.5px;padding:4px 14px;" title="Simulate cold-chain temperature falsification">
-                    <i class="bi bi-thermometer-high me-1" aria-hidden="true"></i> Simulate Cold-Chain Tamper
-                </button>
-            </form>
-            {% endif %}
-        </div>
-        {% endif %}
-    </div>
-    {% elif is_tampered %}
-    <div class="py-4 px-3 bg-danger bg-opacity-10">
-        <div class="d-inline-flex align-items-center badge-tampered mb-2">
-            <i class="bi bi-shield-fill-x fs-2 me-2" aria-hidden="true"></i>
-            <span class="fs-3 fw-bold">{{ result_label }}</span>
-        </div>
-        <p class="text-danger fw-semibold mt-2 mb-3 fs-6 mx-auto" style="max-width: 720px;">
-            <i class="bi bi-exclamation-triangle-fill me-1" aria-hidden="true"></i> {{ result_reason }}
-        </p>
-
-        <!-- 3-Step Plain-English Consumer Safety Strip -->
-        <div class="consumer-check-strip mb-3" role="list" aria-label="At-a-glance food check">
-            <div class="consumer-check-pill {{ 'is-alert' if harvest_status == 'tampered' else 'is-ok' }}" role="listitem">
-                <span class="consumer-check-icon" aria-hidden="true">
-                    <i class="bi {{ 'bi-exclamation-lg' if harvest_status == 'tampered' else 'bi-check-lg' }}"></i>
-                </span>
-                <div class="small lh-sm">
-                    <div class="fw-bold text-dark">1. Farm Origin</div>
-                    <div class="{{ 'text-danger fw-semibold' if harvest_status == 'tampered' else 'text-muted' }}">
-                        {{ 'Record Altered' if harvest_status == 'tampered' else (product.farmer_data.farm_location if (product.farmer_data and product.farmer_data.farm_location) else 'Verified') }}
-                    </div>
-                </div>
-            </div>
-            {% if transport_verifications %}
-            {% set latest_t = transport_verifications[-1] %}
-            <div class="consumer-check-pill {{ 'is-alert' if (transport_tampered or latest_t.temp_eval.status == 'breach') else 'is-ok' }}" role="listitem">
-                <span class="consumer-check-icon" aria-hidden="true">
-                    <i class="bi {{ 'bi-exclamation-lg' if transport_tampered else ('bi-thermometer-high' if latest_t.temp_eval.status == 'breach' else 'bi-snow2') }}"></i>
-                </span>
-                <div class="small lh-sm">
-                    <div class="fw-bold text-dark">2. Cold Storage</div>
-                    <div class="{{ 'text-danger fw-semibold' if transport_tampered else 'text-muted' }}">
-                        {{ 'Tampered: ' if transport_tampered else '' }}{{ latest_t.temp_eval.label }}
-                    </div>
-                </div>
-            </div>
-            {% else %}
-            <div class="consumer-check-pill is-pending" role="listitem">
-                <span class="consumer-check-icon" aria-hidden="true"><i class="bi bi-truck"></i></span>
-                <div class="small lh-sm">
-                    <div class="fw-bold text-dark">2. Cold Storage</div>
-                    <div class="text-muted">Not shipped yet</div>
-                </div>
-            </div>
-            {% endif %}
-            {% if retail_verification %}
-            <div class="consumer-check-pill {{ 'is-alert' if retail_verification.status == 'tampered' else 'is-ok' }}" role="listitem">
-                <span class="consumer-check-icon" aria-hidden="true">
-                    <i class="bi {{ 'bi-exclamation-lg' if retail_verification.status == 'tampered' else 'bi-shop' }}"></i>
-                </span>
-                <div class="small lh-sm">
-                    <div class="fw-bold text-dark">3. Store Shelf</div>
-                    <div class="{{ 'text-danger fw-semibold' if retail_verification.status == 'tampered' else 'text-muted' }}">
-                        {{ 'Record Altered' if retail_verification.status == 'tampered' else retail_verification.record.store_name }}
-                    </div>
-                </div>
-            </div>
-            {% else %}
-            <div class="consumer-check-pill is-pending" role="listitem">
-                <span class="consumer-check-icon" aria-hidden="true"><i class="bi bi-shop"></i></span>
-                <div class="small lh-sm">
-                    <div class="fw-bold text-dark">3. Store Shelf</div>
-                    <div class="text-muted">Not listed at store yet</div>
-                </div>
-            </div>
-            {% endif %}
-        </div>
-
-        {% if tamper_incidents %}
-        <div class="tamper-incident-panel" role="region" aria-label="Where and When Tampering Was Detected">
-            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
-                <h2 class="h6 fw-bold text-danger mb-0">
-                    <i class="bi bi-geo-alt-fill me-1" aria-hidden="true"></i> Where &amp; When Record Changed
-                </h2>
-                <button type="button" class="btn btn-xs btn-outline-danger py-1 px-2 no-print" style="font-size:12px;" onclick="const d=document.getElementById('technical-proof-disclosure'); if(d){d.open=true; d.scrollIntoView({behavior:'smooth', block:'start'});}">
-                    <i class="bi bi-shield-lock me-1" aria-hidden="true"></i> View Hash Proof
-                </button>
-            </div>
-            {% for inc in tamper_incidents %}
-            <div class="tamper-incident-card">
-                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
-                    <span class="badge bg-danger">{{ inc.stage_label }} &bull; {{ inc.status_label }}</span>
-                    <a href="#{{ inc.anchor_id }}" class="small fw-semibold text-danger text-decoration-none no-print">
-                        Jump to Timeline <i class="bi bi-arrow-down-short" aria-hidden="true"></i>
-                    </a>
-                </div>
-                <div class="row g-2 small">
-                    <div class="col-md-6">
-                        <span class="text-muted fw-semibold d-block"><i class="bi bi-pin-map-fill text-danger me-1" aria-hidden="true"></i>Where:</span>
-                        <span class="fw-bold text-dark">{{ inc.where }}</span>
-                    </div>
-                    <div class="col-md-6">
-                        <span class="text-muted fw-semibold d-block"><i class="bi bi-clock-fill text-danger me-1" aria-hidden="true"></i>When Recorded (On-Chain / Checkpoint):</span>
-                        <span class="fw-bold text-dark">{{ inc.when }}</span>
-                    </div>
-                </div>
-                {% if inc.changed_fields %}
-                <div class="mt-2 pt-2 border-top border-danger-subtle small">
-                    <span class="text-danger fw-bold d-block mb-1">Altered Value(s):</span>
-                    <ul class="mb-0 ps-3">
-                        {% for diff in inc.changed_fields %}
-                        <li>
-                            <strong>{{ diff.label }}:</strong>
-                            <span class="text-success fw-semibold">{{ diff.original }}</span>
-                            &rarr;
-                            <span class="text-danger fw-bold">{{ diff.clean_modified }}</span>
-                        </li>
-                        {% endfor %}
-                    </ul>
-                </div>
-                {% elif inc.snapshot_note %}
-                <div class="mt-2 pt-2 border-top border-danger-subtle small text-muted">
-                    <i class="bi bi-info-circle me-1" aria-hidden="true"></i>{{ inc.snapshot_note }}
-                </div>
-                {% endif %}
-            </div>
-            {% endfor %}
-        </div>
-        {% endif %}
-
-        {% if demo_mode %}
-        <div class="d-flex justify-content-center align-items-center gap-2 mt-2 flex-wrap no-print">
+          {% if is_verified %}
+          <form action="{{ url_for('toggle_demo_tamper', batch_id=product.batch_id) }}" method="POST" class="d-inline m-0">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+            <button type="submit" class="btn btn--sm btn--danger">Test Farm Tamper</button>
+          </form>
+          {% if product.transport_data %}
+          <form action="{{ url_for('toggle_transport_tamper', batch_id=product.batch_id) }}" method="POST" class="d-inline m-0">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+            <button type="submit" class="btn btn--sm btn--danger">Test Temp Tamper</button>
+          </form>
+          {% endif %}
+          {% elif is_tampered %}
             {% if harvest_status == 'tampered' %}
             <form action="{{ url_for('toggle_demo_tamper', batch_id=product.batch_id) }}" method="POST" class="d-inline m-0">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                <button type="submit" class="btn btn-sm btn-success fw-bold px-3 py-2 shadow-sm" style="border-radius:20px;font-size:12.5px;">
-                    <i class="bi bi-arrow-counterclockwise me-1" aria-hidden="true"></i> Restore Harvest to Authentic State
-                </button>
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+              <button type="submit" class="btn btn--sm btn--forest">Restore Farm Record</button>
             </form>
             {% endif %}
             {% if transport_tampered %}
             <form action="{{ url_for('toggle_transport_tamper', batch_id=product.batch_id) }}" method="POST" class="d-inline m-0">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                <button type="submit" class="btn btn-sm btn-success fw-bold px-3 py-2 shadow-sm" style="border-radius:20px;font-size:12.5px;">
-                    <i class="bi bi-arrow-counterclockwise me-1" aria-hidden="true"></i> Restore Cold-Chain Temp to Authentic State
-                </button>
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+              <button type="submit" class="btn btn--sm btn--forest">Restore Temp Record</button>
             </form>
             {% endif %}
-        </div>
-
-        {% if simulate_tamper %}
-        <div class="alert alert-warning border-warning d-flex align-items-center justify-content-between p-3 mx-auto mt-3 mb-0 text-start shadow-sm" style="max-width:850px;border-radius:12px;background:#fffbeb;">
-            <div class="me-3">
-                <div class="d-flex align-items-center mb-1">
-                    <span class="badge bg-danger text-uppercase me-2" style="font-size:11px;">Demo Simulation Active</span>
-                    <strong class="text-dark">Field Alteration Injected:</strong>
-                </div>
-                <div class="text-dark small">
-                    The attribute <code>{{ simulated_field }}</code> was modified from <strong class="text-success">"{{ original_value }}"</strong> &rarr; <strong class="text-danger">"{{ tampered_value }}"</strong>.
-                </div>
-            </div>
-            <a href="{{ url_for('verify_batch', batch_id=product.batch_id) }}" class="btn btn-success fw-bold text-nowrap px-3 py-2 shadow-sm" style="border-radius:8px;">
-                <i class="bi bi-arrow-counterclockwise me-1" aria-hidden="true"></i> Restore Original
-            </a>
-        </div>
+          {% endif %}
         {% endif %}
+      </div>
+    </div>
+
+    <div class="band__aside">
+      {% if is_verified %}
+        <span class="chip chip--ok"><span class="chip__dot"></span>Verified</span>
+        <div class="hd-note">Score {{ trust_score.score }}/100</div>
+      {% elif is_tampered %}
+        <span class="chip chip--bad"><span class="chip__dot"></span>Changed after recording</span>
+      {% else %}
+        <span class="chip chip--wait"><span class="chip__dot"></span>Can&rsquo;t verify right now</span>
+      {% endif %}
+    </div>
+  </div>
+</section>
+
+<!-- ============ TAMPER ALERT (ONLY SHOWN WHEN SOMETHING CHANGED) ============ -->
+{% if is_tampered and tamper_incidents %}
+<div class="shell" style="padding-top:18px">
+  <section class="panel" style="border-color:var(--bad-line)" role="region" aria-label="Where and When Tampering Was Detected">
+    <div class="panel__hd" style="background:var(--bad-wash);border-bottom-color:var(--bad-line)">
+      <h2 class="panel__title" style="color:var(--bad-ink)">Where &amp; When Record Changed</h2>
+      <button type="button" class="btn btn--sm btn--danger no-print" onclick="var d=document.getElementById('technical-proof-disclosure'); if(d){d.open=true; d.scrollIntoView({behavior:'smooth', block:'start'});}">
+        View Technical Proof
+      </button>
+    </div>
+    <div class="panel__bd">
+      {% for inc in tamper_incidents %}
+      <div class="forensic" style="{% if not loop.last %}margin-bottom:12px{% endif %}">
+        <div class="forensic__hd">
+          <span class="forensic__t">{{ inc.stage_label }} &middot; {{ inc.status_label }}</span>
+        </div>
+        <div class="forensic__row">
+          <span class="forensic__k">Where:</span>
+          <span class="forensic__v">{{ inc.where }}</span>
+        </div>
+        <div class="forensic__row">
+          <span class="forensic__k">When Recorded (On-Chain / Checkpoint):</span>
+          <span class="forensic__v mono">{{ inc.when }}</span>
+        </div>
+        {% if inc.changed_fields %}
+        <div style="padding:10px 14px;border-top:1px solid var(--line)">
+          <div class="table-wrap">
+            <table class="ledger diff">
+              <thead>
+                <tr>
+                  <th style="width:30%">What changed</th>
+                  <th style="width:35%">Original</th>
+                  <th>Now stored</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for diff in inc.changed_fields %}
+                <tr class="is-changed">
+                  <td class="fld">{{ diff.label }}</td>
+                  <td class="orig">{{ diff.original }}</td>
+                  <td class="now">{{ diff.clean_modified }}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+        {% elif inc.snapshot_note %}
+        <div style="padding:10px 14px;border-top:1px solid var(--line)" class="t-xs muted">{{ inc.snapshot_note }}</div>
         {% endif %}
+      </div>
+      {% endfor %}
     </div>
-    {% else %}
-    <div class="py-4 px-3 bg-warning bg-opacity-10">
-        <div class="d-inline-flex align-items-center text-warning-emphasis mb-2" style="background:#fff3cd;padding:8px 18px;border-radius:30px;border:1px solid #ffe69c;">
-            <i class="bi bi-question-circle-fill fs-2 me-2 text-warning" aria-hidden="true"></i>
-            <span class="fs-3 fw-bold">{{ result_label }}</span>
-        </div>
-        <p class="text-warning-emphasis fw-semibold mt-2 mb-0 fs-6 mx-auto" style="max-width: 720px;">
-            <i class="bi bi-info-circle-fill me-1" aria-hidden="true"></i> {{ result_reason }}
-        </p>
-    </div>
-    {% endif %}
-
-    <!-- Collapsible Technical Blockchain Proof (collapsed by default) -->
-    <details class="th-disclosure border-0 border-top rounded-0 text-start" id="technical-proof-disclosure">
-        <summary>
-            Technical Blockchain Proof
-        </summary>
-        <div class="th-disclosure-body bg-white">
-            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
-                <div class="small">
-                    <strong class="text-dark">Batch ID:</strong>
-                    <span class="font-monospace ms-1">{{ product.batch_id }}</span>
-                </div>
-                <a href="{{ url_for('api_verify_batch', batch_id=product.batch_id) }}" target="_blank" class="btn btn-xs btn-outline-primary py-1 px-2 no-print" style="font-size:12px;">
-                    <i class="bi bi-filetype-json me-1" aria-hidden="true"></i> View JSON Summary
-                </a>
-            </div>
-
-            <div class="mb-3">
-                <h2 class="h6 fw-bold text-dark mb-2">
-                    <i class="bi bi-diagram-3 me-1 text-success" aria-hidden="true"></i> Stage-Wise Cryptographic Verification
-                </h2>
-                {% set summary_cls = 'is-tampered' if stage_proof_summary.result_key == 'tampered' else ('is-verified' if stage_proof_summary.result_key == 'verified' else 'is-cannot-verify') %}
-                <div class="proof-summary-banner {{ summary_cls }}">
-                    <div class="d-flex align-items-center gap-2 fw-bold small mb-1">
-                        {% if stage_proof_summary.result_key == 'tampered' %}
-                        <i class="bi bi-shield-exclamation fs-5" aria-hidden="true"></i>
-                        {% elif stage_proof_summary.result_key == 'verified' %}
-                        <i class="bi bi-shield-check fs-5" aria-hidden="true"></i>
-                        {% else %}
-                        <i class="bi bi-question-circle fs-5" aria-hidden="true"></i>
-                        {% endif %}
-                        <span>{{ stage_proof_summary.heading }}</span>
-                    </div>
-                    <div class="small fw-semibold">{{ stage_proof_summary.detail }}</div>
-                </div>
-            </div>
-
-            <!-- Vertical Connected Stage Proof Timeline -->
-            <div class="proof-timeline">
-                <!-- STAGE 1 — FARMER / HARVEST -->
-                {% set h_cls = 'is-verified' if harvest_verification.status == 'verified' else ('is-tampered' if harvest_verification.status == 'tampered' else 'is-cannot-verify') %}
-                <section class="proof-stage-card {{ h_cls }}" aria-label="Stage 1 Farmer Harvest Verification">
-                    <span class="proof-stage-node" aria-hidden="true">1</span>
-                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
-                        <h3 class="h6 fw-bold mb-0">STAGE 1 &mdash; FARMER / HARVEST</h3>
-                        {% if harvest_verification.status == 'verified' %}
-                        <span class="badge bg-success-subtle text-success border border-success-subtle"><i class="bi bi-check-circle-fill me-1" aria-hidden="true"></i>HASH VERIFIED</span>
-                        {% elif harvest_verification.status == 'tampered' %}
-                        <span class="badge bg-danger"><i class="bi bi-x-octagon-fill me-1" aria-hidden="true"></i>HASH MISMATCH &mdash; TAMPERING DETECTED</span>
-                        {% else %}
-                        <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle"><i class="bi bi-question-circle-fill me-1" aria-hidden="true"></i>UNABLE TO VERIFY</span>
-                        {% endif %}
-                    </div>
-                    <p class="small text-muted mb-3">{{ harvest_verification.explanation }}</p>
-
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <div class="proof-hash-card {{ 'is-mismatch' if harvest_verification.status == 'tampered' else '' }}">
-                                <div class="d-flex justify-content-between align-items-center gap-2">
-                                    <span class="fw-bold small text-dark">Original Blockchain Hash</span>
-                                    {% if harvest_verification.original_hash %}
-                                    <span class="proof-copy-wrap no-print">
-                                        <button type="button" class="proof-copy-btn" command="--copy" commandfor="proof-harvest-orig" aria-label="Copy Original Blockchain Hash for Farmer Harvest">
-                                            <i class="bi bi-clipboard" aria-hidden="true"></i> Copy
-                                        </button>
-                                        <span class="proof-copy-tip" role="status"></span>
-                                    </span>
-                                    {% endif %}
-                                </div>
-                                <code id="proof-harvest-orig" class="proof-hash-value text-dark">{{ harvest_verification.original_hash or 'Not recorded on blockchain' }}</code>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="proof-hash-card {{ 'is-mismatch' if harvest_verification.status == 'tampered' else '' }}">
-                                <div class="d-flex justify-content-between align-items-center gap-2">
-                                    <span class="fw-bold small text-dark">Recomputed Database Hash</span>
-                                    <span class="proof-copy-wrap no-print">
-                                        <button type="button" class="proof-copy-btn" command="--copy" commandfor="proof-harvest-recomp" aria-label="Copy Recomputed Database Hash for Farmer Harvest">
-                                            <i class="bi bi-clipboard" aria-hidden="true"></i> Copy
-                                        </button>
-                                        <span class="proof-copy-tip" role="status"></span>
-                                    </span>
-                                </div>
-                                <code id="proof-harvest-recomp" class="proof-hash-value {{ 'text-danger fw-bold' if harvest_verification.status == 'tampered' else 'text-success' }}">{{ harvest_verification.recomputed_hash }}</code>
-                            </div>
-                        </div>
-                    </div>
-
-                    {% if harvest_verification.status == 'tampered' %}
-                    <div class="alert alert-danger py-2 px-3 small fw-bold mt-3 mb-0">
-                        <i class="bi bi-exclamation-octagon-fill me-1" aria-hidden="true"></i>
-                        ORIGINAL HASH &ne; RECOMPUTED HASH &mdash; Harvest record in database differs from blockchain!
-                    </div>
-                        {% if harvest_verification.changed_fields %}
-                        <div class="mt-3">
-                            <div class="small fw-bold text-danger mb-1">WHAT CHANGED?</div>
-                            <div tabindex="0" role="region" aria-label="Farmer Harvest Changed Fields Comparison" class="proof-diff-wrap">
-                                <table class="proof-diff-table">
-                                    <thead>
-                                        <tr>
-                                            <th scope="col">Field</th>
-                                            <th scope="col">Original Value (On Blockchain)</th>
-                                            <th scope="col">Modified Value (In Database)</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {% for diff in harvest_verification.changed_fields %}
-                                        <tr>
-                                            <th scope="row">{{ diff.label }}</th>
-                                            <td class="proof-val-original">{{ diff.original }}</td>
-                                            <td class="proof-val-modified">
-                                                {{ diff.clean_modified }}
-                                                {% if diff.is_demo_marker %}
-                                                <span class="badge bg-secondary-subtle text-secondary ms-1">Demo</span>
-                                                {% endif %}
-                                            </td>
-                                        </tr>
-                                        {% endfor %}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                        {% elif harvest_verification.snapshot_note %}
-                        <p class="small text-muted mt-2 mb-0">
-                            <i class="bi bi-info-circle me-1" aria-hidden="true"></i>{{ harvest_verification.snapshot_note }}
-                        </p>
-                        {% endif %}
-                    {% endif %}
-                </section>
-
-                <!-- STAGE 2 — TRANSPORTER -->
-                {% set t_cls = 'is-verified' if transport_stage_status == 'verified' else ('is-tampered' if transport_stage_status == 'tampered' else ('is-pending' if transport_stage_status == 'pending' else 'is-cannot-verify')) %}
-                <section class="proof-stage-card {{ t_cls }}" aria-label="Stage 2 Transporter Verification">
-                    <span class="proof-stage-node" aria-hidden="true">2</span>
-                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
-                        <h3 class="h6 fw-bold mb-0">STAGE 2 &mdash; TRANSPORTER</h3>
-                        {% if transport_stage_status == 'verified' %}
-                        <span class="badge bg-success-subtle text-success border border-success-subtle"><i class="bi bi-check-circle-fill me-1" aria-hidden="true"></i>HASH VERIFIED</span>
-                        {% elif transport_stage_status == 'tampered' %}
-                        <span class="badge bg-danger"><i class="bi bi-x-octagon-fill me-1" aria-hidden="true"></i>HASH MISMATCH &mdash; TAMPERING DETECTED</span>
-                        {% elif transport_stage_status == 'pending' %}
-                        <span class="badge bg-secondary-subtle text-secondary border"><i class="bi bi-hourglass-split me-1" aria-hidden="true"></i>PENDING</span>
-                        {% else %}
-                        <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle"><i class="bi bi-question-circle-fill me-1" aria-hidden="true"></i>UNABLE TO VERIFY</span>
-                        {% endif %}
-                    </div>
-
-                    {% if transport_verifications %}
-                        {% for tv in transport_verifications %}
-                        {% set t_rec = tv.record %}
-                        <div class="proof-checkpoint-box {{ 'is-tampered' if tv.stage_status == 'tampered' else '' }}">
-                            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
-                                <div class="small fw-bold text-dark">
-                                    Checkpoint #{{ tv.checkpoint_number }}: {{ t_rec.status }}
-                                    <span class="text-muted fw-normal">&bull; {{ t_rec.current_location }}</span>
-                                </div>
-                                <div class="d-flex align-items-center gap-2 flex-wrap">
-                                    <span class="badge {{ tv.temp_eval.badge_class }}">{{ tv.temp_eval.label }}</span>
-                                    {% if tv.stage_status == 'verified' %}
-                                    <span class="badge bg-success-subtle text-success border border-success-subtle"><i class="bi bi-check-circle-fill me-1" aria-hidden="true"></i>HASH VERIFIED</span>
-                                    {% elif tv.stage_status == 'tampered' %}
-                                    <span class="badge bg-danger"><i class="bi bi-x-octagon-fill me-1" aria-hidden="true"></i>HASH MISMATCH</span>
-                                    {% else %}
-                                    <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle"><i class="bi bi-question-circle-fill me-1" aria-hidden="true"></i>UNABLE TO VERIFY</span>
-                                    {% endif %}
-                                </div>
-                            </div>
-                            <p class="small text-muted mb-2">{{ tv.explanation }}</p>
-
-                            <div class="row g-3">
-                                <div class="col-md-6">
-                                    <div class="proof-hash-card {{ 'is-mismatch' if tv.stage_status == 'tampered' else '' }}">
-                                        <div class="d-flex justify-content-between align-items-center gap-2">
-                                            <span class="fw-bold small text-dark">Original Transport Hash</span>
-                                            {% if tv.original_hash %}
-                                            <span class="proof-copy-wrap no-print">
-                                                <button type="button" class="proof-copy-btn" command="--copy" commandfor="proof-transport-orig-{{ loop.index }}" aria-label="Copy Original Transport Hash for Checkpoint {{ tv.checkpoint_number }}">
-                                                    <i class="bi bi-clipboard" aria-hidden="true"></i> Copy
-                                                </button>
-                                                <span class="proof-copy-tip" role="status"></span>
-                                            </span>
-                                            {% endif %}
-                                        </div>
-                                        <code id="proof-transport-orig-{{ loop.index }}" class="proof-hash-value text-dark">{{ tv.original_hash or 'Not recorded on blockchain' }}</code>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="proof-hash-card {{ 'is-mismatch' if tv.stage_status == 'tampered' else '' }}">
-                                        <div class="d-flex justify-content-between align-items-center gap-2">
-                                            <span class="fw-bold small text-dark">Recomputed Transport Hash</span>
-                                            <span class="proof-copy-wrap no-print">
-                                                <button type="button" class="proof-copy-btn" command="--copy" commandfor="proof-transport-recomp-{{ loop.index }}" aria-label="Copy Recomputed Transport Hash for Checkpoint {{ tv.checkpoint_number }}">
-                                                    <i class="bi bi-clipboard" aria-hidden="true"></i> Copy
-                                                </button>
-                                                <span class="proof-copy-tip" role="status"></span>
-                                            </span>
-                                        </div>
-                                        <code id="proof-transport-recomp-{{ loop.index }}" class="proof-hash-value {{ 'text-danger fw-bold' if tv.stage_status == 'tampered' else 'text-success' }}">{{ tv.recomputed_hash }}</code>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {% if tv.stage_status == 'tampered' %}
-                            <div class="alert alert-danger py-2 px-3 small fw-bold mt-3 mb-0">
-                                <i class="bi bi-exclamation-octagon-fill me-1" aria-hidden="true"></i>
-                                ORIGINAL HASH &ne; RECOMPUTED HASH &mdash; Checkpoint #{{ tv.checkpoint_number }} data was altered after blockchain anchoring!
-                            </div>
-                                {% if tv.changed_fields %}
-                                <div class="mt-3">
-                                    <div class="small fw-bold text-danger mb-1">WHAT CHANGED?</div>
-                                    <div tabindex="0" role="region" aria-label="Transport Checkpoint {{ tv.checkpoint_number }} Changed Fields Comparison" class="proof-diff-wrap">
-                                        <table class="proof-diff-table">
-                                            <thead>
-                                                <tr>
-                                                    <th scope="col">Field</th>
-                                                    <th scope="col">Original Value (On Blockchain)</th>
-                                                    <th scope="col">Modified Value (In Database)</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {% for diff in tv.changed_fields %}
-                                                <tr>
-                                                    <th scope="row">{{ diff.label }}</th>
-                                                    <td class="proof-val-original">{{ diff.original }}</td>
-                                                    <td class="proof-val-modified">
-                                                        {{ diff.clean_modified }}
-                                                        {% if diff.is_demo_marker %}
-                                                        <span class="badge bg-secondary-subtle text-secondary ms-1">Demo</span>
-                                                        {% endif %}
-                                                    </td>
-                                                </tr>
-                                                {% endfor %}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                                {% elif tv.snapshot_note %}
-                                <p class="small text-muted mt-2 mb-0">
-                                    <i class="bi bi-info-circle me-1" aria-hidden="true"></i>{{ tv.snapshot_note }}
-                                </p>
-                                {% endif %}
-                            {% endif %}
-                        </div>
-                        {% endfor %}
-                        {% if stage_proof_summary.extra_transport_on_chain %}
-                        <p class="small text-warning-emphasis mt-2 mb-0">
-                            <i class="bi bi-exclamation-triangle me-1" aria-hidden="true"></i>Additional transport entries exist on the blockchain that are missing from the local database.
-                        </p>
-                        {% endif %}
-                    {% elif stage_proof_summary.extra_transport_on_chain %}
-                        <p class="small text-warning-emphasis mb-0">Transport entries exist on the blockchain that are missing from local records.</p>
-                    {% else %}
-                        <p class="small text-muted mb-0">Pending &mdash; No transport checkpoints have been recorded for this batch yet.</p>
-                    {% endif %}
-                </section>
-
-                <!-- STAGE 3 — RETAILER -->
-                {% set r_cls = 'is-verified' if retail_stage_status == 'verified' else ('is-tampered' if retail_stage_status == 'tampered' else ('is-pending' if retail_stage_status == 'pending' else 'is-cannot-verify')) %}
-                <section class="proof-stage-card {{ r_cls }}" aria-label="Stage 3 Retailer Verification">
-                    <span class="proof-stage-node" aria-hidden="true">3</span>
-                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
-                        <h3 class="h6 fw-bold mb-0">STAGE 3 &mdash; RETAILER</h3>
-                        {% if retail_stage_status == 'verified' %}
-                        <span class="badge bg-success-subtle text-success border border-success-subtle"><i class="bi bi-check-circle-fill me-1" aria-hidden="true"></i>HASH VERIFIED</span>
-                        {% elif retail_stage_status == 'tampered' %}
-                        <span class="badge bg-danger"><i class="bi bi-x-octagon-fill me-1" aria-hidden="true"></i>HASH MISMATCH &mdash; TAMPERING DETECTED</span>
-                        {% elif retail_stage_status == 'pending' %}
-                        <span class="badge bg-secondary-subtle text-secondary border"><i class="bi bi-hourglass-split me-1" aria-hidden="true"></i>PENDING</span>
-                        {% else %}
-                        <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle"><i class="bi bi-question-circle-fill me-1" aria-hidden="true"></i>UNABLE TO VERIFY</span>
-                        {% endif %}
-                    </div>
-
-                    {% if retail_verification %}
-                        <p class="small text-muted mb-3">{{ retail_verification.explanation }}</p>
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <div class="proof-hash-card {{ 'is-mismatch' if retail_verification.stage_status == 'tampered' else '' }}">
-                                    <div class="d-flex justify-content-between align-items-center gap-2">
-                                        <span class="fw-bold small text-dark">Original Retail Hash</span>
-                                        {% if retail_verification.original_hash %}
-                                        <span class="proof-copy-wrap no-print">
-                                            <button type="button" class="proof-copy-btn" command="--copy" commandfor="proof-retail-orig" aria-label="Copy Original Retail Hash">
-                                                <i class="bi bi-clipboard" aria-hidden="true"></i> Copy
-                                            </button>
-                                            <span class="proof-copy-tip" role="status"></span>
-                                        </span>
-                                        {% endif %}
-                                    </div>
-                                    <code id="proof-retail-orig" class="proof-hash-value text-dark">{{ retail_verification.original_hash or 'Not recorded on blockchain' }}</code>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="proof-hash-card {{ 'is-mismatch' if retail_verification.stage_status == 'tampered' else '' }}">
-                                    <div class="d-flex justify-content-between align-items-center gap-2">
-                                        <span class="fw-bold small text-dark">Recomputed Retail Hash</span>
-                                        <span class="proof-copy-wrap no-print">
-                                            <button type="button" class="proof-copy-btn" command="--copy" commandfor="proof-retail-recomp" aria-label="Copy Recomputed Retail Hash">
-                                                <i class="bi bi-clipboard" aria-hidden="true"></i> Copy
-                                            </button>
-                                            <span class="proof-copy-tip" role="status"></span>
-                                        </span>
-                                    </div>
-                                    <code id="proof-retail-recomp" class="proof-hash-value {{ 'text-danger fw-bold' if retail_verification.stage_status == 'tampered' else 'text-success' }}">{{ retail_verification.recomputed_hash }}</code>
-                                </div>
-                            </div>
-                        </div>
-
-                        {% if retail_verification.stage_status == 'tampered' %}
-                        <div class="alert alert-danger py-2 px-3 small fw-bold mt-3 mb-0">
-                            <i class="bi bi-exclamation-octagon-fill me-1" aria-hidden="true"></i>
-                            ORIGINAL HASH &ne; RECOMPUTED HASH &mdash; Retail listing in database differs from blockchain!
-                        </div>
-                            {% if retail_verification.changed_fields %}
-                            <div class="mt-3">
-                                <div class="small fw-bold text-danger mb-1">WHAT CHANGED?</div>
-                                <div tabindex="0" role="region" aria-label="Retailer Changed Fields Comparison" class="proof-diff-wrap">
-                                    <table class="proof-diff-table">
-                                        <thead>
-                                            <tr>
-                                                <th scope="col">Field</th>
-                                                <th scope="col">Original Value (On Blockchain)</th>
-                                                <th scope="col">Modified Value (In Database)</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {% for diff in retail_verification.changed_fields %}
-                                            <tr>
-                                                <th scope="row">{{ diff.label }}</th>
-                                                <td class="proof-val-original">{{ diff.original }}</td>
-                                                <td class="proof-val-modified">
-                                                    {{ diff.clean_modified }}
-                                                    {% if diff.is_demo_marker %}
-                                                    <span class="badge bg-secondary-subtle text-secondary ms-1">Demo</span>
-                                                    {% endif %}
-                                                </td>
-                                            </tr>
-                                            {% endfor %}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                            {% elif retail_verification.snapshot_note %}
-                            <p class="small text-muted mt-2 mb-0">
-                                <i class="bi bi-info-circle me-1" aria-hidden="true"></i>{{ retail_verification.snapshot_note }}
-                            </p>
-                            {% endif %}
-                        {% endif %}
-                    {% elif stage_proof_summary.extra_retail_on_chain %}
-                        <p class="small text-warning-emphasis mb-0">A retail record exists on the blockchain that is missing from local records.</p>
-                    {% else %}
-                        <p class="small text-muted mb-0">Pending &mdash; Produce has not been listed at retail yet.</p>
-                    {% endif %}
-                </section>
-            </div>
-        </div>
-    </details>
+  </section>
 </div>
+{% endif %}
 
-<div class="row g-4 mb-4">
-    <!-- Product Overview Card -->
+<!-- ============ CLEAN 2-COLUMN FOOD STORY ============ -->
+<div class="shell">
+  <div class="row g-4" style="padding-top:22px;padding-bottom:56px">
+
+    <!-- LEFT: COMPACT PRODUCT CARD -->
     <div class="col-lg-4">
-        <div class="card card-custom shadow-sm mb-4">
-            <div class="card-header card-header-ag">
-                <h2 class="h5 mb-0 fw-bold"><i class="bi bi-box-seam me-2" aria-hidden="true"></i>Produce Details</h2>
-            </div>
-            <div class="card-body text-center p-4">
-                <div class="mb-3">
-                    <img src="{{ product_image_url(product.image) }}" alt="{{ product.name }}" class="img-fluid rounded border shadow-sm" style="max-height: 220px; object-fit: cover;">
-                </div>
-                <p class="h5 fw-bold mb-1">{{ product.name }}</p>
-                <p class="text-muted font-monospace small mb-3">Batch ID: {{ product.batch_id }}</p>
-
-                <div class="text-start bg-light p-3 rounded mb-3 small">
-                    <div class="d-flex justify-content-between mb-1">
-                        <span class="text-muted">Origin:</span>
-                        <span class="fw-semibold">{{ product.farmer_data.farm_location if product.farmer_data and product.farmer_data.farm_location else 'Registered Farm' }}</span>
-                    </div>
-                    <div class="d-flex justify-content-between mb-1">
-                        <span class="text-muted">Quantity:</span>
-                        <span class="fw-semibold">{{ product.quantity }}</span>
-                    </div>
-                    <div class="d-flex justify-content-between mb-1">
-                        <span class="text-muted">Farming Method:</span>
-                        <span class="fw-semibold">{{ product.farming_method }}</span>
-                    </div>
-                    <div class="d-flex justify-content-between mb-1">
-                        <span class="text-muted">Packaging Date:</span>
-                        <span class="fw-semibold">{{ product.packaging_date }}</span>
-                    </div>
-                    <div class="d-flex justify-content-between mb-1">
-                        <span class="text-muted">Farmer:</span>
-                        <span class="fw-semibold">{{ product.farmer.full_name or product.farmer.username }}</span>
-                    </div>
-                    {% if product.retail_data and product.retail_data.price %}
-                    <div class="d-flex justify-content-between mb-1">
-                        <span class="text-muted">Shop Price:</span>
-                        <span class="fw-semibold text-success">${{ '%.2f'|format(product.retail_data.price) }}</span>
-                    </div>
-                    {% endif %}
-                    <div class="d-flex justify-content-between">
-                        <span class="text-muted">Current Stage:</span>
-                        <span class="badge bg-primary">{{ product.status }}</span>
-                    </div>
-                </div>
-
-                <div class="border rounded p-3 bg-white">
-                    <span class="fw-semibold small d-block mb-2 text-muted"><i class="bi bi-qr-code me-1"></i> Scan to Verify on Phone</span>
-                    <img src="{{ url_for('batch_qr_png', batch_id=product.batch_id) }}" alt="Verification QR code for {{ product.batch_id }}" class="img-fluid" style="max-width: 150px;">
-                    <div class="small text-muted font-monospace mt-1 text-break">{{ qr_verify_url }}</div>
-                </div>
-            </div>
+      <aside class="panel" style="position:sticky;top:76px;overflow:hidden">
+        <div style="height:190px;background:var(--sunken);overflow:hidden">
+          <img src="{{ product_image_url(product.image) }}" alt="{{ product.name }}" style="width:100%;height:100%;object-fit:cover">
         </div>
+        <div class="panel__bd">
+          <h2 class="vcard__name" style="margin-top:0;font-size:24px">{{ product.name }}</h2>
+          <p class="vcard__variety">{{ product.farming_method }} &middot; {{ product.quantity }}</p>
+
+          <div class="vmeta" style="margin-top:12px">
+            <div>
+              <div class="vmeta__k">Where Grown</div>
+              <div class="vmeta__v">{{ product.farmer_data.farm_location if product.farmer_data and product.farmer_data.farm_location else (product.farmer.full_name or product.farmer.username) }}</div>
+            </div>
+            <div>
+              <div class="vmeta__k">Freshness &amp; Cold Chain</div>
+              <div class="vmeta__v">{{ transport_verifications[-1].temp_eval.label if transport_verifications else 'Not shipped yet' }}</div>
+            </div>
+            <div>
+              <div class="vmeta__k">Packed</div>
+              <div class="vmeta__v mono" style="font-size:12.5px">{{ product.packaging_date }}</div>
+            </div>
+            <div>
+              <div class="vmeta__k">Price</div>
+              <div class="vmeta__v">{{ ('$%.2f'|format(product.retail_data.price)) if (product.retail_data and product.retail_data.price) else '—' }}</div>
+            </div>
+          </div>
+
+          <div class="qr-wrap" style="margin-top:14px">
+            <div class="qr-box" style="width:76px;height:76px">
+              <img src="{{ url_for('batch_qr_png', batch_id=product.batch_id) }}" alt="QR code for {{ product.batch_id }}">
+            </div>
+            <div class="qr-meta">
+              <div class="qr-meta__t">Batch QR</div>
+              <div class="qr-meta__id">{{ product.batch_id }}</div>
+              <p class="qr-meta__s">Scan on any phone to view this page.</p>
+            </div>
+          </div>
+        </div>
+      </aside>
     </div>
 
-    <!-- Full Journey Timeline: Farm -> Transport -> Shop -->
+    <!-- RIGHT: SIMPLE PLAIN-ENGLISH FOOD JOURNEY -->
     <div class="col-lg-8">
-        <!-- Quick Plain-English Answers for Shoppers -->
-        <div class="consumer-facts-grid">
-            <div class="consumer-fact-tile">
-                <div class="fact-kicker"><i class="bi bi-flower1 text-success" aria-hidden="true"></i> Where Grown</div>
-                <div class="fact-main">{{ product.farmer_data.farm_location if product.farmer_data and product.farmer_data.farm_location else (product.farmer.full_name or product.farmer.username) }}</div>
-                <div class="fact-sub">{{ product.farming_method }} &bull; Packed {{ product.packaging_date }}</div>
-            </div>
-            <div class="consumer-fact-tile">
-                <div class="fact-kicker"><i class="bi bi-thermometer-half text-primary" aria-hidden="true"></i> Freshness &amp; Cold Chain</div>
-                {% if transport_verifications %}
-                {% set latest_tv = transport_verifications[-1] %}
-                <div class="fact-main {{ 'text-danger' if latest_tv.temp_eval.status == 'breach' else 'text-success' }}">
-                    {{ latest_tv.temp_eval.label }}
-                </div>
-                <div class="fact-sub">{{ transport_verifications|length }} transit check(s) &bull; Latest: {{ latest_tv.record.current_location }}</div>
-                {% else %}
-                <div class="fact-main text-muted">Awaiting Pickup</div>
-                <div class="fact-sub">Shipping checkpoints will appear once picked up.</div>
-                {% endif %}
-            </div>
-            <div class="consumer-fact-tile">
-                <div class="fact-kicker"><i class="bi bi-shop text-warning-emphasis" aria-hidden="true"></i> Retail Store &amp; Price</div>
-                {% if product.retail_data %}
-                <div class="fact-main">{{ product.retail_data.store_name }}</div>
-                <div class="fact-sub">
-                    {% if product.retail_data.price %}${{ '%.2f'|format(product.retail_data.price) }} &bull; {% endif %}{{ product.retail_data.store_location }}
-                </div>
-                {% else %}
-                <div class="fact-main text-muted">Not in Store Yet</div>
-                <div class="fact-sub">Store price and stock appear once stocked.</div>
-                {% endif %}
-            </div>
-            <div class="consumer-fact-tile">
-                <div class="fact-kicker"><i class="bi bi-clock-history text-success" aria-hidden="true"></i> Shelf Life &amp; Pack Size</div>
-                <div class="fact-main">{{ product.retail_data.shelf_life if product.retail_data and product.retail_data.shelf_life else product.quantity }}</div>
-                <div class="fact-sub">Batch Qty: {{ product.quantity }} &bull; Stage: {{ product.status }}</div>
-            </div>
+      <div class="panel">
+        <div class="panel__hd">
+          <span class="panel__title">Food journey</span>
+          <span class="t-xs">Farm &rarr; Transport &rarr; Shop</span>
         </div>
+        <div class="panel__bd">
+          <div class="stages">
 
-        <div class="card card-custom shadow-sm mb-4">
-            <div class="card-header card-header-ag d-flex justify-content-between align-items-center">
-                <h2 class="h5 mb-0 fw-bold"><i class="bi bi-signpost-split me-2" aria-hidden="true"></i>Food Journey Timeline</h2>
-                <span class="badge bg-success">Farm &rarr; Transport &rarr; Shop</span>
+            <!-- 1. FARM -->
+            {% set f_stage_cls = 'stage--ok' if harvest_status == 'verified' else ('stage--bad' if harvest_status == 'tampered' else 'stage--wait') %}
+            <article class="stage {{ f_stage_cls }}" id="stage-farm">
+              <div class="stage__rail" id="journey-stage-harvest">
+                <span class="stage__dot timeline-icon {{ 'tampered' if harvest_status == 'tampered' else 'completed' }}"></span>
+                <span class="stage__line"></span>
+              </div>
+              <div class="stage__body">
+                <div class="stage__head">
+                  <div>
+                    <h3 class="stage__title">1. Farm</h3>
+                    <p class="stage__meta">{{ product.farmer.full_name or product.farmer.username }} &middot; {{ product.farmer_data.farm_location if product.farmer_data and product.farmer_data.farm_location else 'Registered Farm' }}</p>
+                  </div>
+                  {% if harvest_status == 'verified' %}
+                    <span class="chip chip--ok chip--sm"><span class="chip__dot"></span>Verified</span>
+                  {% elif harvest_status == 'tampered' %}
+                    <span class="chip chip--bad chip--sm"><span class="chip__dot"></span>Changed after recording</span>
+                  {% else %}
+                    <span class="chip chip--wait chip--sm">Can&rsquo;t check right now</span>
+                  {% endif %}
+                </div>
+
+                <p class="t-sm" style="margin-top:6px">
+                  Packed on <strong>{{ product.packaging_date }}</strong> &middot; {{ product.quantity }} &middot; {{ product.farming_method }}.
+                  {% if product.farmer_data and product.farmer_data.certifications %}
+                  Certified: {{ product.farmer_data.certifications }}.
+                  {% endif %}
+                </p>
+
+                {% if harvest_verification.status == 'tampered' %}
+                <div class="stage__flag">
+                  <strong>Tampered at Farm Origin ({{ harvest_verification.recorded_when }}):</strong>
+                  {% if harvest_verification.changed_fields %}
+                    {% for diff in harvest_verification.changed_fields %}
+                    <div>{{ diff.label }}: <span style="color:var(--ok-ink);font-weight:600">{{ diff.original }}</span> &rarr; <strong>{{ diff.clean_modified }}</strong></div>
+                    {% endfor %}
+                  {% else %}
+                    <span>{{ harvest_verification.snapshot_note or 'Record mismatch detected.' }}</span>
+                  {% endif %}
+                </div>
+                {% endif %}
+              </div>
+            </article>
+
+            <!-- 2. TRANSPORT -->
+            {% if transport_verifications %}
+              {% for tv in transport_verifications %}
+              {% set t = tv.record %}
+              {% set tv_cls = 'stage--ok' if tv.status == 'verified' else ('stage--bad' if tv.status == 'tampered' else 'stage--wait') %}
+              <article class="stage {{ tv_cls }}" id="{{ 'stage-transport' if loop.first else ('journey-stage-transport-' ~ loop.index) }}">
+                <div class="stage__rail" id="journey-stage-transport-{{ loop.index }}">
+                  <span class="stage__dot timeline-icon {{ 'tampered' if tv.status == 'tampered' else 'completed' }}"></span>
+                  <span class="stage__line"></span>
+                </div>
+                <div class="stage__body">
+                  <div class="stage__head">
+                    <div>
+                      <h3 class="stage__title">2. Transport Stop #{{ loop.index }} &mdash; {{ t.current_location }}</h3>
+                      <p class="stage__meta">{{ t.status }} &middot; {{ tv.recorded_when }}</p>
+                    </div>
+                    {% if tv.status == 'verified' %}
+                      <span class="chip chip--ok chip--sm"><span class="chip__dot"></span>Verified</span>
+                    {% elif tv.status == 'tampered' %}
+                      <span class="chip chip--bad chip--sm"><span class="chip__dot"></span>Changed after recording</span>
+                    {% else %}
+                      <span class="chip chip--wait chip--sm">Can&rsquo;t check right now</span>
+                    {% endif %}
+                  </div>
+
+                  <p class="t-sm" style="margin-top:6px">
+                    Temperature: <strong>{{ tv.temp_eval.label }}</strong> &middot; Vehicle: <span class="mono">{{ t.vehicle_number or 'Fleet unit' }}</span>
+                    {% if t.notes %}<br><span class="muted">&ldquo;{{ t.notes }}&rdquo;</span>{% endif %}
+                  </p>
+
+                  {% if tv.stage_status == 'tampered' %}
+                  <div class="stage__flag">
+                    <strong>Tampered at Checkpoint #{{ loop.index }} ({{ t.current_location }} &bull; {{ tv.recorded_when }}):</strong>
+                    {% if tv.changed_fields %}
+                      {% for diff in tv.changed_fields %}
+                      <div>{{ diff.label }}: <span style="color:var(--ok-ink);font-weight:600">{{ diff.original }}</span> &rarr; <strong>{{ diff.clean_modified }}</strong></div>
+                      {% endfor %}
+                    {% else %}
+                      <span>{{ tv.snapshot_note or 'Record mismatch detected.' }}</span>
+                    {% endif %}
+                  </div>
+                  {% endif %}
+                </div>
+              </article>
+              {% endfor %}
+            {% else %}
+              <article class="stage stage--pending" id="stage-transport">
+                <div class="stage__rail"><span class="stage__dot"></span><span class="stage__line"></span></div>
+                <div class="stage__body">
+                  <div class="stage__head">
+                    <h3 class="stage__title">2. Transport</h3>
+                    <span class="chip chip--pending chip--sm">Not shipped yet</span>
+                  </div>
+                  <p class="t-sm muted" style="margin-top:4px">This batch has not left the farm yet.</p>
+                </div>
+              </article>
+            {% endif %}
+
+            <!-- 3. SHOP -->
+            {% if retail_verification %}
+            {% set r = retail_verification.record %}
+            {% set r_stage_cls = 'stage--ok' if retail_verification.status == 'verified' else ('stage--bad' if retail_verification.status == 'tampered' else 'stage--wait') %}
+            <article class="stage stage--last {{ r_stage_cls }}" id="stage-retail">
+              <div class="stage__rail" id="journey-stage-retail">
+                <span class="stage__dot timeline-icon {{ 'tampered' if retail_verification.status == 'tampered' else 'completed' }}"></span>
+              </div>
+              <div class="stage__body">
+                <div class="stage__head">
+                  <div>
+                    <h3 class="stage__title">3. Shop &mdash; {{ r.store_name }}</h3>
+                    <p class="stage__meta">{{ r.store_location }} &middot; Arrived {{ r.arrival_date or retail_verification.recorded_when }}</p>
+                  </div>
+                  {% if retail_verification.status == 'verified' %}
+                    <span class="chip chip--ok chip--sm"><span class="chip__dot"></span>Verified</span>
+                  {% elif retail_verification.status == 'tampered' %}
+                    <span class="chip chip--bad chip--sm"><span class="chip__dot"></span>Changed after recording</span>
+                  {% else %}
+                    <span class="chip chip--wait chip--sm">Can&rsquo;t check right now</span>
+                  {% endif %}
+                </div>
+
+                <p class="t-sm" style="margin-top:6px">
+                  Price: <strong>${{ '%.2f'|format(r.price) if r.price else 'N/A' }}</strong> &middot; Stock: {{ r.stock_quantity }} &middot; Shelf life: {{ r.shelf_life or 'Fresh' }}.
+                </p>
+
+                {% if retail_verification.stage_status == 'tampered' %}
+                <div class="stage__flag">
+                  <strong>Tampered at Retail Store ({{ r.store_name }} &bull; {{ retail_verification.recorded_when }}):</strong>
+                  {% if retail_verification.changed_fields %}
+                    {% for diff in retail_verification.changed_fields %}
+                    <div>{{ diff.label }}: <span style="color:var(--ok-ink);font-weight:600">{{ diff.original }}</span> &rarr; <strong>{{ diff.clean_modified }}</strong></div>
+                    {% endfor %}
+                  {% else %}
+                    <span>{{ retail_verification.snapshot_note or 'Record mismatch detected.' }}</span>
+                  {% endif %}
+                </div>
+                {% endif %}
+              </div>
+            </article>
+            {% else %}
+            <article class="stage stage--last stage--pending" id="stage-retail">
+              <div class="stage__rail"><span class="stage__dot"></span></div>
+              <div class="stage__body">
+                <div class="stage__head">
+                  <h3 class="stage__title">3. Shop</h3>
+                  <span class="chip chip--pending chip--sm">Not in store yet</span>
+                </div>
+                <p class="t-sm muted" style="margin-top:4px">This batch has not arrived at a store yet.</p>
+              </div>
+            </article>
+            {% endif %}
+
+          </div>
+        </div>
+      </div>
+
+      <!-- ============ OPTIONAL TECHNICAL PROOF (COLLAPSED BY DEFAULT) ============ -->
+      <details class="th-disclosure" id="technical-proof-disclosure">
+        <summary>Technical Blockchain Proof</summary>
+        <div class="th-disclosure-body">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px">
+            <div class="t-xs"><strong>Batch ID:</strong> <span class="mono">{{ product.batch_id }}</span></div>
+            <a href="{{ url_for('api_verify_batch', batch_id=product.batch_id) }}" target="_blank" class="btn btn--sm no-print">View JSON Summary</a>
+          </div>
+
+          <h2 style="font-size:13.5px;font-weight:700;margin:0 0 10px;color:var(--ink)">Stage-Wise Cryptographic Verification</h2>
+
+          {% set summary_cls = 'is-tampered' if stage_proof_summary.result_key == 'tampered' else ('is-verified' if stage_proof_summary.result_key == 'verified' else 'is-cannot-verify') %}
+          <div class="proof-summary-banner {{ summary_cls }}">
+            <div style="font-weight:700;margin-bottom:3px">{{ stage_proof_summary.heading }}</div>
+            <div>{{ stage_proof_summary.detail }}</div>
+          </div>
+
+          <!-- STAGE 1 -->
+          <section class="proof-stage-card {{ 'is-tampered' if harvest_verification.status == 'tampered' else '' }}" aria-label="Stage 1 Farmer Harvest Verification">
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px">
+              <h3 style="font-size:13px;font-weight:700">STAGE 1 &mdash; FARMER / HARVEST</h3>
+              {% if harvest_verification.status == 'verified' %}
+                <span class="chip chip--ok chip--sm">HASH VERIFIED</span>
+              {% elif harvest_verification.status == 'tampered' %}
+                <span class="chip chip--bad chip--sm">HASH MISMATCH &mdash; TAMPERING DETECTED</span>
+              {% else %}
+                <span class="chip chip--wait chip--sm">UNABLE TO VERIFY</span>
+              {% endif %}
             </div>
-            <div class="card-body p-4">
-                <ul class="timeline">
-                    <!-- 1. Farm Stage -->
-                    <li id="journey-stage-harvest" class="timeline-item">
-                        <div class="timeline-icon {{ 'tampered' if harvest_status == 'tampered' else 'completed' }}">
-                            <i class="bi {{ 'bi-exclamation-lg' if harvest_status == 'tampered' else 'bi-flower1' }}" aria-hidden="true"></i>
-                        </div>
-                        <div class="timeline-content {{ 'is-tampered-step' if harvest_status == 'tampered' else '' }}">
-                            <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-1">
-                                <h3 class="h6 fw-bold {{ 'text-danger' if harvest_status == 'tampered' else 'text-success' }} mb-0">Farm</h3>
-                                <div class="d-flex gap-1 align-items-center">
-                                    {% if harvest_status == 'verified' %}
-                                    <span class="badge bg-success-subtle text-success border border-success-subtle"><i class="bi bi-shield-check me-1"></i>Verified</span>
-                                    {% elif harvest_status == 'tampered' %}
-                                    <span class="badge bg-danger"><i class="bi bi-x-octagon me-1"></i>Changed after recording</span>
-                                    {% else %}
-                                    <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle">Can't check right now</span>
-                                    {% endif %}
-                                    <span class="badge bg-light text-dark border">{{ harvest_verification.recorded_when }}</span>
-                                </div>
-                            </div>
-                            <p class="mb-1 text-muted small">
-                                Harvested and packed by <strong>{{ product.farmer.full_name or product.farmer.username }}</strong>
-                                {% if product.farmer_data and product.farmer_data.farm_location %}
-                                    at <em>{{ product.farmer_data.farm_location }}</em>
-                                {% endif %}.
-                            </p>
-                            {% if harvest_verification.status == 'tampered' %}
-                            <div class="alert alert-danger py-2 px-3 small mt-2 mb-2">
-                                <strong>Tampered at Farm Origin ({{ harvest_verification.recorded_when }}):</strong>
-                                {% if harvest_verification.changed_fields %}
-                                    {% for diff in harvest_verification.changed_fields %}
-                                    <div>{{ diff.label }}: <span class="text-success fw-semibold">{{ diff.original }}</span> &rarr; <span class="fw-bold">{{ diff.clean_modified }}</span></div>
-                                    {% endfor %}
-                                {% else %}
-                                    <span>{{ harvest_verification.snapshot_note or 'Record hash mismatch detected.' }}</span>
-                                {% endif %}
-                            </div>
-                            {% endif %}
-                            {% if product.farmer_data %}
-                                <div class="bg-light p-2 rounded small mt-2">
-                                    {% if product.farmer_data.certifications %}
-                                        <div><strong>Certifications:</strong> {{ product.farmer_data.certifications }}</div>
-                                    {% endif %}
-                                    {% if product.farmer_data.notes %}
-                                        <div class="text-muted fst-italic">"{{ product.farmer_data.notes }}"</div>
-                                    {% endif %}
-                                </div>
-                            {% endif %}
-                        </div>
-                    </li>
+            <p class="t-xs" style="margin-bottom:10px">{{ harvest_verification.explanation }}</p>
 
-                    <!-- 2. Transport Checkpoints -->
-                    {% if transport_verifications %}
-                        {% for tv in transport_verifications %}
-                        {% set t = tv.record %}
-                        <li id="journey-stage-transport-{{ loop.index }}" class="timeline-item">
-                            <div class="timeline-icon {{ 'tampered' if tv.status == 'tampered' else 'completed' }}">
-                                <i class="bi {{ 'bi-exclamation-lg' if tv.status == 'tampered' else 'bi-truck' }}" aria-hidden="true"></i>
-                            </div>
-                            <div class="timeline-content {{ 'is-tampered-step' if tv.status == 'tampered' else '' }}">
-                                <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-1">
-                                    <h3 class="h6 fw-bold {{ 'text-danger' if tv.status == 'tampered' else 'text-primary' }} mb-0">Transport Checkpoint #{{ loop.index }} &bull; {{ t.status }}</h3>
-                                    <div class="d-flex gap-1 align-items-center">
-                                        {% if tv.status == 'verified' %}
-                                            <span class="badge bg-success-subtle text-success border border-success-subtle"><i class="bi bi-shield-check me-1"></i>Verified</span>
-                                        {% elif tv.status == 'tampered' %}
-                                            <span class="badge bg-danger"><i class="bi bi-x-octagon me-1"></i>Changed after recording</span>
-                                        {% else %}
-                                            <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle">Can't check right now</span>
-                                        {% endif %}
-                                        <span class="badge bg-light text-dark border">{{ tv.recorded_when }}</span>
-                                    </div>
-                                </div>
-                                <div class="small mb-1">
-                                    <strong>Location:</strong> {{ t.current_location }}
-                                </div>
-                                <div class="row g-2 small text-muted">
-                                    <div class="col-sm-6">
-                                        <i class="bi bi-thermometer-half text-danger"></i>
-                                        <span class="badge {{ tv.temp_eval.badge_class }}">{{ tv.temp_eval.label }}</span>
-                                    </div>
-                                    <div class="col-sm-6">
-                                        <i class="bi bi-truck-flatbed"></i> Vehicle: {{ t.vehicle_number or 'Fleet Unit' }}
-                                    </div>
-                                </div>
-                                {% if tv.stage_status == 'tampered' %}
-                                <div class="alert alert-danger py-2 px-3 small mt-2 mb-0">
-                                    <strong>Tampered at Checkpoint #{{ loop.index }} ({{ t.current_location }} &bull; {{ tv.recorded_when }}):</strong>
-                                    {% if tv.changed_fields %}
-                                        {% for diff in tv.changed_fields %}
-                                        <div>{{ diff.label }}: <span class="text-success fw-semibold">{{ diff.original }}</span> &rarr; <span class="fw-bold">{{ diff.clean_modified }}</span></div>
-                                        {% endfor %}
-                                    {% else %}
-                                        <span>{{ tv.snapshot_note or 'Record hash mismatch detected.' }}</span>
-                                    {% endif %}
-                                </div>
-                                {% endif %}
-                                {% if t.notes %}
-                                <div class="bg-light p-2 rounded small mt-2 text-muted fst-italic">
-                                    "{{ t.notes }}"
-                                </div>
-                                {% endif %}
-                            </div>
-                        </li>
+            <div class="row g-2">
+              <div class="col-md-6">
+                <div class="proof-hash-card {{ 'is-mismatch' if harvest_verification.status == 'tampered' else '' }}">
+                  <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+                    <span class="t-xs" style="font-weight:600;color:var(--ink)">Original Blockchain Hash</span>
+                    {% if harvest_verification.original_hash %}
+                    <span class="proof-copy-wrap no-print">
+                      <button type="button" class="proof-copy-btn" command="--copy" commandfor="proof-harvest-orig" aria-label="Copy Original Blockchain Hash for Farmer Harvest">Copy</button>
+                      <span class="proof-copy-tip" role="status"></span>
+                    </span>
+                    {% endif %}
+                  </div>
+                  <code id="proof-harvest-orig" class="proof-hash-value">{{ harvest_verification.original_hash or 'Not recorded on blockchain' }}</code>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="proof-hash-card {{ 'is-mismatch' if harvest_verification.status == 'tampered' else '' }}">
+                  <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+                    <span class="t-xs" style="font-weight:600;color:var(--ink)">Recomputed Database Hash</span>
+                    <span class="proof-copy-wrap no-print">
+                      <button type="button" class="proof-copy-btn" command="--copy" commandfor="proof-harvest-recomp" aria-label="Copy Recomputed Database Hash for Farmer Harvest">Copy</button>
+                      <span class="proof-copy-tip" role="status"></span>
+                    </span>
+                  </div>
+                  <code id="proof-harvest-recomp" class="proof-hash-value">{{ harvest_verification.recomputed_hash }}</code>
+                </div>
+              </div>
+            </div>
+
+            {% if harvest_verification.status == 'tampered' %}
+            <div class="stage__flag" style="margin-top:10px;font-weight:600">
+              ORIGINAL HASH &ne; RECOMPUTED HASH &mdash; Harvest record in database differs from blockchain!
+            </div>
+              {% if harvest_verification.changed_fields %}
+              <div style="margin-top:10px">
+                <div class="t-xs" style="font-weight:700;color:var(--bad-ink);margin-bottom:6px">WHAT CHANGED?</div>
+                <div tabindex="0" role="region" aria-label="Farmer Harvest Changed Fields Comparison" class="proof-diff-wrap">
+                  <table class="proof-diff-table">
+                    <thead>
+                      <tr>
+                        <th scope="col">Field</th>
+                        <th scope="col">Original Value (On Blockchain)</th>
+                        <th scope="col">Modified Value (In Database)</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {% for diff in harvest_verification.changed_fields %}
+                      <tr>
+                        <th scope="row">{{ diff.label }}</th>
+                        <td class="proof-val-original">{{ diff.original }}</td>
+                        <td class="proof-val-modified">{{ diff.clean_modified }}</td>
+                      </tr>
+                      {% endfor %}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              {% elif harvest_verification.snapshot_note %}
+              <p class="t-xs muted" style="margin-top:8px">{{ harvest_verification.snapshot_note }}</p>
+              {% endif %}
+            {% endif %}
+          </section>
+
+          <!-- STAGE 2 -->
+          <section class="proof-stage-card {{ 'is-tampered' if transport_stage_status == 'tampered' else '' }}" aria-label="Stage 2 Transporter Verification">
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px">
+              <h3 style="font-size:13px;font-weight:700">STAGE 2 &mdash; TRANSPORTER</h3>
+              {% if transport_stage_status == 'verified' %}
+                <span class="chip chip--ok chip--sm">HASH VERIFIED</span>
+              {% elif transport_stage_status == 'tampered' %}
+                <span class="chip chip--bad chip--sm">HASH MISMATCH &mdash; TAMPERING DETECTED</span>
+              {% elif transport_stage_status == 'pending' %}
+                <span class="chip chip--pending chip--sm">PENDING</span>
+              {% else %}
+                <span class="chip chip--wait chip--sm">UNABLE TO VERIFY</span>
+              {% endif %}
+            </div>
+
+            {% if transport_verifications %}
+              {% for tv in transport_verifications %}
+              {% set t_rec = tv.record %}
+              <div class="proof-checkpoint-box {{ 'is-tampered' if tv.stage_status == 'tampered' else '' }}">
+                <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px">
+                  <div class="t-xs" style="font-weight:700;color:var(--ink)">Checkpoint #{{ tv.checkpoint_number }}: {{ t_rec.status }} &middot; {{ t_rec.current_location }}</div>
+                  <div style="display:flex;gap:6px;flex-wrap:wrap">
+                    <span class="chip chip--neutral chip--sm">{{ tv.temp_eval.label }}</span>
+                    {% if tv.stage_status == 'verified' %}
+                      <span class="chip chip--ok chip--sm">HASH VERIFIED</span>
+                    {% elif tv.stage_status == 'tampered' %}
+                      <span class="chip chip--bad chip--sm">HASH MISMATCH</span>
+                    {% else %}
+                      <span class="chip chip--wait chip--sm">UNABLE TO VERIFY</span>
+                    {% endif %}
+                  </div>
+                </div>
+                <p class="t-xs" style="margin-bottom:8px">{{ tv.explanation }}</p>
+
+                <div class="row g-2">
+                  <div class="col-md-6">
+                    <div class="proof-hash-card {{ 'is-mismatch' if tv.stage_status == 'tampered' else '' }}">
+                      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+                        <span class="t-xs" style="font-weight:600;color:var(--ink)">Original Transport Hash</span>
+                        {% if tv.original_hash %}
+                        <span class="proof-copy-wrap no-print">
+                          <button type="button" class="proof-copy-btn" command="--copy" commandfor="proof-transport-orig-{{ loop.index }}" aria-label="Copy Original Transport Hash for Checkpoint {{ tv.checkpoint_number }}">Copy</button>
+                          <span class="proof-copy-tip" role="status"></span>
+                        </span>
+                        {% endif %}
+                      </div>
+                      <code id="proof-transport-orig-{{ loop.index }}" class="proof-hash-value">{{ tv.original_hash or 'Not recorded on blockchain' }}</code>
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="proof-hash-card {{ 'is-mismatch' if tv.stage_status == 'tampered' else '' }}">
+                      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+                        <span class="t-xs" style="font-weight:600;color:var(--ink)">Recomputed Transport Hash</span>
+                        <span class="proof-copy-wrap no-print">
+                          <button type="button" class="proof-copy-btn" command="--copy" commandfor="proof-transport-recomp-{{ loop.index }}" aria-label="Copy Recomputed Transport Hash for Checkpoint {{ tv.checkpoint_number }}">Copy</button>
+                          <span class="proof-copy-tip" role="status"></span>
+                        </span>
+                      </div>
+                      <code id="proof-transport-recomp-{{ loop.index }}" class="proof-hash-value">{{ tv.recomputed_hash }}</code>
+                    </div>
+                  </div>
+                </div>
+
+                {% if tv.stage_status == 'tampered' %}
+                <div class="stage__flag" style="margin-top:10px;font-weight:600">
+                  ORIGINAL HASH &ne; RECOMPUTED HASH &mdash; Checkpoint #{{ tv.checkpoint_number }} data was altered after blockchain anchoring!
+                </div>
+                  {% if tv.changed_fields %}
+                  <div style="margin-top:10px">
+                    <div class="t-xs" style="font-weight:700;color:var(--bad-ink);margin-bottom:6px">WHAT CHANGED?</div>
+                    <div tabindex="0" role="region" aria-label="Transport Checkpoint {{ tv.checkpoint_number }} Changed Fields Comparison" class="proof-diff-wrap">
+                      <table class="proof-diff-table">
+                        <thead>
+                          <tr>
+                            <th scope="col">Field</th>
+                            <th scope="col">Original Value (On Blockchain)</th>
+                            <th scope="col">Modified Value (In Database)</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {% for diff in tv.changed_fields %}
+                          <tr>
+                            <th scope="row">{{ diff.label }}</th>
+                            <td class="proof-val-original">{{ diff.original }}</td>
+                            <td class="proof-val-modified">{{ diff.clean_modified }}</td>
+                          </tr>
+                          {% endfor %}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                  {% elif tv.snapshot_note %}
+                  <p class="t-xs muted" style="margin-top:8px">{{ tv.snapshot_note }}</p>
+                  {% endif %}
+                {% endif %}
+              </div>
+              {% endfor %}
+              {% if stage_proof_summary.extra_transport_on_chain %}
+              <p class="t-xs" style="color:var(--ochre);margin-top:8px">Additional transport entries exist on the blockchain that are missing from the local database.</p>
+              {% endif %}
+            {% elif stage_proof_summary.extra_transport_on_chain %}
+              <p class="t-xs" style="color:var(--ochre)">Transport entries exist on the blockchain that are missing from local records.</p>
+            {% else %}
+              <p class="t-xs muted">Pending &mdash; No transport checkpoints have been recorded for this batch yet.</p>
+            {% endif %}
+          </section>
+
+          <!-- STAGE 3 -->
+          <section class="proof-stage-card {{ 'is-tampered' if retail_stage_status == 'tampered' else '' }}" aria-label="Stage 3 Retailer Verification" style="margin-bottom:0">
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px">
+              <h3 style="font-size:13px;font-weight:700">STAGE 3 &mdash; RETAILER</h3>
+              {% if retail_stage_status == 'verified' %}
+                <span class="chip chip--ok chip--sm">HASH VERIFIED</span>
+              {% elif retail_stage_status == 'tampered' %}
+                <span class="chip chip--bad chip--sm">HASH MISMATCH &mdash; TAMPERING DETECTED</span>
+              {% elif retail_stage_status == 'pending' %}
+                <span class="chip chip--pending chip--sm">PENDING</span>
+              {% else %}
+                <span class="chip chip--wait chip--sm">UNABLE TO VERIFY</span>
+              {% endif %}
+            </div>
+
+            {% if retail_verification %}
+              <p class="t-xs" style="margin-bottom:10px">{{ retail_verification.explanation }}</p>
+              <div class="row g-2">
+                <div class="col-md-6">
+                  <div class="proof-hash-card {{ 'is-mismatch' if retail_verification.stage_status == 'tampered' else '' }}">
+                    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+                      <span class="t-xs" style="font-weight:600;color:var(--ink)">Original Retail Hash</span>
+                      {% if retail_verification.original_hash %}
+                      <span class="proof-copy-wrap no-print">
+                        <button type="button" class="proof-copy-btn" command="--copy" commandfor="proof-retail-orig" aria-label="Copy Original Retail Hash">Copy</button>
+                        <span class="proof-copy-tip" role="status"></span>
+                      </span>
+                      {% endif %}
+                    </div>
+                    <code id="proof-retail-orig" class="proof-hash-value">{{ retail_verification.original_hash or 'Not recorded on blockchain' }}</code>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="proof-hash-card {{ 'is-mismatch' if retail_verification.stage_status == 'tampered' else '' }}">
+                    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+                      <span class="t-xs" style="font-weight:600;color:var(--ink)">Recomputed Retail Hash</span>
+                      <span class="proof-copy-wrap no-print">
+                        <button type="button" class="proof-copy-btn" command="--copy" commandfor="proof-retail-recomp" aria-label="Copy Recomputed Retail Hash">Copy</button>
+                        <span class="proof-copy-tip" role="status"></span>
+                      </span>
+                    </div>
+                    <code id="proof-retail-recomp" class="proof-hash-value">{{ retail_verification.recomputed_hash }}</code>
+                  </div>
+                </div>
+              </div>
+
+              {% if retail_verification.stage_status == 'tampered' %}
+              <div class="stage__flag" style="margin-top:10px;font-weight:600">
+                ORIGINAL HASH &ne; RECOMPUTED HASH &mdash; Retail listing in database differs from blockchain!
+              </div>
+                {% if retail_verification.changed_fields %}
+                <div style="margin-top:10px">
+                  <div class="t-xs" style="font-weight:700;color:var(--bad-ink);margin-bottom:6px">WHAT CHANGED?</div>
+                  <div tabindex="0" role="region" aria-label="Retailer Changed Fields Comparison" class="proof-diff-wrap">
+                    <table class="proof-diff-table">
+                      <thead>
+                        <tr>
+                          <th scope="col">Field</th>
+                          <th scope="col">Original Value (On Blockchain)</th>
+                          <th scope="col">Modified Value (In Database)</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {% for diff in retail_verification.changed_fields %}
+                        <tr>
+                          <th scope="row">{{ diff.label }}</th>
+                          <td class="proof-val-original">{{ diff.original }}</td>
+                          <td class="proof-val-modified">{{ diff.clean_modified }}</td>
+                        </tr>
                         {% endfor %}
-                    {% else %}
-                        <li class="timeline-item">
-                            <div class="timeline-icon">
-                                <i class="bi bi-truck"></i>
-                            </div>
-                            <div class="timeline-content text-muted">
-                                <div class="d-flex justify-content-between align-items-center mb-1">
-                                    <h3 class="h6 fw-bold mb-0">Transport</h3>
-                                    <span class="badge bg-secondary-subtle text-secondary border">Pending</span>
-                                </div>
-                                <small>Pending &mdash; Shipment has not departed yet.</small>
-                            </div>
-                        </li>
-                    {% endif %}
-
-                    <!-- 3. Shop Stage -->
-                    {% if retail_verification %}
-                    {% set r = retail_verification.record %}
-                    <li id="journey-stage-retail" class="timeline-item">
-                        <div class="timeline-icon {{ 'tampered' if retail_verification.status == 'tampered' else 'completed' }}">
-                            <i class="bi {{ 'bi-exclamation-lg' if retail_verification.status == 'tampered' else 'bi-shop' }}" aria-hidden="true"></i>
-                        </div>
-                        <div class="timeline-content {{ 'is-tampered-step' if retail_verification.status == 'tampered' else '' }}">
-                            <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-1">
-                                <h3 class="h6 fw-bold {{ 'text-danger' if retail_verification.status == 'tampered' else 'text-warning-emphasis' }} mb-0">Shop</h3>
-                                <div class="d-flex gap-1 align-items-center">
-                                    {% if retail_verification.status == 'verified' %}
-                                        <span class="badge bg-success-subtle text-success border border-success-subtle"><i class="bi bi-shield-check me-1"></i>Verified</span>
-                                    {% elif retail_verification.status == 'tampered' %}
-                                        <span class="badge bg-danger"><i class="bi bi-x-octagon me-1"></i>Changed after recording</span>
-                                    {% else %}
-                                        <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle">Can't check right now</span>
-                                    {% endif %}
-                                    <span class="badge bg-light text-dark border">{{ retail_verification.recorded_when }}</span>
-                                </div>
-                            </div>
-                            <div class="small mb-1">
-                                <strong>Store:</strong> {{ r.store_name }} ({{ r.store_location }})
-                            </div>
-                            <div class="row g-2 small text-muted">
-                                <div class="col-sm-6">
-                                    <strong>Price:</strong> <span class="badge bg-success fs-6">${{ '%.2f'|format(r.price) if r.price else 'N/A' }}</span>
-                                </div>
-                                <div class="col-sm-6">
-                                    <strong>Stock:</strong> {{ r.stock_quantity }} (Shelf Life: {{ r.shelf_life }})
-                                </div>
-                            </div>
-                            {% if retail_verification.stage_status == 'tampered' %}
-                            <div class="alert alert-danger py-2 px-3 small mt-2 mb-0">
-                                <strong>Tampered at Retail Store ({{ r.store_name }} &bull; {{ retail_verification.recorded_when }}):</strong>
-                                {% if retail_verification.changed_fields %}
-                                    {% for diff in retail_verification.changed_fields %}
-                                    <div>{{ diff.label }}: <span class="text-success fw-semibold">{{ diff.original }}</span> &rarr; <span class="fw-bold">{{ diff.clean_modified }}</span></div>
-                                    {% endfor %}
-                                {% else %}
-                                    <span>{{ retail_verification.snapshot_note or 'Record hash mismatch detected.' }}</span>
-                                {% endif %}
-                            </div>
-                            {% endif %}
-                        </div>
-                    </li>
-                    {% else %}
-                    <li class="timeline-item">
-                        <div class="timeline-icon">
-                            <i class="bi bi-shop"></i>
-                        </div>
-                        <div class="timeline-content text-muted">
-                            <div class="d-flex justify-content-between align-items-center mb-1">
-                                <h3 class="h6 fw-bold mb-0">Shop</h3>
-                                <span class="badge bg-secondary-subtle text-secondary border">Pending</span>
-                            </div>
-                            <small>Pending &mdash; Produce has not reached a retail store yet.</small>
-                        </div>
-                    </li>
-                    {% endif %}
-                </ul>
-            </div>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+                {% elif retail_verification.snapshot_note %}
+                <p class="t-xs muted" style="margin-top:8px">{{ retail_verification.snapshot_note }}</p>
+                {% endif %}
+              {% endif %}
+            {% elif stage_proof_summary.extra_retail_on_chain %}
+              <p class="t-xs" style="color:var(--ochre)">A retail record exists on the blockchain that is missing from local records.</p>
+            {% else %}
+              <p class="t-xs muted">Pending &mdash; Produce has not been listed at retail yet.</p>
+            {% endif %}
+          </section>
         </div>
+      </details>
+
     </div>
+  </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
 <script>
 (() => {
-    const timers = new WeakMap();
-    let lastMessage = '';
-
-    function legacyCopy(text) {
-        const field = Object.assign(document.createElement('textarea'), { value: text });
-        field.setAttribute('readonly', '');
-        field.style.cssText = 'position:fixed;inset-block-start:0;opacity:0';
-        document.body.append(field);
-        field.select();
-        try {
-            return document.execCommand('copy');
-        } finally {
-            field.remove();
-        }
+  const timers = new WeakMap();
+  function legacyCopy(text) {
+    const field = Object.assign(document.createElement('textarea'), { value: text });
+    field.setAttribute('readonly', '');
+    field.style.cssText = 'position:fixed;top:0;opacity:0';
+    document.body.append(field);
+    field.select();
+    try { return document.execCommand('copy'); } finally { field.remove(); }
+  }
+  function report(button, ok) {
+    const tip = button.nextElementSibling;
+    clearTimeout(timers.get(button));
+    button.removeAttribute('data-copied');
+    button.setAttribute(ok ? 'data-copied' : 'data-failed', '');
+    if (tip) tip.textContent = ok ? 'Copied' : 'Copy failed';
+    timers.set(button, setTimeout(() => {
+      button.removeAttribute('data-copied');
+      if (tip) tip.textContent = '';
+    }, 1800));
+  }
+  async function copyHash(button, target) {
+    if (!target) return;
+    const text = target.innerText.trim();
+    if (!text) return;
+    try {
+      await navigator.clipboard.writeText(text);
+      report(button, true);
+    } catch {
+      try {
+        if (!legacyCopy(text)) throw new Error('Copy failed');
+        report(button, true);
+      } catch {
+        report(button, false);
+      }
     }
-
-    function report(button, ok) {
-        const tip = button.nextElementSibling;
-        clearTimeout(timers.get(button));
-        button.removeAttribute('data-copied');
-        button.removeAttribute('data-failed');
-        let message = ok ? 'Copied' : 'Copy failed';
-        if (message === lastMessage) message += '\u00A0';
-        lastMessage = message;
-        if (tip) tip.textContent = '';
-        void button.offsetWidth;
-        button.setAttribute(ok ? 'data-copied' : 'data-failed', '');
-        if (tip) {
-            requestAnimationFrame(() => {
-                tip.textContent = message;
-            });
-        }
-        timers.set(button, setTimeout(() => {
-            button.removeAttribute('data-copied');
-            button.removeAttribute('data-failed');
-            if (tip) tip.textContent = '';
-        }, 2000));
-    }
-
-    async function copyHash(button, target) {
-        if (!target) return;
-        const text = target.innerText.trim();
-        if (!text) return;
-        try {
-            await navigator.clipboard.writeText(text);
-            report(button, true);
-        } catch {
-            try {
-                if (!legacyCopy(text)) throw new Error('Copy failed');
-                report(button, true);
-            } catch {
-                report(button, false);
-            }
-        }
-    }
-
-    if ('CommandEvent' in window) {
-        document.addEventListener('command', (event) => {
-            if (event.command === '--copy') {
-                copyHash(event.source, event.target);
-            }
-        }, true);
-    } else {
-        document.addEventListener('click', (event) => {
-            const button = event.target.closest('button[command="--copy"]');
-            if (!button) return;
-            const target = document.getElementById(button.getAttribute('commandfor'));
-            if (target) copyHash(button, target);
-        });
-    }
+  }
+  if ('CommandEvent' in window) {
+    document.addEventListener('command', (event) => {
+      if (event.command === '--copy') copyHash(event.source, event.target);
+    }, true);
+  } else {
+    document.addEventListener('click', (event) => {
+      const button = event.target.closest('button[command="--copy"]');
+      if (!button) return;
+      const target = document.getElementById(button.getAttribute('commandfor'));
+      if (target) copyHash(button, target);
+    });
+  }
 })();
 </script>
 {% endblock %}

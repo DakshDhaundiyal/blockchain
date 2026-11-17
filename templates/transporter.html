@@ -1,214 +1,448 @@
 {% extends "base.html" %}
+{% block title %}Transporter Portal — TrustHarvest{% endblock %}
 
-{% block title %}Transport & Logistics Portal - TrustHarvest{% endblock %}
+{% block main_inner %}
+{% set ready_products = [] %}
+{% set shipped_products = [] %}
+{% for p in products %}
+  {% if p.transport_data and p.transport_data|length > 0 %}
+    {% set _ = shipped_products.append(p) %}
+  {% else %}
+    {% set _ = ready_products.append(p) %}
+  {% endif %}
+{% endfor %}
 
-{% block content %}
-<div class="role-transport">
-    <!-- Portal Header -->
-    <div class="th-portal-header mb-3">
-        <div class="th-portal-heading-wrap">
-            <div class="th-portal-icon" aria-hidden="true">
-                <i class="bi bi-truck"></i>
-            </div>
-            <div>
-                <h1 class="th-portal-title">Transport &amp; Cold-Chain Dispatch</h1>
-                <p class="th-portal-sub">Live fleet telemetry, hub handoffs, and refrigerated temperature logging.</p>
-            </div>
-        </div>
-        <a href="{{ url_for('workflow_entry', stage='transport') }}" class="th-btn-outline">
-            <i class="bi bi-diagram-3" aria-hidden="true"></i> Guided Workflow
+<!-- ============ CLEAN SELECTED-BATCH BAR (SHOWS "NO DATA" UNTIL A PRODUCT IS SELECTED) ============ -->
+<section class="tele" aria-label="Selected shipment summary">
+  <div class="tele__in">
+    <div class="tele__top">
+      <div>
+        <div class="tele__eyebrow"><i></i>Transport Portal</div>
+        <h1 class="tele__title">
+          <span id="teleBatchTitle">No batch selected</span>
+          <span class="plate" id="telePlate" hidden></span>
+        </h1>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <span class="tele__alert" id="teleAlert" hidden>
+          <span id="teleAlertText"></span>
+        </span>
+        <button type="button" id="teleClearBtn" class="btn btn--sm" hidden style="border-color:#2E5240;color:#C6D6C8;background:rgba(255,255,255,.04)">
+          Clear
+        </button>
+        <a href="{{ url_for('workflow_entry', stage='transport') }}" class="btn btn--sm" style="border-color:#2E5240;color:#DCE9DA;background:rgba(255,255,255,.06)">
+          Guided Workflow &rarr;
         </a>
+      </div>
     </div>
 
-    <!-- Cold-Chain Telemetry Strip -->
-    {% set ns = namespace(safe_count=0, warn_count=0) %}
-    {% for t in transport_entries %}
-        {% set te = evaluate_temperature(t.temperature) %}
-        {% if 'danger' in te.badge_class or 'warning' in te.badge_class %}
-            {% set ns.warn_count = ns.warn_count + 1 %}
-        {% else %}
-            {% set ns.safe_count = ns.safe_count + 1 %}
-        {% endif %}
-    {% endfor %}
-    <div class="tr-telemetry-strip">
-        <div class="tr-telemetry-tile">
-            <div class="tr-telemetry-icon" aria-hidden="true"><i class="bi bi-geo-alt-fill"></i></div>
-            <div>
-                <div class="th-kpi-value">{{ transport_entries|length }}</div>
-                <div class="th-kpi-label">Checkpoints logged</div>
-            </div>
+    <div class="tele__grid" style="grid-template-columns:minmax(0,1.4fr) minmax(0,1fr) minmax(0,1fr)">
+      <!-- 1. Temperature gauge -->
+      <div>
+        <div class="tele__k">
+          <span>Temperature</span>
+          <b>safe range: 2&ndash;6 &deg;C</b>
         </div>
-        <div class="tr-telemetry-tile">
-            <div class="tr-telemetry-icon is-safe" aria-hidden="true"><i class="bi bi-thermometer-snow"></i></div>
-            <div>
-                <div class="th-kpi-value">{{ ns.safe_count }}</div>
-                <div class="th-kpi-label">Optimal cold-chain</div>
-            </div>
+        <div class="tbar">
+          <div class="tbar__track">
+            <div class="tbar__ticks"></div>
+            <div class="tbar__band" style="left:8%;width:16%" title="Safe cold range: 2°C – 6°C"></div>
+            <div class="tbar__mark" id="tbarMark" hidden style="left:16%"></div>
+          </div>
+          <div class="tbar__axis">
+            <span>0&deg;</span><span>5&deg;</span><span>10&deg;</span><span>15&deg;</span><span>20&deg;</span><span>25&deg;C</span>
+          </div>
         </div>
-        <div class="tr-telemetry-tile">
-            <div class="tr-telemetry-icon {{ 'is-alert' if ns.warn_count > 0 else '' }}" aria-hidden="true"><i class="bi bi-exclamation-triangle"></i></div>
-            <div>
-                <div class="th-kpi-value">{{ ns.warn_count }}</div>
-                <div class="th-kpi-label">Temp alerts</div>
-            </div>
+      </div>
+
+      <!-- 2. Latest temperature reading -->
+      <div>
+        <div class="tele__k"><span>Latest reading</span></div>
+        <div class="tele__num tele__empty" id="teleTemp">No data</div>
+        <div class="tele__s" id="teleTempSub">Click a product on the right</div>
+      </div>
+
+      <!-- 3. Last stop -->
+      <div>
+        <div class="tele__k"><span>Last stop</span></div>
+        <div class="tele__v tele__empty" id="teleLoc">No data</div>
+        <div class="tele__s" id="teleLocSub">&mdash;</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ WORKSPACE: LOG FORM (5) + PRODUCTS (7) ============ -->
+<div class="shell" style="padding-top:22px;padding-bottom:56px">
+  <div class="row g-4" style="align-items:flex-start">
+
+    <!-- LEFT: SIMPLE CHECKPOINT FORM -->
+    <div class="col-lg-5">
+      <form class="panel cpform" method="POST" action="{{ url_for('add_transport_data') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+
+        <div class="panel__hd">
+          <span class="panel__title">Add a transport stop</span>
         </div>
-        <div class="tr-telemetry-tile">
-            <div class="tr-telemetry-icon" aria-hidden="true"><i class="bi bi-shield-check"></i></div>
-            <div>
-                <div class="th-kpi-value">{{ recorded_count|default(0) }} / {{ transport_entries|length }}</div>
-                <div class="th-kpi-label">Anchored on-chain</div>
+
+        <div class="panel__bd">
+          <div class="field">
+            <label class="label" for="tr-product">Batch</label>
+            <select id="tr-product" name="product_id" class="select" required>
+              <option value="" disabled selected>-- Select a product --</option>
+              {% for p in products %}
+              <option value="{{ p.id }}">{{ p.batch_id }} &middot; {{ p.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="field">
+            <label class="label" for="tr-status">Status</label>
+            <select id="tr-status" name="status" class="select" required>
+              <option value="Picked Up from Farm">Picked Up from Farm</option>
+              <option value="In Transit (Cold-Storage)" selected>In Transit (Cold-Storage)</option>
+              <option value="Cross-Dock Hub Inspected">Cross-Dock Hub Inspected</option>
+              <option value="Customs / Ag Inspection Cleared">Customs / Ag Inspection Cleared</option>
+              <option value="Delivered to Distribution Center">Delivered to Distribution Center</option>
+              <option value="Delivered to Retailer">Delivered to Retailer</option>
+            </select>
+          </div>
+
+          <div class="field-row">
+            <div class="field">
+              <label class="label" for="tr-location">Location</label>
+              <input id="tr-location" type="text" name="current_location" class="input" placeholder="e.g. Spokane Cold Hub" required>
             </div>
+            <div class="field">
+              <label class="label" for="tr-vehicle">Vehicle ID</label>
+              <input id="tr-vehicle" type="text" name="vehicle_number" class="input input--mono" placeholder="e.g. TRK-7842" required>
+            </div>
+          </div>
+
+          <div class="field">
+            <label class="label" for="tr-temp">Temperature</label>
+            <input id="tr-temp" type="text" name="temperature" class="input input--mono" placeholder="e.g. 4.0 °C" value="4.0 °C">
+          </div>
+
+          <div class="field" style="margin-bottom:4px">
+            <label class="label" for="tr-notes">Notes (optional)</label>
+            <textarea id="tr-notes" name="notes" class="textarea" rows="2" placeholder="Seal intact, cold storage normal..."></textarea>
+          </div>
+
+          <div class="alertnote" id="trTempAlert" hidden>
+            <span>This temperature is outside the 2&ndash;6 &deg;C safe range and will be flagged on the public check.</span>
+          </div>
         </div>
+
+        <div class="panel__ft">
+          <span class="t-xs">Saved to shipment log</span>
+          <button type="submit" class="btn btn--primary">Save stop</button>
+        </div>
+      </form>
     </div>
 
-    <!-- Full-Width Horizontal Quick-Log Dispatch Console -->
-    <section class="tr-dispatch-card" aria-labelledby="dispatch-heading">
-        <div class="tr-dispatch-head">
-            <div class="d-flex align-items-center gap-3">
-                <div class="tr-telemetry-icon" aria-hidden="true"><i class="bi bi-broadcast-pin"></i></div>
-                <div>
-                    <h2 id="dispatch-heading" class="th-panel-title">Log Transit Checkpoint</h2>
-                    <p class="th-panel-sub">Anchor vehicle location and reefer temperature in one click</p>
-                </div>
-            </div>
-            <span class="th-badge-batch" style="background:#e0f2fe;color:#0369a1;border-color:#bae6fd;">
-                <i class="bi bi-snow2 me-1" aria-hidden="true"></i> Target Cold Corridor: 2°C – 6°C
-            </span>
+    <!-- RIGHT: PRODUCTS READY TO SHIP & ALREADY SHIPPED -->
+    <div class="col-lg-7">
+      <div class="panel">
+        <div class="panel__hd">
+          <div>
+            <span class="panel__title">Products to ship</span>
+            <div class="t-xs" style="margin-top:2px">Click any product to view its details above</div>
+          </div>
+          <div class="shipfilter" role="group" aria-label="Filter products">
+            <button type="button" class="is-active" data-ship-filter="all">All ({{ products|length }})</button>
+            <button type="button" data-ship-filter="ready">Ready ({{ ready_products|length }})</button>
+            <button type="button" data-ship-filter="shipped">Shipped ({{ shipped_products|length }})</button>
+          </div>
         </div>
 
-        <div class="p-4">
-            <form method="POST" action="{{ url_for('add_transport_data') }}">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+        <div class="panel__bd">
+          {% if products %}
 
-                <div class="row g-3 mb-3">
-                    <div class="col-md-4">
-                        <label for="tr-product" class="form-label">Select Shipment Batch</label>
-                        <select id="tr-product" name="product_id" class="form-select" required>
-                            <option value="" disabled selected>-- Select Batch --</option>
-                            {% for p in products %}
-                            <option value="{{ p.id }}">
-                                {{ p.batch_id }} - {{ p.name }} ({{ p.status }})
-                            </option>
-                            {% endfor %}
-                        </select>
+            <!-- READY TO SHIP -->
+            <div class="shipgroup" data-ship-group="ready">
+              <div class="shipgroup__hd">
+                <span>Ready to ship</span>
+                <span>{{ ready_products|length }}</span>
+              </div>
+              {% if ready_products %}
+              <div class="shiplist">
+                {% for p in ready_products %}
+                {% set origin = p.farmer_data.farm_location if p.farmer_data and p.farmer_data.farm_location else (p.farmer.full_name or p.farmer.username) %}
+                <article
+                  class="shipcard"
+                  tabindex="0"
+                  role="button"
+                  aria-pressed="false"
+                  data-select-batch
+                  data-product-id="{{ p.id }}"
+                  data-batch-id="{{ p.batch_id }}"
+                  data-name="{{ p.name }}"
+                  data-quantity="{{ p.quantity }}"
+                  data-origin="{{ origin }}"
+                  data-shipped="false"
+                  data-cp-count="0"
+                  data-warn-count="0"
+                  data-latest-temp=""
+                  data-latest-temp-label=""
+                  data-latest-temp-warn="false"
+                  data-latest-loc=""
+                  data-latest-status=""
+                  data-latest-vehicle=""
+                >
+                  <img class="shipcard__img" src="{{ product_image_url(p.image) }}" alt="{{ p.name }}" width="46" height="46" loading="lazy">
+                  <div class="shipcard__body">
+                    <div class="shipcard__top">
+                      <span class="shipcard__name">{{ p.name }}</span>
+                      <span class="shipcard__id">{{ p.batch_id }}</span>
                     </div>
-
-                    <div class="col-md-4">
-                        <label for="tr-status" class="form-label">Checkpoint Stage</label>
-                        <select id="tr-status" name="status" class="form-select" required>
-                            <option value="Picked Up from Farm">Picked Up from Farm</option>
-                            <option value="In Transit (Cold-Storage)">In Transit (Cold-Storage)</option>
-                            <option value="Cross-Dock Hub Inspected">Cross-Dock Hub Inspected</option>
-                            <option value="Customs / Ag Inspection Cleared">Customs / Ag Inspection Cleared</option>
-                            <option value="Delivered to Distribution Center">Delivered to Distribution Center</option>
-                            <option value="Delivered to Retailer">Delivered to Retailer</option>
-                        </select>
+                    <div class="shipcard__meta">
+                      <span>{{ origin }}</span>
+                      <span>&middot; {{ p.quantity }}</span>
                     </div>
-
-                    <div class="col-md-4">
-                        <label for="tr-location" class="form-label">Location / Facility</label>
-                        <input id="tr-location" type="text" name="current_location" class="form-control" placeholder="e.g. Spokane Regional Cold Hub" required>
+                  </div>
+                  <div class="shipcard__right">
+                    <span class="chip chip--pending chip--sm">Ready to ship</span>
+                    <div class="shipcard__links">
+                      <a href="{{ url_for('verify_batch', batch_id=p.batch_id) }}">View &rarr;</a>
                     </div>
-                </div>
-
-                <div class="row g-3 align-items-end">
-                    <div class="col-sm-6 col-md-2">
-                        <label for="tr-temp" class="form-label">Temperature</label>
-                        <input id="tr-temp" type="text" name="temperature" class="form-control" placeholder="e.g. 3.5 °C" value="4.0 °C">
-                    </div>
-
-                    <div class="col-sm-6 col-md-2">
-                        <label for="tr-vehicle" class="form-label">Vehicle ID</label>
-                        <input id="tr-vehicle" type="text" name="vehicle_number" class="form-control" placeholder="e.g. TRK-7842" required>
-                    </div>
-
-                    <div class="col-md-5">
-                        <label for="tr-notes" class="form-label">Condition Notes</label>
-                        <input id="tr-notes" type="text" name="notes" class="form-control" placeholder="Cold storage intact, seal inspected...">
-                    </div>
-
-                    <div class="col-md-3">
-                        <button type="submit" class="tr-btn-dispatch w-100">
-                            <i class="bi bi-send-check" aria-hidden="true"></i>
-                            <span>Record Checkpoint</span>
-                        </button>
-                    </div>
-                </div>
-            </form>
-        </div>
-    </section>
-
-    <!-- Live Chronological Route Telemetry Feed -->
-    <section class="th-panel-card">
-        <div class="th-panel-head">
-            <div class="th-panel-head-left">
-                <div class="tr-telemetry-icon" aria-hidden="true">
-                    <i class="bi bi-signpost-split"></i>
-                </div>
-                <div>
-                    <h2 class="th-panel-title">Live Route &amp; Cold-Chain Feed</h2>
-                    <p class="th-panel-sub">Chronological transit log across all refrigerated fleet handoffs</p>
-                </div>
-            </div>
-            <span class="th-count-pill" style="background:#0e2a38;">{{ transport_entries|length }} Updates</span>
-        </div>
-
-        <div class="th-panel-body">
-            {% if transport_entries %}
-            <div class="tr-route-timeline">
-                {% for t in transport_entries %}
-                {% set te = evaluate_temperature(t.temperature) %}
-                {% set is_temp_warn = ('danger' in te.badge_class or 'warning' in te.badge_class) %}
-                <article class="tr-route-stop">
-                    <span class="tr-route-dot {% if is_temp_warn %}is-warn{% endif %}" aria-hidden="true"></span>
-
-                    <div class="min-w-0">
-                        <div class="d-flex align-items-center flex-wrap gap-2 mb-1">
-                            <span class="th-badge-batch">{{ t.product.batch_id }}</span>
-                            {% if t.on_chain_hash %}
-                            <span class="th-badge-recorded"><i class="bi bi-check2-circle" aria-hidden="true"></i> Recorded</span>
-                            {% else %}
-                            <span class="th-badge-pending">Pending</span>
-                            {% endif %}
-                        </div>
-                        <div class="th-batch-name">{{ t.status }}</div>
-                        <div class="th-batch-meta">
-                            <i class="bi bi-geo-alt me-1" aria-hidden="true"></i>{{ t.current_location }}
-                            {% if t.timestamp %} &middot; {{ t.timestamp.strftime('%Y-%m-%d %H:%M') }}{% endif %}
-                        </div>
-                        {% if t.notes %}
-                        <div class="small text-muted mt-1">{{ t.notes }}</div>
-                        {% endif %}
-                    </div>
-
-                    <div class="d-flex align-items-center flex-wrap gap-2">
-                        <span class="tr-vehicle-plate">
-                            <i class="bi bi-truck" aria-hidden="true"></i> {{ t.vehicle_number or 'Unspecified' }}
-                        </span>
-                        <span class="tr-temp-gauge {% if is_temp_warn %}is-warn{% endif %}">
-                            <i class="bi bi-thermometer-half" aria-hidden="true"></i> {{ te.label }}
-                        </span>
-                    </div>
-
-                    <div class="th-batch-actions justify-content-md-end">
-                        <a href="{{ url_for('workflow_entry', batch_id=t.product.batch_id, stage='transport') }}" class="th-btn-outline">
-                            <i class="bi bi-diagram-3" aria-hidden="true"></i> Workflow
-                        </a>
-                        <a href="{{ url_for('verify_batch', batch_id=t.product.batch_id) }}" class="th-btn-outline" title="View journey for {{ t.product.batch_id }}">
-                            <i class="bi bi-eye" aria-hidden="true"></i> View
-                        </a>
-                    </div>
+                  </div>
                 </article>
                 {% endfor %}
+              </div>
+              {% else %}
+              <p class="t-xs muted" style="padding:8px 0 4px">No batches waiting for pickup.</p>
+              {% endif %}
             </div>
-            {% else %}
-            <div class="text-center py-5 text-muted">
-                <i class="bi bi-truck fs-1 d-block mb-2 opacity-50" aria-hidden="true"></i>
-                <div class="fw-semibold text-dark mb-1">No transport checkpoints logged yet</div>
-                <div class="small">Use the dispatch console above to record your first cold-chain checkpoint.</div>
+
+            <!-- ALREADY SHIPPED -->
+            <div class="shipgroup" data-ship-group="shipped">
+              <div class="shipgroup__hd">
+                <span>Already shipped</span>
+                <span>{{ shipped_products|length }}</span>
+              </div>
+              {% if shipped_products %}
+              <div class="shiplist">
+                {% for p in shipped_products %}
+                {% set cps = p.transport_data %}
+                {% set latest_cp = cps[-1] %}
+                {% set latest_te = evaluate_temperature(latest_cp.temperature) %}
+                {% set latest_is_warn = ('danger' in latest_te.badge_class or 'warning' in latest_te.badge_class) %}
+                {% set cns = namespace(warn=0) %}
+                {% for cp in cps %}
+                  {% set cte = evaluate_temperature(cp.temperature) %}
+                  {% if 'danger' in cte.badge_class or 'warning' in cte.badge_class %}
+                    {% set cns.warn = cns.warn + 1 %}
+                  {% endif %}
+                {% endfor %}
+                {% set origin = p.farmer_data.farm_location if p.farmer_data and p.farmer_data.farm_location else (p.farmer.full_name or p.farmer.username) %}
+                <article
+                  class="shipcard"
+                  tabindex="0"
+                  role="button"
+                  aria-pressed="false"
+                  data-select-batch
+                  data-product-id="{{ p.id }}"
+                  data-batch-id="{{ p.batch_id }}"
+                  data-name="{{ p.name }}"
+                  data-quantity="{{ p.quantity }}"
+                  data-origin="{{ origin }}"
+                  data-shipped="true"
+                  data-cp-count="{{ cps|length }}"
+                  data-warn-count="{{ cns.warn }}"
+                  data-latest-temp="{{ latest_cp.temperature or 'Ambient' }}"
+                  data-latest-temp-label="{{ latest_te.label }}"
+                  data-latest-temp-warn="{{ 'true' if latest_is_warn else 'false' }}"
+                  data-latest-loc="{{ latest_cp.current_location }}"
+                  data-latest-status="{{ latest_cp.status }}"
+                  data-latest-vehicle="{{ latest_cp.vehicle_number or '' }}"
+                >
+                  <img class="shipcard__img" src="{{ product_image_url(p.image) }}" alt="{{ p.name }}" width="46" height="46" loading="lazy">
+                  <div class="shipcard__body">
+                    <div class="shipcard__top">
+                      <span class="shipcard__name">{{ p.name }}</span>
+                      <span class="shipcard__id">{{ p.batch_id }}</span>
+                    </div>
+                    <div class="shipcard__meta">
+                      <span>{{ latest_cp.current_location }}</span>
+                      <span>&middot; {{ cps|length }} stop{{ '' if cps|length == 1 else 's' }}</span>
+                    </div>
+                  </div>
+                  <div class="shipcard__right">
+                    {% if latest_is_warn %}
+                      <span class="chip chip--bad chip--sm"><span class="chip__dot"></span>{{ latest_cp.temperature or 'Warm' }}</span>
+                    {% else %}
+                      <span class="chip chip--ok chip--sm"><span class="chip__dot"></span>{{ latest_cp.temperature or 'Shipped' }}</span>
+                    {% endif %}
+                    <div class="shipcard__links">
+                      <a href="{{ url_for('verify_batch', batch_id=p.batch_id) }}">View &rarr;</a>
+                    </div>
+                  </div>
+                </article>
+                {% endfor %}
+              </div>
+              {% else %}
+              <p class="t-xs muted" style="padding:8px 0 4px">No shipped batches yet.</p>
+              {% endif %}
             </div>
-            {% endif %}
+
+          {% else %}
+          <div style="padding:32px 16px;text-align:center" class="t-sm muted">
+            No products available yet.
+          </div>
+          {% endif %}
         </div>
-    </section>
+      </div>
+    </div>
+
+  </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  var cards = Array.from(document.querySelectorAll("[data-select-batch]"));
+  var productSelect = document.getElementById("tr-product");
+  var vehicleInput = document.getElementById("tr-vehicle");
+  var clearBtn = document.getElementById("teleClearBtn");
+
+  var teleBatchTitle = document.getElementById("teleBatchTitle");
+  var telePlate = document.getElementById("telePlate");
+  var teleAlert = document.getElementById("teleAlert");
+  var teleAlertText = document.getElementById("teleAlertText");
+  var tbarMark = document.getElementById("tbarMark");
+  var teleTemp = document.getElementById("teleTemp");
+  var teleTempSub = document.getElementById("teleTempSub");
+  var teleLoc = document.getElementById("teleLoc");
+  var teleLocSub = document.getElementById("teleLocSub");
+
+  var selectedProductId = null;
+
+  function clearTelemetry() {
+    selectedProductId = null;
+    cards.forEach(function (c) {
+      c.classList.remove("is-selected");
+      c.setAttribute("aria-pressed", "false");
+    });
+    if (productSelect) productSelect.value = "";
+    if (clearBtn) clearBtn.hidden = true;
+    if (teleBatchTitle) teleBatchTitle.textContent = "No batch selected";
+    if (telePlate) { telePlate.hidden = true; telePlate.textContent = ""; }
+    if (teleAlert) teleAlert.hidden = true;
+    if (tbarMark) { tbarMark.hidden = true; tbarMark.classList.remove("tbar__mark--warn"); }
+
+    if (teleTemp) { teleTemp.textContent = "No data"; teleTemp.className = "tele__num tele__empty"; }
+    if (teleTempSub) teleTempSub.textContent = "Click a product on the right";
+    if (teleLoc) { teleLoc.textContent = "No data"; teleLoc.className = "tele__v tele__empty"; }
+    if (teleLocSub) teleLocSub.textContent = "\u2014";
+  }
+
+  function applyBatchCard(card, syncSelect) {
+    if (!card) { clearTelemetry(); return; }
+    var d = card.dataset;
+    selectedProductId = d.productId;
+
+    cards.forEach(function (c) {
+      var active = c === card;
+      c.classList.toggle("is-selected", active);
+      c.setAttribute("aria-pressed", active ? "true" : "false");
+    });
+
+    if (syncSelect !== false && productSelect) productSelect.value = d.productId;
+    if (vehicleInput && d.latestVehicle) vehicleInput.value = d.latestVehicle;
+    if (clearBtn) clearBtn.hidden = false;
+
+    if (teleBatchTitle) teleBatchTitle.textContent = d.name + " (" + d.batchId + ")";
+    if (telePlate) {
+      if (d.latestVehicle) { telePlate.textContent = d.latestVehicle; telePlate.hidden = false; }
+      else { telePlate.hidden = true; telePlate.textContent = ""; }
+    }
+
+    var warnCount = parseInt(d.warnCount || "0", 10);
+    if (teleAlert && teleAlertText) {
+      if (warnCount > 0) {
+        teleAlertText.textContent = warnCount + " warm reading" + (warnCount === 1 ? "" : "s");
+        teleAlert.hidden = false;
+      } else {
+        teleAlert.hidden = true;
+      }
+    }
+
+    if (d.shipped === "true") {
+      var isWarn = d.latestTempWarn === "true";
+      if (teleTemp) {
+        teleTemp.textContent = d.latestTemp || "Ambient";
+        teleTemp.className = isWarn ? "tele__num tele__num--warn" : "tele__num";
+      }
+      if (teleTempSub) teleTempSub.textContent = d.latestTempLabel || d.latestStatus;
+
+      if (teleLoc) { teleLoc.textContent = d.latestLoc || "In transit"; teleLoc.className = "tele__v"; }
+      if (teleLocSub) teleLocSub.textContent = d.cpCount + " stop" + (d.cpCount === "1" ? "" : "s") + " \u00b7 " + d.latestStatus;
+
+      if (tbarMark) {
+        var m = (d.latestTemp || "").match(/-?\d+(\.\d+)?/);
+        if (m) {
+          var pct = Math.max(2, Math.min(98, (parseFloat(m[0]) / 25) * 100));
+          tbarMark.style.left = pct.toFixed(1) + "%";
+          tbarMark.classList.toggle("tbar__mark--warn", isWarn);
+          tbarMark.hidden = false;
+        } else {
+          tbarMark.hidden = true;
+        }
+      }
+    } else {
+      if (teleTemp) { teleTemp.textContent = "No data"; teleTemp.className = "tele__num tele__empty"; }
+      if (teleTempSub) teleTempSub.textContent = "Ready to ship \u00b7 no reading yet";
+      if (teleLoc) { teleLoc.textContent = "Waiting at farm"; teleLoc.className = "tele__v"; }
+      if (teleLocSub) teleLocSub.textContent = d.origin || "Registered Farm";
+      if (tbarMark) tbarMark.hidden = true;
+    }
+  }
+
+  cards.forEach(function (card) {
+    function toggle(e) {
+      if (e.target && e.target.closest("a")) return;
+      if (selectedProductId === card.dataset.productId) clearTelemetry();
+      else applyBatchCard(card, true);
+    }
+    card.addEventListener("click", toggle);
+    card.addEventListener("keydown", function (e) {
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggle(e); }
+    });
+  });
+
+  if (productSelect) {
+    productSelect.addEventListener("change", function () {
+      var match = cards.find(function (c) { return c.dataset.productId === productSelect.value; });
+      if (match) applyBatchCard(match, false);
+      else clearTelemetry();
+    });
+  }
+  if (clearBtn) clearBtn.addEventListener("click", clearTelemetry);
+
+  var filterBtns = document.querySelectorAll("[data-ship-filter]");
+  var groups = document.querySelectorAll("[data-ship-group]");
+  filterBtns.forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var mode = btn.getAttribute("data-ship-filter");
+      filterBtns.forEach(function (b) { b.classList.toggle("is-active", b === btn); });
+      groups.forEach(function (g) {
+        g.hidden = (mode !== "all" && g.getAttribute("data-ship-group") !== mode);
+      });
+    });
+  });
+
+  var tempInput = document.getElementById("tr-temp");
+  var alertBox = document.getElementById("trTempAlert");
+  if (tempInput && alertBox) {
+    var check = function () {
+      var m = (tempInput.value || "").match(/-?\d+(\.\d+)?/);
+      alertBox.hidden = !m || (parseFloat(m[0]) >= 2 && parseFloat(m[0]) <= 6);
+    };
+    tempInput.addEventListener("input", check);
+    check();
+  }
+});
+</script>
 {% endblock %}

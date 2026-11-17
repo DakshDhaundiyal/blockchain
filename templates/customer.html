@@ -1,406 +1,301 @@
 {% extends "base.html" %}
-
-{% block title %}Customer Portal - TrustHarvest Traceability{% endblock %}
+{% block title %}Verify Produce — TrustHarvest{% endblock %}
 
 {% block content %}
-<!-- Bright Market Daylight Consumer Hero + Integrated Scanner -->
-<div class="row justify-content-center">
-    <div class="col-lg-10">
-        <section class="cs-hero-shell">
-            <div class="text-center mb-4">
-                <span class="th-badge-recorded mb-2">
-                    <i class="bi bi-shield-check" aria-hidden="true"></i> Consumer Food Safety Check
-                </span>
-                <h1 class="cs-hero-title mb-2">Check Where Your Food Came From</h1>
-                <p class="text-muted mb-0 mx-auto" style="max-width:560px;font-size:15px;">
-                    Scan any grocery sticker or type the Batch Code to verify the farm, check cold-storage temperatures, and confirm nothing was tampered with.
-                </p>
-            </div>
+<div style="max-width:760px;margin:0 auto">
 
-            <div class="th-tablist justify-content-center" role="tablist" aria-label="Produce verification methods">
-                <button type="button" class="th-tab-btn" id="tab-batch-id" role="tab" aria-selected="true">
-                    <i class="bi bi-search me-1" aria-hidden="true"></i> Type Batch Code
-                </button>
-                <button type="button" class="th-tab-btn" id="tab-qr-scan" role="tab" aria-selected="false">
-                    <i class="bi bi-qr-code-scan me-1" aria-hidden="true"></i> Scan Package QR
-                </button>
-            </div>
+  <!-- ============ SIMPLE HEADER ============ -->
+  <section class="verify-hero" style="padding-top:16px;max-width:100%" aria-labelledby="verify-hero-title">
+    <p class="eyebrow">Consumer food check</p>
+    <h1 id="verify-hero-title">Check where your food came from.</h1>
+    <p>Type the Batch ID from the label, or scan the QR code with your camera or a photo.</p>
+  </section>
 
-            <!-- Panel 1: Batch ID Lookup -->
-            <div id="panel-batch-id" role="tabpanel" aria-labelledby="tab-batch-id" class="mt-3">
-                <form action="{{ url_for('customer_dashboard') }}" method="GET" class="mx-auto" style="max-width:680px;">
-                    <label for="customer-batch-input" class="form-label small fw-semibold text-muted">Enter the code printed on the produce sticker or crate</label>
-                    <div class="input-group input-group-lg">
-                        <span class="input-group-text bg-white" aria-hidden="true"><i class="bi bi-search text-success"></i></span>
-                        <input
-                            type="text"
-                            id="customer-batch-input"
-                            name="batch_id"
-                            class="form-control"
-                            placeholder="e.g. TH-APPLES-001"
-                            required
-                            value="{{ request.args.get('batch_id', '') }}"
-                        >
-                        <button class="th-btn-forest px-4" type="submit" style="border-top-left-radius:0;border-bottom-left-radius:0;">
-                            Check Food
-                        </button>
-                    </div>
-                </form>
+  <!-- ============ 2 SIMPLE TABS (SHOW ONE TOOL AT A TIME) ============ -->
+  <div class="vtabs" role="tablist" aria-label="Produce verification methods">
+    <button type="button" id="tab-batch-id" role="tab" aria-selected="true" aria-controls="panel-batch-id">
+      Enter Batch ID
+    </button>
+    <button type="button" id="tab-qr-scan" role="tab" aria-selected="false" aria-controls="panel-qr-scan">
+      Scan QR Code
+    </button>
+  </div>
 
-                {% if products %}
-                <div class="d-flex align-items-center justify-content-center flex-wrap gap-2 mt-3 small">
-                    <span class="text-muted fw-semibold">Quick sample check:</span>
-                    {% for sample in products[:3] %}
-                    <a href="{{ url_for('verify_batch', batch_id=sample.batch_id) }}" class="th-btn-outline py-1 px-3" style="border-radius:999px;font-size:12.5px;">
-                        <i class="bi bi-arrow-right-circle text-success" aria-hidden="true"></i>
-                        <span>{{ sample.name }}</span>
-                        <span class="font-monospace text-muted">({{ sample.batch_id }})</span>
-                    </a>
-                    {% endfor %}
-                </div>
-                {% endif %}
-            </div>
-
-            <!-- Panel 2: QR Scanner (Webcam + File Upload + Demo QR Decode) -->
-            <div id="panel-qr-scan" role="tabpanel" aria-labelledby="tab-qr-scan" hidden class="mt-3">
-                <div class="row g-3 align-items-stretch">
-                    <div class="col-md-6 text-center">
-                        <div class="p-3 rounded-4 border h-100 d-flex flex-column justify-content-between" style="background:var(--neutral-50);">
-                            <div>
-                                <div class="small fw-bold text-dark mb-2">Option A: Use Webcam</div>
-                                <div id="qr-reader" class="qr-reader-frame p-2" style="min-height: 190px;">
-                                    <div id="qr-placeholder" class="py-4 text-muted small">
-                                        <i class="bi bi-camera-video fs-1 d-block mb-2 text-success opacity-75" aria-hidden="true"></i>
-                                        Hold a QR code in front of your camera to auto-open its trace page.
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="d-flex justify-content-center gap-2 mt-3">
-                                <button type="button" id="btn-start-cam" class="th-btn-forest py-2 px-3" style="font-size:13px;">
-                                    <i class="bi bi-camera-video" aria-hidden="true"></i> Start Webcam
-                                </button>
-                                <button type="button" id="btn-stop-cam" class="th-btn-outline" hidden>
-                                    <i class="bi bi-stop-circle" aria-hidden="true"></i> Stop Camera
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="col-md-6">
-                        <div class="p-3 rounded-4 border h-100" style="background:var(--neutral-50);">
-                            <div class="small fw-bold text-dark mb-1">Option B: Upload a QR Image</div>
-                            <p class="small text-muted mb-3">
-                                Upload any QR code photo or PNG file to open its food journey immediately.
-                            </p>
-
-                            <div class="mb-3">
-                                <label for="qr-file-input" class="form-label small fw-semibold">Upload QR Image (.png / .jpg)</label>
-                                <input type="file" id="qr-file-input" class="form-control form-control-sm" accept="image/*">
-                            </div>
-
-                            {% if demo_mode and products %}
-                            <div class="small fw-semibold mb-1">Demo Mode: Instant 1-click QR test</div>
-                            <button
-                                type="button"
-                                id="btn-demo-qr-scan"
-                                class="th-btn-outline w-100 py-2"
-                                data-qr-url="{{ url_for('batch_qr_png', batch_id=products[0].batch_id) }}"
-                                data-batch-id="{{ products[0].batch_id }}"
-                            >
-                                <i class="bi bi-magic text-success" aria-hidden="true"></i> Demo Decode QR: {{ products[0].batch_id }}
-                            </button>
-                            {% endif %}
-
-                            <div id="qr-scan-status" class="mt-3 small" aria-live="polite"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-    </div>
-</div>
-
-<!-- 3-Step Shopper Reassurance Bar -->
-<div class="cs-trust-strip">
-    <div class="cs-trust-pill">
-        <div class="cs-trust-icon" aria-hidden="true"><i class="bi bi-flower1"></i></div>
-        <div>
-            <div class="fw-bold small" style="color:var(--green-900);">1. Verified Farm Origin</div>
-            <div class="text-muted" style="font-size:12px;">Organic claims sealed at harvest</div>
+  <!-- TAB 1: ENTER BATCH ID -->
+  <div id="panel-batch-id" role="tabpanel" aria-labelledby="tab-batch-id" class="panel" style="margin-top:14px">
+    <div class="panel__bd" style="padding:20px">
+      <form action="{{ url_for('customer_dashboard') }}" method="GET">
+        <label class="label" for="customer-batch-input">Batch ID</label>
+        <div class="hero__actions" style="max-width:100%">
+          <input
+            type="text"
+            id="customer-batch-input"
+            name="batch_id"
+            class="input input--lg input--mono"
+            placeholder="e.g. {{ products[0].batch_id if products else 'TH-APPLES-001' }}"
+            required
+            autocomplete="off"
+            spellcheck="false"
+            value="{{ request.args.get('batch_id', '') }}"
+          >
+          <button type="submit" class="btn btn--primary btn--lg">Check Food</button>
         </div>
-    </div>
-    <div class="cs-trust-pill">
-        <div class="cs-trust-icon" aria-hidden="true"><i class="bi bi-thermometer-snow"></i></div>
-        <div>
-            <div class="fw-bold small" style="color:var(--green-900);">2. Cold-Chain Monitored</div>
-            <div class="text-muted" style="font-size:12px;">Every truck temperature checkpoint checked</div>
-        </div>
-    </div>
-    <div class="cs-trust-pill">
-        <div class="cs-trust-icon" aria-hidden="true"><i class="bi bi-shield-check"></i></div>
-        <div>
-            <div class="fw-bold small" style="color:var(--green-900);">3. Instant Tamper Alert</div>
-            <div class="text-muted" style="font-size:12px;">See exactly if &amp; where records changed</div>
-        </div>
-    </div>
-</div>
+      </form>
 
-<!-- Magazine Food Discovery Grid -->
-<div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
-    <div>
-        <h2 class="h4 fw-bold mb-0" style="color:var(--green-900);"><i class="bi bi-basket text-success me-2" aria-hidden="true"></i>Browse Tracked Foods</h2>
-        <p class="text-muted small mb-0">Tap any produce card below to read its complete farm-to-shelf safety report.</p>
+      {% if products %}
+      <div style="margin-top:14px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <span class="t-xs">Try a sample:</span>
+        {% for sample in products[:3] %}
+        <a href="{{ url_for('verify_batch', batch_id=sample.batch_id) }}" class="tag mono" style="font-size:12px">
+          {{ sample.batch_id }}
+        </a>
+        {% endfor %}
+      </div>
+      {% endif %}
     </div>
-    <span class="th-count-pill">{{ products|length }} Item(s) Listed</span>
-</div>
+  </div>
 
-{% if products %}
-<div class="cs-food-grid mb-4">
-    {% for p in products %}
-    {% set vst = (batch_statuses.get(p.batch_id) if batch_statuses is defined else none) %}
-    <article class="cs-food-card">
-        <div class="cs-food-media">
-            <img src="{{ product_image_url(p.image) }}" alt="{{ p.name }}" loading="lazy">
-            <div class="cs-food-badge-top">
-                {% if vst %}
-                    {% if vst.status == 'verified' %}
-                        <span class="th-badge-recorded" style="background:rgba(255,255,255,0.95);"><i class="bi bi-shield-check" aria-hidden="true"></i> {{ vst.label }}</span>
-                    {% elif vst.status == 'tampered' %}
-                        <span class="badge bg-danger rounded-pill px-3 py-2"><i class="bi bi-exclamation-octagon me-1" aria-hidden="true"></i>{{ vst.label }}</span>
-                    {% else %}
-                        <span class="badge bg-warning text-dark rounded-pill px-3 py-2"><i class="bi bi-question-circle me-1" aria-hidden="true"></i>{{ vst.label }}</span>
-                    {% endif %}
-                {% else %}
-                    <span class="th-badge-recorded" style="background:rgba(255,255,255,0.95);">{{ p.status }}</span>
-                {% endif %}
+  <!-- TAB 2: SCAN OR UPLOAD QR -->
+  <div id="panel-qr-scan" role="tabpanel" aria-labelledby="tab-qr-scan" class="panel" style="margin-top:14px" hidden>
+    <div class="panel__bd" style="padding:20px">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <div style="font-size:14px;font-weight:600;margin-bottom:4px">Use camera</div>
+          <div class="scanner" style="margin-top:8px">
+            <span class="scanner__frame" aria-hidden="true"></span>
+            <div id="qr-reader">
+              <div id="qr-placeholder" class="scanner__lbl">Click &ldquo;Start camera&rdquo; and point at a QR label.</div>
             </div>
-            {% if p.retail_data and p.retail_data.price %}
-            <span class="cs-food-price-pill">${{ '%.2f'|format(p.retail_data.price) }}</span>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:10px">
+            <button type="button" id="btn-start-cam" class="btn btn--forest btn--sm" style="flex:1">Start camera</button>
+            <button type="button" id="btn-stop-cam" class="btn btn--sm" hidden>Stop camera</button>
+          </div>
+        </div>
+
+        <div class="col-md-6">
+          <div style="font-size:14px;font-weight:600;margin-bottom:4px">Or upload a QR photo</div>
+          <label class="drop" for="qr-file-input" style="margin-top:8px">
+            <div class="drop__t">Choose QR image (.png / .jpg)</div>
+            <div class="drop__s">Reads the QR code right in your browser</div>
+            <input type="file" id="qr-file-input" class="visually-hidden" accept="image/*">
+          </label>
+
+          {% if demo_mode and products %}
+          <div style="margin-top:12px">
+            <button
+              type="button"
+              id="btn-demo-qr-scan"
+              class="btn btn--sm btn--block"
+              data-qr-url="{{ url_for('batch_qr_png', batch_id=products[0].batch_id) }}"
+              data-batch-id="{{ products[0].batch_id }}"
+            >
+              Demo: scan {{ products[0].batch_id }} QR
+            </button>
+          </div>
+          {% endif %}
+
+          <div id="qr-scan-status" class="t-xs" style="margin-top:12px" aria-live="polite"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ SIMPLE LIST OF TRACKED FOODS ============ -->
+  <section style="margin-top:34px" aria-labelledby="tracked-title">
+    <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px">
+      <h2 class="t-h2" id="tracked-title" style="font-size:22px">Tracked foods</h2>
+      <span class="t-xs">{{ products|length }} available</span>
+    </div>
+
+    {% if products %}
+    <div class="shiplist" style="margin-top:0">
+      {% for p in products %}
+      {% set vst = (batch_statuses.get(p.batch_id) if batch_statuses is defined else none) %}
+      <a href="{{ url_for('verify_batch', batch_id=p.batch_id) }}" class="shipcard" style="text-decoration:none">
+        <img class="shipcard__img" src="{{ product_image_url(p.image) }}" alt="{{ p.name }}" width="46" height="46" loading="lazy">
+        <div class="shipcard__body">
+          <div class="shipcard__top">
+            <span class="shipcard__name">{{ p.name }}</span>
+            <span class="shipcard__id">{{ p.batch_id }}</span>
+          </div>
+          <div class="shipcard__meta">
+            <span>{{ p.farmer_data.farm_location if p.farmer_data and p.farmer_data.farm_location else (p.farmer.full_name or p.farmer.username) }}</span>
+            {% if p.retail_data and p.retail_data.store_name %}
+            <span>&middot; {{ p.retail_data.store_name }}</span>
             {% endif %}
+          </div>
         </div>
-
-        <div class="cs-food-body">
-            <div>
-                <span class="th-badge-batch">{{ p.batch_id }}</span>
-                <h3 class="h5 fw-bold mb-1" style="color:var(--green-900);">{{ p.name }}</h3>
-                <div class="small text-muted">{{ p.farming_method }}</div>
-            </div>
-
-            <ul class="cs-food-meta-list">
-                <li>
-                    <i class="bi bi-geo-alt text-success me-1" aria-hidden="true"></i>
-                    <strong>Grown at:</strong> {{ p.farmer_data.farm_location if p.farmer_data and p.farmer_data.farm_location else (p.farmer.full_name or p.farmer.username) }}
-                </li>
-                <li>
-                    <i class="bi bi-calendar3 text-muted me-1" aria-hidden="true"></i>
-                    <strong>Packed:</strong> {{ p.packaging_date }} ({{ p.quantity }})
-                </li>
-                {% if vst and vst.latest_temp %}
-                <li>
-                    <i class="bi bi-thermometer-half {{ 'text-danger' if vst.latest_temp.status == 'breach' else 'text-primary' }} me-1" aria-hidden="true"></i>
-                    <strong>Cold Storage:</strong> {{ vst.latest_temp.label }}
-                </li>
-                {% endif %}
-                <li>
-                    <i class="bi bi-shop text-warning-emphasis me-1" aria-hidden="true"></i>
-                    <strong>Store:</strong>
-                    {% if p.retail_data and p.retail_data.store_name %}
-                        {{ p.retail_data.store_name }}
-                    {% else %}
-                        <span class="text-muted">Not in store yet</span>
-                    {% endif %}
-                </li>
-            </ul>
+        <div class="shipcard__right">
+          {% if vst %}
+            {% if vst.status == 'verified' %}
+              <span class="chip chip--ok chip--sm"><span class="chip__dot"></span>{{ vst.label }}</span>
+            {% elif vst.status == 'tampered' %}
+              <span class="chip chip--bad chip--sm"><span class="chip__dot"></span>{{ vst.label }}</span>
+            {% else %}
+              <span class="chip chip--wait chip--sm"><span class="chip__dot"></span>{{ vst.label }}</span>
+            {% endif %}
+          {% else %}
+            <span class="chip chip--neutral chip--sm">{{ p.status }}</span>
+          {% endif %}
+          <span class="t-xs" style="color:var(--forest);font-weight:600">Check &rarr;</span>
         </div>
+      </a>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="panel">
+      <div class="panel__bd t-sm muted" style="text-align:center;padding:28px">
+        No foods registered yet.
+      </div>
+    </div>
+    {% endif %}
+  </section>
 
-        <div class="cs-food-footer">
-            <a href="{{ url_for('verify_batch', batch_id=p.batch_id) }}" class="th-btn-forest py-2 px-3 flex-grow-1" style="font-size:13.5px;">
-                <i class="bi bi-shield-check" aria-hidden="true"></i> Check Food Story
-            </a>
-            <a href="{{ url_for('batch_qr_png', batch_id=p.batch_id, download=1) }}" download="qr_{{ p.batch_id }}.png" class="th-btn-icon" aria-label="Download QR code for {{ p.batch_id }}">
-                <i class="bi bi-qr-code" aria-hidden="true"></i>
-            </a>
-        </div>
-    </article>
-    {% endfor %}
 </div>
-{% else %}
-<div class="th-panel-card p-5 text-center text-muted mb-4">
-    No produce batches available right now.
-</div>
-{% endif %}
 {% endblock %}
 
 {% block scripts %}
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <script>
 document.addEventListener("DOMContentLoaded", function () {
-    const tabs = Array.from(document.querySelectorAll('[role="tab"]'));
-    const panels = {
-        "tab-batch-id": document.getElementById("panel-batch-id"),
-        "tab-qr-scan": document.getElementById("panel-qr-scan"),
-    };
+  var tabs = Array.from(document.querySelectorAll('[role="tab"]'));
+  var panels = {
+    "tab-batch-id": document.getElementById("panel-batch-id"),
+    "tab-qr-scan": document.getElementById("panel-qr-scan")
+  };
 
-    function activateTab(selectedTab) {
-        tabs.forEach((t) => {
-            const isSelected = t === selectedTab;
-            t.setAttribute("aria-selected", String(isSelected));
-            t.tabIndex = isSelected ? 0 : -1;
-            const p = panels[t.id];
-            if (p) p.hidden = !isSelected;
-        });
-        if (selectedTab.id !== "tab-qr-scan") {
-            stopWebcamScanner();
-        }
-    }
-
-    tabs.forEach((tab, idx) => {
-        tab.tabIndex = tab.getAttribute("aria-selected") === "true" ? 0 : -1;
-        tab.addEventListener("click", () => activateTab(tab));
-        tab.addEventListener("keydown", (e) => {
-            let nextIdx = null;
-            if (e.key === "ArrowRight") nextIdx = (idx + 1) % tabs.length;
-            else if (e.key === "ArrowLeft") nextIdx = (idx - 1 + tabs.length) % tabs.length;
-            else if (e.key === "Home") nextIdx = 0;
-            else if (e.key === "End") nextIdx = tabs.length - 1;
-            if (nextIdx !== null) {
-                e.preventDefault();
-                activateTab(tabs[nextIdx]);
-                tabs[nextIdx].focus();
-            }
-        });
+  function activateTab(selectedTab) {
+    tabs.forEach(function (t) {
+      var on = t === selectedTab;
+      t.setAttribute("aria-selected", String(on));
+      t.tabIndex = on ? 0 : -1;
+      if (panels[t.id]) panels[t.id].hidden = !on;
     });
+    if (selectedTab.id !== "tab-qr-scan") stopWebcamScanner();
+  }
 
-    if (window.location.hash === "#scan") {
-        const scanTab = document.getElementById("tab-qr-scan");
-        if (scanTab) activateTab(scanTab);
+  tabs.forEach(function (tab, idx) {
+    tab.tabIndex = tab.getAttribute("aria-selected") === "true" ? 0 : -1;
+    tab.addEventListener("click", function () { activateTab(tab); });
+    tab.addEventListener("keydown", function (e) {
+      var nextIdx = null;
+      if (e.key === "ArrowRight") nextIdx = (idx + 1) % tabs.length;
+      else if (e.key === "ArrowLeft") nextIdx = (idx - 1 + tabs.length) % tabs.length;
+      if (nextIdx !== null) {
+        e.preventDefault();
+        activateTab(tabs[nextIdx]);
+        tabs[nextIdx].focus();
+      }
+    });
+  });
+
+  if (window.location.hash === "#scan") {
+    var scanTab = document.getElementById("tab-qr-scan");
+    if (scanTab) activateTab(scanTab);
+  }
+
+  var statusEl = document.getElementById("qr-scan-status");
+  var placeholderEl = document.getElementById("qr-placeholder");
+  var startBtn = document.getElementById("btn-start-cam");
+  var stopBtn = document.getElementById("btn-stop-cam");
+  var fileInput = document.getElementById("qr-file-input");
+  var demoBtn = document.getElementById("btn-demo-qr-scan");
+  var html5Qr = null;
+  var cameraActive = false;
+
+  function setStatus(text, tone) {
+    if (!statusEl) return;
+    statusEl.style.color = tone === "error" ? "var(--bad-ink)" : (tone === "success" ? "var(--ok-ink)" : "var(--muted)");
+    statusEl.style.fontWeight = tone === "info" ? "400" : "600";
+    statusEl.textContent = text;
+  }
+
+  function handleDecodedText(decodedText) {
+    var match = String(decodedText).match(/\/verify\/([A-Za-z0-9_-]+)/) || String(decodedText).match(/(TH-[A-Za-z0-9_-]+)/);
+    var batchId = match ? match[1] : String(decodedText).trim();
+    setStatus("Found " + batchId + ". Opening...", "success");
+    stopWebcamScanner();
+    setTimeout(function () {
+      window.location.href = "/verify/" + encodeURIComponent(batchId);
+    }, 500);
+  }
+
+  function getScanner() {
+    if (!window.Html5Qrcode) {
+      setStatus("QR scanner unavailable offline. Use Enter Batch ID.", "error");
+      return null;
     }
+    if (!html5Qr) html5Qr = new Html5Qrcode("qr-reader");
+    return html5Qr;
+  }
 
-    const statusEl = document.getElementById("qr-scan-status");
-    const placeholderEl = document.getElementById("qr-placeholder");
-    const startBtn = document.getElementById("btn-start-cam");
-    const stopBtn = document.getElementById("btn-stop-cam");
-    const fileInput = document.getElementById("qr-file-input");
-    const demoBtn = document.getElementById("btn-demo-qr-scan");
-    let html5Qr = null;
-    let cameraActive = false;
-
-    function setStatus(html, tone) {
-        if (!statusEl) return;
-        const cls = tone === "error" ? "text-danger fw-semibold" : (tone === "success" ? "text-success fw-semibold" : "text-muted");
-        statusEl.className = "mt-3 small " + cls;
-        statusEl.innerHTML = html;
+  async function stopWebcamScanner() {
+    if (html5Qr && cameraActive) {
+      try { await html5Qr.stop(); } catch (_) {}
+      cameraActive = false;
     }
+    if (stopBtn) stopBtn.hidden = true;
+    if (startBtn) startBtn.hidden = false;
+    if (placeholderEl) placeholderEl.hidden = false;
+  }
 
-    function handleDecodedText(decodedText) {
-        const match = String(decodedText).match(/\/verify\/([A-Za-z0-9_-]+)/) || String(decodedText).match(/(TH-[A-Za-z0-9_-]+)/);
-        const batchId = match ? match[1] : String(decodedText).trim();
-        if (statusEl) {
-            statusEl.className = "mt-3 small text-success fw-semibold";
-            statusEl.replaceChildren();
-            const icon = document.createElement("i");
-            icon.className = "bi bi-check-circle-fill me-1";
-            const msg = document.createTextNode(" Decoded: ");
-            const code = document.createElement("code");
-            code.textContent = String(decodedText);
-            const tail = document.createTextNode(". Redirecting to verification...");
-            statusEl.append(icon, msg, code, tail);
-        }
-        stopWebcamScanner();
-        setTimeout(() => {
-            window.location.href = `/verify/${encodeURIComponent(batchId)}`;
-        }, 650);
-    }
-
-    function getScanner() {
-        if (!window.Html5Qrcode) {
-            setStatus("QR scanner library unavailable offline. Use Batch ID Lookup tab.", "error");
-            return null;
-        }
-        if (!html5Qr) {
-            html5Qr = new Html5Qrcode("qr-reader");
-        }
-        return html5Qr;
-    }
-
-    async function stopWebcamScanner() {
-        if (html5Qr && cameraActive) {
-            try {
-                await html5Qr.stop();
-            } catch (_) {}
-            cameraActive = false;
-        }
-        if (stopBtn) stopBtn.hidden = true;
-        if (startBtn) startBtn.hidden = false;
+  if (startBtn) {
+    startBtn.addEventListener("click", async function () {
+      var scanner = getScanner();
+      if (!scanner) return;
+      try {
+        if (placeholderEl) placeholderEl.hidden = true;
+        setStatus("Starting camera...", "info");
+        await scanner.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 200, height: 200 } }, handleDecodedText);
+        cameraActive = true;
+        startBtn.hidden = true;
+        stopBtn.hidden = false;
+        setStatus("Point your camera at the QR label.", "info");
+      } catch (err) {
         if (placeholderEl) placeholderEl.hidden = false;
-    }
+        setStatus("Camera unavailable (" + err + "). Try uploading a QR photo instead.", "error");
+      }
+    });
+  }
 
-    if (startBtn) {
-        startBtn.addEventListener("click", async function () {
-            const scanner = getScanner();
-            if (!scanner) return;
-            try {
-                if (placeholderEl) placeholderEl.hidden = true;
-                setStatus("Requesting camera access...", "info");
-                await scanner.start(
-                    { facingMode: "environment" },
-                    { fps: 10, qrbox: { width: 220, height: 220 } },
-                    handleDecodedText
-                );
-                cameraActive = true;
-                startBtn.hidden = true;
-                stopBtn.hidden = false;
-                setStatus("Camera active. Hold a TrustHarvest QR code in front of your webcam.", "info");
-            } catch (err) {
-                if (placeholderEl) placeholderEl.hidden = false;
-                const httpsHint = (!window.isSecureContext && location.hostname !== "localhost" && location.hostname !== "127.0.0.1")
-                    ? " Camera scanning requires an HTTPS connection."
-                    : "";
-                const demoHint = demoBtn ? " or using the Demo Decode button" : "";
-                setStatus(`Camera access failed or unavailable (${err}).${httpsHint} Try uploading a QR image${demoHint}.`, "error");
-            }
-        });
-    }
+  if (stopBtn) stopBtn.addEventListener("click", stopWebcamScanner);
 
-    if (stopBtn) {
-        stopBtn.addEventListener("click", stopWebcamScanner);
-    }
+  if (fileInput) {
+    fileInput.addEventListener("change", async function (e) {
+      var file = e.target.files && e.target.files[0];
+      if (!file) return;
+      await stopWebcamScanner();
+      var scanner = getScanner();
+      if (!scanner) return;
+      try {
+        setStatus("Reading QR photo...", "info");
+        var decoded = await scanner.scanFile(file, false);
+        handleDecodedText(decoded);
+      } catch (err) {
+        setStatus("Could not find a QR code in that image.", "error");
+      }
+    });
+  }
 
-    if (fileInput) {
-        fileInput.addEventListener("change", async function (e) {
-            const file = e.target.files && e.target.files[0];
-            if (!file) return;
-            await stopWebcamScanner();
-            const scanner = getScanner();
-            if (!scanner) return;
-            try {
-                setStatus("Decoding uploaded QR image...", "info");
-                const decoded = await scanner.scanFile(file, false);
-                handleDecodedText(decoded);
-            } catch (err) {
-                setStatus(`Could not detect a valid QR code in that image (${err}).`, "error");
-            }
-        });
-    }
-
-    if (demoBtn) {
-        demoBtn.addEventListener("click", async function () {
-            const qrUrl = demoBtn.dataset.qrUrl;
-            await stopWebcamScanner();
-            const scanner = getScanner();
-            if (!scanner) return;
-            try {
-                setStatus("Fetching generated batch QR PNG and running real QR decoder...", "info");
-                const resp = await fetch(qrUrl);
-                const blob = await resp.blob();
-                const file = new File([blob], "demo_qr.png", { type: "image/png" });
-                const decoded = await scanner.scanFile(file, false);
-                handleDecodedText(decoded);
-            } catch (err) {
-                setStatus(`Demo QR decode failed (${err}).`, "error");
-            }
-        });
-    }
+  if (demoBtn) {
+    demoBtn.addEventListener("click", async function () {
+      var qrUrl = demoBtn.dataset.qrUrl;
+      await stopWebcamScanner();
+      var scanner = getScanner();
+      if (!scanner) return;
+      try {
+        setStatus("Scanning demo QR...", "info");
+        var resp = await fetch(qrUrl);
+        var blob = await resp.blob();
+        var file = new File([blob], "demo_qr.png", { type: "image/png" });
+        var decoded = await scanner.scanFile(file, false);
+        handleDecodedText(decoded);
+      } catch (err) {
+        setStatus("Demo scan failed (" + err + ").", "error");
+      }
+    });
+  }
 });
 </script>
 {% endblock %}

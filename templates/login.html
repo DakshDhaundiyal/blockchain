@@ -1,73 +1,68 @@
 {% extends "base.html" %}
-
-{% block title %}Access Dashboards - TrustHarvest{% endblock %}
+{% block title %}Sign In — TrustHarvest{% endblock %}
 
 {% block content %}
-<div class="row justify-content-center py-5">
-    <div class="col-md-6 col-lg-5">
-        {% if demo_mode %}
-        <!-- Quick Seamless Persona Switcher Card (Demo Mode Only) -->
-        <div class="workflow-stepper-container mb-4 p-4">
-            <div class="text-center mb-3">
-                <span class="th-stepper-eyebrow mb-2">
-                    <i class="bi bi-lightning-charge-fill" aria-hidden="true"></i> Demo Mode Active
-                </span>
-                <h1 class="h5 fw-bold mb-1 text-white">Instant Demo Role Switcher</h1>
-                <p class="small mb-0" style="color:rgba(255,255,255,0.72);">Switch directly to any stakeholder dashboard:</p>
-            </div>
-            <div class="d-grid gap-2">
-                <a href="{{ url_for('switch_role', role='farmer', next=request.args.get('next')) if request.args.get('next') else url_for('switch_role', role='farmer') }}" class="th-btn-outline justify-content-between py-2 px-3">
-                    <span><i class="bi bi-tree-fill text-success me-2" aria-hidden="true"></i><strong>Farmer / Producer</strong></span>
-                    <i class="bi bi-arrow-right" aria-hidden="true"></i>
-                </a>
-                <a href="{{ url_for('switch_role', role='transporter', next=request.args.get('next')) if request.args.get('next') else url_for('switch_role', role='transporter') }}" class="th-btn-outline justify-content-between py-2 px-3">
-                    <span><i class="bi bi-truck text-success me-2" aria-hidden="true"></i><strong>Transporter / Logistics</strong></span>
-                    <i class="bi bi-arrow-right" aria-hidden="true"></i>
-                </a>
-                <a href="{{ url_for('switch_role', role='retailer', next=request.args.get('next')) if request.args.get('next') else url_for('switch_role', role='retailer') }}" class="th-btn-outline justify-content-between py-2 px-3">
-                    <span><i class="bi bi-shop text-success me-2" aria-hidden="true"></i><strong>Retailer / Supermarket</strong></span>
-                    <i class="bi bi-arrow-right" aria-hidden="true"></i>
-                </a>
-                <a href="{{ url_for('switch_role', role='customer', next=request.args.get('next')) if request.args.get('next') else url_for('switch_role', role='customer') }}" class="th-btn-outline justify-content-between py-2 px-3">
-                    <span><i class="bi bi-qr-code-scan text-success me-2" aria-hidden="true"></i><strong>Consumer / Customer</strong></span>
-                    <i class="bi bi-arrow-right" aria-hidden="true"></i>
-                </a>
-            </div>
-        </div>
+<div class="auth-wrap">
+  {% if demo_mode %}
+  <div class="panel" style="margin-bottom:18px">
+    <div class="panel__hd" style="background:var(--forest);color:#fff;border-radius:var(--r-panel) var(--r-panel) 0 0;border-bottom-color:#244232">
+      <div>
+        <div class="eyebrow" style="color:#A9C4AC;font-size:11px">Demo mode active</div>
+        <div class="panel__title" style="color:#fff;margin-top:3px">Instant Demo Role Switcher</div>
+      </div>
+      <span class="chip chip--ok chip--sm">4 roles</span>
+    </div>
+    <div class="panel__bd" style="display:flex;flex-direction:column;gap:8px">
+      <a class="auth-demo-row" href="{{ url_for('switch_role', role='farmer', next=request.args.get('next')) if request.args.get('next') else url_for('switch_role', role='farmer') }}">
+        <span><strong>Farmer</strong> &middot; <span class="muted">Register harvest &amp; QR label</span></span>
+        <span>&rarr;</span>
+      </a>
+      <a class="auth-demo-row" href="{{ url_for('switch_role', role='transporter', next=request.args.get('next')) if request.args.get('next') else url_for('switch_role', role='transporter') }}">
+        <span><strong>Transporter</strong> &middot; <span class="muted">Log cold-chain checkpoints</span></span>
+        <span>&rarr;</span>
+      </a>
+      <a class="auth-demo-row" href="{{ url_for('switch_role', role='retailer', next=request.args.get('next')) if request.args.get('next') else url_for('switch_role', role='retailer') }}">
+        <span><strong>Retailer</strong> &middot; <span class="muted">Update shelf stock &amp; pricing</span></span>
+        <span>&rarr;</span>
+      </a>
+      <a class="auth-demo-row" href="{{ url_for('switch_role', role='customer', next=request.args.get('next')) if request.args.get('next') else url_for('switch_role', role='customer') }}">
+        <span><strong>Customer</strong> &middot; <span class="muted">Scan QR or inspect origin</span></span>
+        <span>&rarr;</span>
+      </a>
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="panel">
+    <div class="panel__hd">
+      <div>
+        <div class="eyebrow" style="font-size:11px">Stakeholder access</div>
+        <h1 class="t-h2" style="margin-top:4px;font-size:24px">Sign in to TrustHarvest</h1>
+      </div>
+    </div>
+    <div class="panel__bd">
+      <form method="POST" action="{{ url_for('login', next=request.args.get('next')) if request.args.get('next') else url_for('login') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+        {% if request.args.get('next') %}
+        <input type="hidden" name="next" value="{{ request.args.get('next') }}"/>
         {% endif %}
 
-        <div class="card card-custom shadow">
-            <div class="card-header card-header-ag text-center py-3">
-                <h1 class="h5 mb-0 fw-bold text-dark"><i class="bi bi-key me-2" aria-hidden="true"></i>Sign In to TrustHarvest</h1>
-            </div>
-            <div class="card-body p-4">
-                <form method="POST" action="{{ url_for('login', next=request.args.get('next')) if request.args.get('next') else url_for('login') }}">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                    {% if request.args.get('next') %}
-                    <input type="hidden" name="next" value="{{ request.args.get('next') }}"/>
-                    {% endif %}
-                    <div class="mb-3">
-                        <label for="login-username" class="form-label fw-semibold">Username</label>
-                        <div class="input-group">
-                            <span class="input-group-text" aria-hidden="true"><i class="bi bi-person"></i></span>
-                            <input id="login-username" type="text" name="username" class="form-control" placeholder="Enter username" autocomplete="username" required autofocus>
-                        </div>
-                    </div>
-                    <div class="mb-4">
-                        <label for="login-password" class="form-label fw-semibold">Password</label>
-                        <div class="input-group">
-                            <span class="input-group-text" aria-hidden="true"><i class="bi bi-key"></i></span>
-                            <input id="login-password" type="password" name="password" class="form-control" placeholder="Enter password" autocomplete="current-password" required>
-                        </div>
-                    </div>
-                    <button type="submit" class="btn btn-ag-primary w-100 py-2 fw-bold">Sign In</button>
-                </form>
-
-                <div class="mt-4 pt-3 border-top text-center">
-                    <small class="text-muted">Don't have an account? <a href="{{ url_for('register') }}" class="text-success fw-bold">Register here</a></small>
-                </div>
-            </div>
+        <div class="field">
+          <label class="label" for="login-username">Username</label>
+          <input class="input" id="login-username" type="text" name="username" placeholder="Enter username" autocomplete="username" required autofocus>
         </div>
+
+        <div class="field">
+          <label class="label" for="login-password">Password</label>
+          <input class="input" id="login-password" type="password" name="password" placeholder="Enter password" autocomplete="current-password" required>
+        </div>
+
+        <button type="submit" class="btn btn--primary btn--block">Sign in</button>
+      </form>
     </div>
+    <div class="panel__ft" style="justify-content:center">
+      <span class="t-xs">Don&rsquo;t have an account? <a class="link" style="font-size:12.5px" href="{{ url_for('register') }}">Register here</a></span>
+    </div>
+  </div>
 </div>
 {% endblock %}
