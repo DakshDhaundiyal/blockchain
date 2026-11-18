@@ -140,6 +140,17 @@
             </div>
           </div>
 
+          <div class="field-row">
+            <div class="field">
+              <label class="label" for="wf-min-temp">Min safe temp (&deg;C)</label>
+              <input id="wf-min-temp" type="number" step="0.5" min="-40" max="50" name="min_temp" class="input input--mono" value="2" required>
+            </div>
+            <div class="field">
+              <label class="label" for="wf-max-temp">Max safe temp (&deg;C)</label>
+              <input id="wf-max-temp" type="number" step="0.5" min="-40" max="50" name="max_temp" class="input input--mono" value="6" required>
+            </div>
+          </div>
+
           {% if allow_uploads %}
           <div class="field" style="margin-bottom:0">
             <label class="label" for="wf-image">Photo (optional)</label>
@@ -201,16 +212,17 @@
           <span class="chip chip--neutral chip--sm mono">{{ product.batch_id }}</span>
         </div>
         <div class="panel__bd">
+          {% set wf_auto_status = 'In Transit (Cold-Storage)' if (product.transport_data and product.transport_data|length > 0) else 'Picked Up from Farm' %}
           <div class="field">
-            <label class="label" for="wf-tr-status">Status</label>
-            <select id="wf-tr-status" name="status" class="select" required>
-              <option value="Picked Up from Farm">Picked Up from Farm</option>
-              <option value="In Transit (Cold-Storage)" selected>In Transit (Cold-Storage)</option>
-              <option value="Cross-Dock Hub Inspected">Cross-Dock Hub Inspected</option>
-              <option value="Customs / Ag Inspection Cleared">Customs / Ag Inspection Cleared</option>
-              <option value="Delivered to Distribution Center">Delivered to Distribution Center</option>
-              <option value="Delivered to Retailer">Delivered to Retailer</option>
-            </select>
+            <label class="label">Status <span style="font-weight:400;text-transform:none;letter-spacing:0">(automatic)</span></label>
+            <input type="hidden" id="wf-tr-status" name="status" value="{{ wf_auto_status }}">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:8px 11px;border:1px solid var(--line-2);border-radius:var(--r-ctl);background:#FBFCF8">
+              <span class="chip chip--ok chip--sm" id="wfStatusAutoPill"><span class="chip__dot"></span>{{ wf_auto_status }}</span>
+              <label class="check" style="font-size:12.5px;margin:0">
+                <input type="checkbox" id="wfDeliverToggle" onchange="var s=document.getElementById('wf-tr-status');var p=document.getElementById('wfStatusAutoPill');var v=this.checked?'Delivered to Retailer':'{{ wf_auto_status }}';s.value=v;p.innerHTML='<span class=chip__dot></span>'+v;">
+                <span>Delivered to store</span>
+              </label>
+            </div>
           </div>
 
           <div class="field">

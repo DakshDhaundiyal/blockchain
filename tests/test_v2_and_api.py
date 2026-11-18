@@ -484,3 +484,64 @@ def test_live_ganache_v2_multistage_immutability_and_tamper(client, app):
     assert "Changed after recording" in html_tampered
     assert "Transport checkpoint #1" in html_tampered
 
+
+def test_custom_cold_chain_contract_range_and_broken_state(client, app, monkeypatch):
+    """Per-batch min_temp/max_temp flags Cold-Chain Contract Broken when transport goes above or below range."""
+    ok = evaluate_temperature("4.0 °C", min_temp=2.0, max_temp=6.0)
+    assert ok["status"] == "optimal"
+    assert ok["contract_broken"] is False
+
+    too_hot = evaluate_temperature("8.5 °C", min_temp=2.0, max_temp=6.0)
+    assert too_hot["status"] == "breach"
+    assert too_hot["contract_broken"] is True
+    assert "Contract Broken" in too_hot["label"]
+
+    too_cold = evaluate_temperature("0.5 °C", min_temp=2.0, max_temp=6.0)
+    assert too_cold["status"] == "breach"
+    assert too_cold["contract_broken"] is True
+    assert "below" in too_cold["label"]
+
+    # End-to-end check on verify page when a checkpoint violates custom 2-6 C range
+    with app.app_context():
+        farmer = User.query.filter_by(username="farmer_test").first()
+        transporter = User.query.filter_by(username="transporter_test").first()
+        batch_id = "TH-SLA-BREACH-01"
+        h_prod = compute_batch_hash(batch_id, "Organic Berries", "120 kg", "100% Certified Organic", "2026-10-12", farmer.id, "default.jpg")
+        prod = Product(
+            batch_id=batch_id, name="Organic Berries", quantity="120 kg",
+            farming_method="100% Certified Organic", packaging_date="2026-10-12",
+            farmer_id=farmer.id, image="default.jpg", on_chain_hash=h_prod,
+            contract_version="V2", min_temp=2.0, max_temp=6.0, status="In Transit",
+        )
+        db.session.add(prod)
+        db.session.flush()
+        h_tr = compute_transport_hash(batch_id, "In Transit", "Highway 99", "9.5 °C", "TRK-SLA", "Cooler issue", transporter.id)
+        tr = TransportData(
+            product_id=prod.id, transporter_id=transporter.id, status="In Transit",
+            current_location="Highway 99", temperature="9.5 °C", vehicle_number="TRK-SLA",
+            notes="Cooler issue", on_chain_hash=h_tr,
+        )
+        db.session.add(tr)
+        db.session.commit()
+
+    monkeypatch.setattr("app.inspect_batch_on_chain", lambda *a, **kw: {
+        "status": "ok",
+        "hash": h_prod,
+        "contract_address": "0x1111111111111111111111111111111111111111",
+        "contract_version": "V2",
+        "registered_by": "0xfarmer0001",
+        "timestamp": None,
+        "stages": [{"index": 0, "stage": "TRANSPORT", "hash": h_tr, "recorded_by": "0xtrans0001", "timestamp": None}],
+        "truncated": False,
+        "expected_signers": None,
+        "conflict_details": None,
+        "error": None,
+    })
+
+    html = client.get(f"/verify/{batch_id}").data.decode("utf-8")
+    assert "Cold-Chain Contract Broken" in html
+    assert "Smart Contract Broken" in html
+    assert "9.5 °C" in html
+    assert "2–6 °C" in html
+
+

@@ -739,6 +739,16 @@ def _register_harvest_batch(user, form_data, image_file):
     if len(farm_location) > 150 or len(certifications) > 200:
         return None, 'Location or certifications details exceed character limit.'
 
+    raw_min_t = (form_data.get('min_temp') or '').strip()
+    raw_max_t = (form_data.get('max_temp') or '').strip()
+    try:
+        min_temp = float(raw_min_t) if raw_min_t != '' else 2.0
+        max_temp = float(raw_max_t) if raw_max_t != '' else 6.0
+    except ValueError:
+        return None, 'Optimal temperature range must be numeric values (e.g. 2 to 6).'
+    if min_temp >= max_temp or min_temp < -40.0 or max_temp > 50.0:
+        return None, 'Optimal temperature range is invalid (Min must be less than Max, between -40 °C and 50 °C).'
+
     batch_id = f"TH-{uuid.uuid4().hex[:8].upper()}"
 
     # Guard against unlikely collision on-chain
@@ -796,6 +806,8 @@ def _register_harvest_batch(user, form_data, image_file):
         contract_address=receipt_meta.get("contract_address"),
         contract_version=receipt_meta.get("contract_version", "V2"),
         signer_address=receipt_meta.get("signer_address"),
+        min_temp=min_temp,
+        max_temp=max_temp,
         status='Harvested'
     )
     db.session.add(product)
@@ -1301,6 +1313,7 @@ def customer_dashboard():
             "reason": vctx["result_reason"],
             "pending": vctx["has_pending_stages"],
             "latest_temp": latest_tv["temp_eval"] if latest_tv else None,
+            "contract_broken": vctx["cold_chain_contract"]["broken"],
         }
     return render_template('customer.html', products=products, batch_statuses=batch_statuses)
 
@@ -1348,6 +1361,9 @@ def _build_verification_context(product, simulate_tamper=False):
     transport_chain_stages = [s for s in v2_stages if s["stage"] == "TRANSPORT"]
     retail_chain_stages = [s for s in v2_stages if s["stage"] == "RETAIL"]
 
+    p_min_temp = float(product.min_temp) if product.min_temp is not None else 2.0
+    p_max_temp = float(product.max_temp) if product.max_temp is not None else 6.0
+
     transport_verifications = []
     has_temp_breach = False
     transport_verified_count = 0
@@ -1379,7 +1395,7 @@ def _build_verification_context(product, simulate_tamper=False):
                 notes=t.notes,
                 transporter_id=t.transporter_id,
             )
-            temp_eval = evaluate_temperature(t.temperature)
+            temp_eval = evaluate_temperature(t.temperature, p_min_temp, p_max_temp)
             if temp_eval.get("status") == "breach":
                 has_temp_breach = True
             transport_verifications.append({
@@ -1523,7 +1539,7 @@ def _build_verification_context(product, simulate_tamper=False):
 
         for idx, t in enumerate(db_transports):
             t_computed = db_transport_hashes[idx]
-            temp_eval = evaluate_temperature(t.temperature)
+            temp_eval = evaluate_temperature(t.temperature, p_min_temp, p_max_temp)
             if temp_eval.get("status") == "breach":
                 has_temp_breach = True
 
@@ -1729,7 +1745,7 @@ def _build_verification_context(product, simulate_tamper=False):
                 notes=t.notes,
                 transporter_id=t.transporter_id,
             )
-            temp_eval = evaluate_temperature(t.temperature)
+            temp_eval = evaluate_temperature(t.temperature, p_min_temp, p_max_temp)
             if temp_eval.get("status") == "breach":
                 has_temp_breach = True
             transport_verifications.append({
@@ -1978,6 +1994,26 @@ def _build_verification_context(product, simulate_tamper=False):
     config_base_url = resolve_qr_base_url(req_root)
     qr_verify_url = f"{config_base_url}/verify/{product.batch_id}" if config_base_url else f"/verify/{product.batch_id}"
 
+    cold_chain_breaches = [
+        {
+            "checkpoint_number": tv["checkpoint_number"],
+            "location": tv["record"].current_location,
+            "temperature": tv["record"].temperature,
+            "celsius": tv["temp_eval"].get("celsius"),
+            "label": tv["temp_eval"].get("label"),
+            "when": tv.get("recorded_when", ""),
+        }
+        for tv in transport_verifications
+        if tv["temp_eval"].get("contract_broken")
+    ]
+    cold_chain_contract = {
+        "min_temp": p_min_temp,
+        "max_temp": p_max_temp,
+        "range_label": f"{p_min_temp:g}–{p_max_temp:g} °C",
+        "broken": len(cold_chain_breaches) > 0,
+        "breaches": cold_chain_breaches,
+    }
+
     return {
         "product": product,
         "computed_hash": computed_hash,
@@ -2012,6 +2048,7 @@ def _build_verification_context(product, simulate_tamper=False):
         "retail_verification": retail_verification,
         "retail_tampered": retail_tampered,
         "has_temp_breach": has_temp_breach,
+        "cold_chain_contract": cold_chain_contract,
         "has_pending_stages": has_pending_stages,
         "trust_score": trust_score,
     }

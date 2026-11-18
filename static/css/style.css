@@ -635,12 +635,23 @@ header.nav{
   border:1px solid #26483A;overflow:hidden
 }
 .tbar__ticks{position:absolute;inset:0;background:repeating-linear-gradient(90deg,rgba(255,255,255,.07) 0 1px,transparent 1px 10%)}
-.tbar__band{position:absolute;top:0;bottom:0;background:rgba(132,204,22,.22);border-left:1px solid rgba(163,230,53,.65);border-right:1px solid rgba(163,230,53,.65)}
+.tbar__band{position:absolute;top:0;bottom:0;background:rgba(132,204,22,.22);border-left:1px solid rgba(163,230,53,.65);border-right:1px solid rgba(163,230,53,.65);transition:left .35s ease,width .35s ease}
 .tbar__mark{
   position:absolute;top:0;bottom:0;transform:translateX(-50%);width:2px;background:#fff;
-  box-shadow:0 0 0 1px rgba(14,43,30,.35);z-index:2
+  box-shadow:0 0 0 1px rgba(14,43,30,.35);z-index:2;transition:left .6s ease
 }
 .tbar__mark--warn{background:#F0B7A8}
+@keyframes thSensorPulse{0%,100%{opacity:1}50%{opacity:.35}}
+.sensor-live-tag{
+  display:inline-flex;align-items:center;gap:5px;font-family:var(--mono);font-size:10.5px;
+  color:#A9C4AC;letter-spacing:.03em;margin-left:8px;font-weight:400
+}
+.sensor-live-tag i{
+  width:6px;height:6px;border-radius:50%;background:var(--lime);display:inline-block;
+  animation:thSensorPulse 2.4s ease-in-out infinite
+}
+.sensor-live-tag--light{color:var(--ok-ink);margin-left:0;margin-top:3px}
+.temp-flicker-flash{transition:opacity .22s ease;opacity:.62}
 .tbar__axis{display:flex;justify-content:space-between;margin-top:5px;font-family:var(--mono);font-size:10.5px;color:#6F8A79;letter-spacing:.02em}
 
 .tele__alert{

@@ -12,7 +12,7 @@
   {% endif %}
 {% endfor %}
 
-<!-- ============ CLEAN SELECTED-BATCH BAR (SHOWS "NO DATA" UNTIL A PRODUCT IS SELECTED) ============ -->
+<!-- ============ SELECTED-BATCH TELEMETRY BAR (SHOWS "NO DATA" UNTIL A PRODUCT IS SELECTED) ============ -->
 <section class="tele" aria-label="Selected shipment summary">
   <div class="tele__in">
     <div class="tele__top">
@@ -37,16 +37,16 @@
     </div>
 
     <div class="tele__grid" style="grid-template-columns:minmax(0,1.4fr) minmax(0,1fr) minmax(0,1fr)">
-      <!-- 1. Temperature gauge -->
+      <!-- 1. Temperature gauge (dynamically reflects selected batch's min–max contract) -->
       <div>
         <div class="tele__k">
           <span>Temperature</span>
-          <b>safe range: 2&ndash;6 &deg;C</b>
+          <b id="teleRangeLabel">contract: select a batch</b>
         </div>
         <div class="tbar">
           <div class="tbar__track">
             <div class="tbar__ticks"></div>
-            <div class="tbar__band" style="left:8%;width:16%" title="Safe cold range: 2°C – 6°C"></div>
+            <div class="tbar__band" id="tbarBand" hidden style="left:8%;width:16%" title="Required cold-chain contract range"></div>
             <div class="tbar__mark" id="tbarMark" hidden style="left:16%"></div>
           </div>
           <div class="tbar__axis">
@@ -55,9 +55,12 @@
         </div>
       </div>
 
-      <!-- 2. Latest temperature reading -->
+      <!-- 2. Latest temperature reading + subtle live sensor flicker -->
       <div>
-        <div class="tele__k"><span>Latest reading</span></div>
+        <div class="tele__k">
+          <span>Latest reading</span>
+          <span class="sensor-live-tag" id="teleLiveTag" hidden><i></i>Live sensor (simulated)</span>
+        </div>
         <div class="tele__num tele__empty" id="teleTemp">No data</div>
         <div class="tele__s" id="teleTempSub">Click a product on the right</div>
       </div>
@@ -91,21 +94,23 @@
             <select id="tr-product" name="product_id" class="select" required>
               <option value="" disabled selected>-- Select a product --</option>
               {% for p in products %}
-              <option value="{{ p.id }}">{{ p.batch_id }} &middot; {{ p.name }}</option>
+              {% set pmin = p.min_temp if p.min_temp is not none else 2.0 %}
+              {% set pmax = p.max_temp if p.max_temp is not none else 6.0 %}
+              <option value="{{ p.id }}" data-min-temp="{{ pmin }}" data-max-temp="{{ pmax }}">{{ p.batch_id }} &middot; {{ p.name }} ({{ '%g'|format(pmin) }}&ndash;{{ '%g'|format(pmax) }} &deg;C)</option>
               {% endfor %}
             </select>
           </div>
 
           <div class="field">
-            <label class="label" for="tr-status">Status</label>
-            <select id="tr-status" name="status" class="select" required>
-              <option value="Picked Up from Farm">Picked Up from Farm</option>
-              <option value="In Transit (Cold-Storage)" selected>In Transit (Cold-Storage)</option>
-              <option value="Cross-Dock Hub Inspected">Cross-Dock Hub Inspected</option>
-              <option value="Customs / Ag Inspection Cleared">Customs / Ag Inspection Cleared</option>
-              <option value="Delivered to Distribution Center">Delivered to Distribution Center</option>
-              <option value="Delivered to Retailer">Delivered to Retailer</option>
-            </select>
+            <label class="label">Status <span style="font-weight:400;text-transform:none;letter-spacing:0">(automatic)</span></label>
+            <input type="hidden" id="tr-status" name="status" value="Picked Up from Farm">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:8px 11px;border:1px solid var(--line-2);border-radius:var(--r-ctl);background:#FBFCF8">
+              <span class="chip chip--ok chip--sm" id="trStatusAutoPill"><span class="chip__dot"></span>Picked Up from Farm</span>
+              <label class="check" style="font-size:12.5px;margin:0">
+                <input type="checkbox" id="trDeliverToggle">
+                <span>Delivered to store</span>
+              </label>
+            </div>
           </div>
 
           <div class="field-row">
@@ -122,6 +127,7 @@
           <div class="field">
             <label class="label" for="tr-temp">Temperature</label>
             <input id="tr-temp" type="text" name="temperature" class="input input--mono" placeholder="e.g. 4.0 °C" value="4.0 °C">
+            <p class="field__hint" id="trRangeHint">Required contract range updates automatically when you choose a batch.</p>
           </div>
 
           <div class="field" style="margin-bottom:4px">
@@ -130,7 +136,7 @@
           </div>
 
           <div class="alertnote" id="trTempAlert" hidden>
-            <span>This temperature is outside the 2&ndash;6 &deg;C safe range and will be flagged on the public check.</span>
+            <span id="trTempAlertText">Outside contract range — saving this will mark the Smart Contract as Broken.</span>
           </div>
         </div>
 
@@ -147,7 +153,7 @@
         <div class="panel__hd">
           <div>
             <span class="panel__title">Products to ship</span>
-            <div class="t-xs" style="margin-top:2px">Click any product to view its details above</div>
+            <div class="t-xs" style="margin-top:2px">Click any product to view its live simulated sensor above</div>
           </div>
           <div class="shipfilter" role="group" aria-label="Filter products">
             <button type="button" class="is-active" data-ship-filter="all">All ({{ products|length }})</button>
@@ -168,6 +174,8 @@
               {% if ready_products %}
               <div class="shiplist">
                 {% for p in ready_products %}
+                {% set pmin = p.min_temp if p.min_temp is not none else 2.0 %}
+                {% set pmax = p.max_temp if p.max_temp is not none else 6.0 %}
                 {% set origin = p.farmer_data.farm_location if p.farmer_data and p.farmer_data.farm_location else (p.farmer.full_name or p.farmer.username) %}
                 <article
                   class="shipcard"
@@ -180,6 +188,8 @@
                   data-name="{{ p.name }}"
                   data-quantity="{{ p.quantity }}"
                   data-origin="{{ origin }}"
+                  data-min-temp="{{ pmin }}"
+                  data-max-temp="{{ pmax }}"
                   data-shipped="false"
                   data-cp-count="0"
                   data-warn-count="0"
@@ -198,7 +208,7 @@
                     </div>
                     <div class="shipcard__meta">
                       <span>{{ origin }}</span>
-                      <span>&middot; {{ p.quantity }}</span>
+                      <span class="mono">&middot; Contract: {{ '%g'|format(pmin) }}&ndash;{{ '%g'|format(pmax) }} &deg;C</span>
                     </div>
                   </div>
                   <div class="shipcard__right">
@@ -224,14 +234,16 @@
               {% if shipped_products %}
               <div class="shiplist">
                 {% for p in shipped_products %}
+                {% set pmin = p.min_temp if p.min_temp is not none else 2.0 %}
+                {% set pmax = p.max_temp if p.max_temp is not none else 6.0 %}
                 {% set cps = p.transport_data %}
                 {% set latest_cp = cps[-1] %}
-                {% set latest_te = evaluate_temperature(latest_cp.temperature) %}
-                {% set latest_is_warn = ('danger' in latest_te.badge_class or 'warning' in latest_te.badge_class) %}
+                {% set latest_te = evaluate_temperature(latest_cp.temperature, pmin, pmax) %}
+                {% set latest_is_warn = latest_te.contract_broken %}
                 {% set cns = namespace(warn=0) %}
                 {% for cp in cps %}
-                  {% set cte = evaluate_temperature(cp.temperature) %}
-                  {% if 'danger' in cte.badge_class or 'warning' in cte.badge_class %}
+                  {% set cte = evaluate_temperature(cp.temperature, pmin, pmax) %}
+                  {% if cte.contract_broken %}
                     {% set cns.warn = cns.warn + 1 %}
                   {% endif %}
                 {% endfor %}
@@ -247,6 +259,8 @@
                   data-name="{{ p.name }}"
                   data-quantity="{{ p.quantity }}"
                   data-origin="{{ origin }}"
+                  data-min-temp="{{ pmin }}"
+                  data-max-temp="{{ pmax }}"
                   data-shipped="true"
                   data-cp-count="{{ cps|length }}"
                   data-warn-count="{{ cns.warn }}"
@@ -265,14 +279,14 @@
                     </div>
                     <div class="shipcard__meta">
                       <span>{{ latest_cp.current_location }}</span>
-                      <span>&middot; {{ cps|length }} stop{{ '' if cps|length == 1 else 's' }}</span>
+                      <span class="mono">&middot; Contract: {{ '%g'|format(pmin) }}&ndash;{{ '%g'|format(pmax) }} &deg;C</span>
                     </div>
                   </div>
                   <div class="shipcard__right">
-                    {% if latest_is_warn %}
-                      <span class="chip chip--bad chip--sm"><span class="chip__dot"></span>{{ latest_cp.temperature or 'Warm' }}</span>
+                    {% if cns.warn > 0 %}
+                      <span class="chip chip--bad chip--sm"><span class="chip__dot"></span>Contract broken</span>
                     {% else %}
-                      <span class="chip chip--ok chip--sm"><span class="chip__dot"></span>{{ latest_cp.temperature or 'Shipped' }}</span>
+                      <span class="chip chip--ok chip--sm"><span class="chip__dot"></span>{{ latest_cp.temperature or 'In range' }}</span>
                     {% endif %}
                     <div class="shipcard__links">
                       <a href="{{ url_for('verify_batch', batch_id=p.batch_id) }}">View &rarr;</a>
@@ -305,12 +319,22 @@ document.addEventListener("DOMContentLoaded", function () {
   var cards = Array.from(document.querySelectorAll("[data-select-batch]"));
   var productSelect = document.getElementById("tr-product");
   var vehicleInput = document.getElementById("tr-vehicle");
+  var tempInput = document.getElementById("tr-temp");
+  var statusInput = document.getElementById("tr-status");
+  var statusPill = document.getElementById("trStatusAutoPill");
+  var deliverToggle = document.getElementById("trDeliverToggle");
+  var alertBox = document.getElementById("trTempAlert");
+  var alertText = document.getElementById("trTempAlertText");
+  var rangeHint = document.getElementById("trRangeHint");
   var clearBtn = document.getElementById("teleClearBtn");
 
   var teleBatchTitle = document.getElementById("teleBatchTitle");
   var telePlate = document.getElementById("telePlate");
   var teleAlert = document.getElementById("teleAlert");
   var teleAlertText = document.getElementById("teleAlertText");
+  var teleRangeLabel = document.getElementById("teleRangeLabel");
+  var teleLiveTag = document.getElementById("teleLiveTag");
+  var tbarBand = document.getElementById("tbarBand");
   var tbarMark = document.getElementById("tbarMark");
   var teleTemp = document.getElementById("teleTemp");
   var teleTempSub = document.getElementById("teleTempSub");
@@ -318,9 +342,102 @@ document.addEventListener("DOMContentLoaded", function () {
   var teleLocSub = document.getElementById("teleLocSub");
 
   var selectedProductId = null;
+  var activeMin = 2.0;
+  var activeMax = 6.0;
+  var activeCpCount = 0;
+  var flickerTimer = null;
+
+  function updateAutoStatus() {
+    var nextStatus = "Picked Up from Farm";
+    if (deliverToggle && deliverToggle.checked) {
+      nextStatus = "Delivered to Retailer";
+    } else if (activeCpCount > 0) {
+      nextStatus = "In Transit (Cold-Storage)";
+    }
+    if (statusInput) statusInput.value = nextStatus;
+    if (statusPill) {
+      statusPill.innerHTML = '<span class="chip__dot"></span>' + nextStatus;
+    }
+  }
+
+  function fmtNum(n) {
+    return Number.isInteger(n) ? String(n) : String(parseFloat(n.toFixed(1)));
+  }
+
+  function tempToPct(val) {
+    return Math.max(1, Math.min(99, (val / 25) * 100));
+  }
+
+  function stopFlicker() {
+    if (flickerTimer) {
+      clearTimeout(flickerTimer);
+      flickerTimer = null;
+    }
+    if (teleLiveTag) teleLiveTag.hidden = true;
+  }
+
+  // Gentle simulated live IoT sensor flicker: 0.0 to 0.5 °C every 2 seconds,
+  // strictly staying inside [minT, maxT] when the batch is within contract.
+  function startFlicker(baseVal, minT, maxT, isBroken) {
+    stopFlicker();
+    if (isNaN(baseVal)) return;
+    if (teleLiveTag) teleLiveTag.hidden = false;
+    var prevDisplayed = Math.round(baseVal * 10) / 10;
+
+    function tick() {
+      var next = prevDisplayed;
+      for (var tries = 0; tries < 6; tries++) {
+        var delta = (Math.random() - 0.5) * 0.5; // -0.25 to +0.25 -> max 0.5 °C span
+        var cand = baseVal + delta;
+        if (!isBroken) {
+          cand = Math.max(minT + 0.05, Math.min(maxT - 0.05, cand));
+          if (minT >= maxT) cand = baseVal;
+        } else {
+          if (baseVal > maxT) cand = Math.max(maxT + 0.2, cand);
+          else if (baseVal < minT) cand = Math.min(minT - 0.2, cand);
+        }
+        cand = Math.round(cand * 10) / 10;
+        if (cand !== prevDisplayed) { next = cand; break; }
+      }
+      prevDisplayed = next;
+
+      if (teleTemp) {
+        teleTemp.classList.add("temp-flicker-flash");
+        teleTemp.textContent = next.toFixed(1) + " \u00b0C";
+        setTimeout(function () {
+          if (teleTemp) teleTemp.classList.remove("temp-flicker-flash");
+        }, 220);
+      }
+      if (tbarMark) {
+        tbarMark.style.left = tempToPct(next).toFixed(1) + "%";
+      }
+
+      flickerTimer = setTimeout(tick, 2000);
+    }
+
+    flickerTimer = setTimeout(tick, 2000);
+  }
+
+  function checkFormTemp() {
+    if (!tempInput || !alertBox) return;
+    var m = (tempInput.value || "").match(/-?\d+(\.\d+)?/);
+    if (!m) { alertBox.hidden = true; return; }
+    var v = parseFloat(m[0]);
+    var broken = (v < activeMin || v > activeMax);
+    alertBox.hidden = !broken;
+    if (broken && alertText) {
+      alertText.textContent = "Outside contract range (" + fmtNum(activeMin) + "\u2013" + fmtNum(activeMax) + " \u00b0C) \u2014 saving this will mark the Smart Contract as Broken on the QR scan.";
+    }
+  }
 
   function clearTelemetry() {
+    stopFlicker();
     selectedProductId = null;
+    activeMin = 2.0;
+    activeMax = 6.0;
+    activeCpCount = 0;
+    if (deliverToggle) deliverToggle.checked = false;
+    updateAutoStatus();
     cards.forEach(function (c) {
       c.classList.remove("is-selected");
       c.setAttribute("aria-pressed", "false");
@@ -330,18 +447,28 @@ document.addEventListener("DOMContentLoaded", function () {
     if (teleBatchTitle) teleBatchTitle.textContent = "No batch selected";
     if (telePlate) { telePlate.hidden = true; telePlate.textContent = ""; }
     if (teleAlert) teleAlert.hidden = true;
+    if (teleRangeLabel) teleRangeLabel.textContent = "contract: select a batch";
+    if (tbarBand) tbarBand.hidden = true;
     if (tbarMark) { tbarMark.hidden = true; tbarMark.classList.remove("tbar__mark--warn"); }
 
     if (teleTemp) { teleTemp.textContent = "No data"; teleTemp.className = "tele__num tele__empty"; }
     if (teleTempSub) teleTempSub.textContent = "Click a product on the right";
     if (teleLoc) { teleLoc.textContent = "No data"; teleLoc.className = "tele__v tele__empty"; }
     if (teleLocSub) teleLocSub.textContent = "\u2014";
+    if (rangeHint) rangeHint.textContent = "Required contract range updates automatically when you choose a batch.";
+    checkFormTemp();
   }
 
   function applyBatchCard(card, syncSelect) {
     if (!card) { clearTelemetry(); return; }
+    stopFlicker();
     var d = card.dataset;
     selectedProductId = d.productId;
+    activeMin = parseFloat(d.minTemp || "2");
+    activeMax = parseFloat(d.maxTemp || "6");
+    activeCpCount = parseInt(d.cpCount || "0", 10);
+    if (deliverToggle) deliverToggle.checked = false;
+    updateAutoStatus();
 
     cards.forEach(function (c) {
       var active = c === card;
@@ -353,7 +480,19 @@ document.addEventListener("DOMContentLoaded", function () {
     if (vehicleInput && d.latestVehicle) vehicleInput.value = d.latestVehicle;
     if (clearBtn) clearBtn.hidden = false;
 
+    var rangeTxt = fmtNum(activeMin) + "\u2013" + fmtNum(activeMax) + " \u00b0C";
     if (teleBatchTitle) teleBatchTitle.textContent = d.name + " (" + d.batchId + ")";
+    if (teleRangeLabel) teleRangeLabel.textContent = "contract: " + rangeTxt;
+    if (rangeHint) rangeHint.textContent = "Required contract range for this batch: " + rangeTxt + ".";
+
+    if (tbarBand) {
+      var loPct = Math.max(0, Math.min(100, (activeMin / 25) * 100));
+      var hiPct = Math.max(loPct + 2, Math.min(100, (activeMax / 25) * 100));
+      tbarBand.style.left = loPct.toFixed(1) + "%";
+      tbarBand.style.width = (hiPct - loPct).toFixed(1) + "%";
+      tbarBand.hidden = false;
+    }
+
     if (telePlate) {
       if (d.latestVehicle) { telePlate.textContent = d.latestVehicle; telePlate.hidden = false; }
       else { telePlate.hidden = true; telePlate.textContent = ""; }
@@ -362,7 +501,7 @@ document.addEventListener("DOMContentLoaded", function () {
     var warnCount = parseInt(d.warnCount || "0", 10);
     if (teleAlert && teleAlertText) {
       if (warnCount > 0) {
-        teleAlertText.textContent = warnCount + " warm reading" + (warnCount === 1 ? "" : "s");
+        teleAlertText.textContent = "Smart Contract Broken \u00b7 " + warnCount + " breach" + (warnCount === 1 ? "" : "es");
         teleAlert.hidden = false;
       } else {
         teleAlert.hidden = true;
@@ -380,24 +519,25 @@ document.addEventListener("DOMContentLoaded", function () {
       if (teleLoc) { teleLoc.textContent = d.latestLoc || "In transit"; teleLoc.className = "tele__v"; }
       if (teleLocSub) teleLocSub.textContent = d.cpCount + " stop" + (d.cpCount === "1" ? "" : "s") + " \u00b7 " + d.latestStatus;
 
-      if (tbarMark) {
-        var m = (d.latestTemp || "").match(/-?\d+(\.\d+)?/);
-        if (m) {
-          var pct = Math.max(2, Math.min(98, (parseFloat(m[0]) / 25) * 100));
-          tbarMark.style.left = pct.toFixed(1) + "%";
-          tbarMark.classList.toggle("tbar__mark--warn", isWarn);
-          tbarMark.hidden = false;
-        } else {
-          tbarMark.hidden = true;
-        }
+      var m = (d.latestTemp || "").match(/-?\d+(\.\d+)?/);
+      if (m && tbarMark) {
+        var baseVal = parseFloat(m[0]);
+        tbarMark.style.left = tempToPct(baseVal).toFixed(1) + "%";
+        tbarMark.classList.toggle("tbar__mark--warn", isWarn);
+        tbarMark.hidden = false;
+        startFlicker(baseVal, activeMin, activeMax, isWarn);
+      } else if (tbarMark) {
+        tbarMark.hidden = true;
       }
     } else {
       if (teleTemp) { teleTemp.textContent = "No data"; teleTemp.className = "tele__num tele__empty"; }
-      if (teleTempSub) teleTempSub.textContent = "Ready to ship \u00b7 no reading yet";
+      if (teleTempSub) teleTempSub.textContent = "Ready to ship \u00b7 waiting for first reading";
       if (teleLoc) { teleLoc.textContent = "Waiting at farm"; teleLoc.className = "tele__v"; }
       if (teleLocSub) teleLocSub.textContent = d.origin || "Registered Farm";
       if (tbarMark) tbarMark.hidden = true;
     }
+
+    checkFormTemp();
   }
 
   cards.forEach(function (card) {
@@ -420,6 +560,9 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
   if (clearBtn) clearBtn.addEventListener("click", clearTelemetry);
+  if (tempInput) tempInput.addEventListener("input", checkFormTemp);
+  if (deliverToggle) deliverToggle.addEventListener("change", updateAutoStatus);
+  updateAutoStatus();
 
   var filterBtns = document.querySelectorAll("[data-ship-filter]");
   var groups = document.querySelectorAll("[data-ship-group]");
@@ -432,17 +575,6 @@ document.addEventListener("DOMContentLoaded", function () {
       });
     });
   });
-
-  var tempInput = document.getElementById("tr-temp");
-  var alertBox = document.getElementById("trTempAlert");
-  if (tempInput && alertBox) {
-    var check = function () {
-      var m = (tempInput.value || "").match(/-?\d+(\.\d+)?/);
-      alertBox.hidden = !m || (parseFloat(m[0]) >= 2 && parseFloat(m[0]) <= 6);
-    };
-    tempInput.addEventListener("input", check);
-    check();
-  }
 });
 </script>
 {% endblock %}

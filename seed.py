@@ -77,6 +77,8 @@ def seed():
             contract_address=meta1.get("contract_address"),
             contract_version=meta1.get("contract_version", "V2"),
             signer_address=meta1.get("signer_address"),
+            min_temp=2.0,
+            max_temp=6.0,
             status="In Stock",
             created_at=utcnow() - timedelta(days=5)
         )
@@ -181,6 +183,8 @@ def seed():
             contract_address=meta2.get("contract_address"),
             contract_version=meta2.get("contract_version", "V2"),
             signer_address=meta2.get("signer_address"),
+            min_temp=10.0,
+            max_temp=14.0,
             status="In Transit",
             created_at=utcnow() - timedelta(days=2)
         )

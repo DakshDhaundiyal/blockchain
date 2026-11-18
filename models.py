@@ -45,6 +45,8 @@ class Product(db.Model):
     contract_address = db.Column(db.String(64), nullable=True)
     contract_version = db.Column(db.String(10), nullable=True)
     signer_address = db.Column(db.String(64), nullable=True)
+    min_temp = db.Column(db.Float, nullable=True, default=2.0)
+    max_temp = db.Column(db.Float, nullable=True, default=6.0)
     status = db.Column(db.String(50), default='Harvested') # Harvested, In Transit, Delivered to Retail, In Stock, Sold
     created_at = db.Column(db.DateTime, default=utcnow)
 
@@ -164,6 +166,8 @@ def ensure_schema_columns():
             ('contract_address', 'VARCHAR(64)'),
             ('contract_version', 'VARCHAR(10)'),
             ('signer_address', 'VARCHAR(64)'),
+            ('min_temp', 'REAL'),
+            ('max_temp', 'REAL'),
         ],
         'transport_data': [
             ('on_chain_hash', 'VARCHAR(66)'),

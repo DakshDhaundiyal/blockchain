@@ -92,6 +92,18 @@
             <input id="farmer-certs" type="text" name="certifications" class="input" placeholder="e.g. USDA Organic Certified" value="USDA Organic Certified">
           </div>
 
+          <div class="field-row">
+            <div class="field">
+              <label class="label" for="farmer-min-temp">Min safe temp (&deg;C)</label>
+              <input id="farmer-min-temp" type="number" step="0.5" min="-40" max="50" name="min_temp" class="input input--mono" value="2" required>
+            </div>
+            <div class="field">
+              <label class="label" for="farmer-max-temp">Max safe temp (&deg;C)</label>
+              <input id="farmer-max-temp" type="number" step="0.5" min="-40" max="50" name="max_temp" class="input input--mono" value="6" required>
+            </div>
+          </div>
+          <p class="field__hint" style="margin-top:-8px;margin-bottom:14px">Cold-chain contract rule: if transport goes below or above this range, the QR scan flags the contract as broken.</p>
+
           {% if allow_uploads %}
           <div class="field" style="margin-bottom:4px">
             <label class="label" for="farmer-image">Photo (optional)</label>
@@ -145,7 +157,7 @@
                 <div class="shipcard__meta">
                   <span>{{ p.quantity }}</span>
                   <span>&middot; {{ p.farming_method }}</span>
-                  <span>&middot; Packed {{ p.packaging_date }}</span>
+                  <span class="mono">&middot; {{ '%g'|format(p.min_temp if p.min_temp is not none else 2) }}&ndash;{{ '%g'|format(p.max_temp if p.max_temp is not none else 6) }} &deg;C</span>
                 </div>
               </div>
               <div class="shipcard__right">

@@ -141,18 +141,28 @@ def validate_image_file(file_storage, allowed_extensions=None) -> tuple[bool, st
         return False, f"Invalid or corrupted image file ({e})."
 
 
-def evaluate_temperature(temp_str: str | None) -> dict:
+def evaluate_temperature(
+    temp_str: str | None,
+    min_temp: float | None = None,
+    max_temp: float | None = None,
+) -> dict:
     """
-    Parses a cold-chain temperature reading (e.g. '4.0 °C', '18.5 C') and classifies it
-    against standard perishable agricultural cold-chain thresholds.
-    Returns { 'celsius': float|None, 'status': str, 'label': str, 'badge_class': str }.
+    Parses a cold-chain temperature reading (e.g. '4.0 °C', '18.5 C') and classifies it.
+    - When custom per-batch `min_temp` and `max_temp` are supplied, enforces that exact
+      cold-chain smart-contract SLA range and sets `contract_broken = True` if violated.
+    - Otherwise falls back to standard perishable agricultural cold-chain thresholds.
+    Returns { 'celsius', 'status', 'label', 'badge_class', 'contract_broken', 'min_temp', 'max_temp' }.
     """
+    has_custom = (min_temp is not None and max_temp is not None)
     if not temp_str:
         return {
             "celsius": None,
             "status": "unknown",
             "label": "Ambient / Unspecified",
             "badge_class": "bg-secondary-subtle text-secondary",
+            "contract_broken": False,
+            "min_temp": min_temp,
+            "max_temp": max_temp,
         }
 
     match = re.search(r"(-?\d+(?:\.\d+)?)", str(temp_str))
@@ -162,15 +172,47 @@ def evaluate_temperature(temp_str: str | None) -> dict:
             "status": "unknown",
             "label": str(temp_str),
             "badge_class": "bg-secondary-subtle text-secondary",
+            "contract_broken": False,
+            "min_temp": min_temp,
+            "max_temp": max_temp,
         }
 
     celsius = float(match.group(1))
+
+    if has_custom:
+        lo = float(min_temp)
+        hi = float(max_temp)
+        range_txt = f"{lo:g}–{hi:g} °C"
+        if lo <= celsius <= hi:
+            return {
+                "celsius": celsius,
+                "status": "optimal",
+                "label": f"{celsius:.1f} °C • Within Contract ({range_txt})",
+                "badge_class": "bg-success-subtle text-success border border-success-subtle",
+                "contract_broken": False,
+                "min_temp": lo,
+                "max_temp": hi,
+            }
+        direction = "below" if celsius < lo else "above"
+        return {
+            "celsius": celsius,
+            "status": "breach",
+            "label": f"{celsius:.1f} °C • Contract Broken ({direction} {range_txt})",
+            "badge_class": "bg-danger-subtle text-danger border border-danger-subtle fw-semibold",
+            "contract_broken": True,
+            "min_temp": lo,
+            "max_temp": hi,
+        }
+
     if -2.0 <= celsius <= 8.0:
         return {
             "celsius": celsius,
             "status": "optimal",
             "label": f"{celsius:.1f} °C • Cold-Chain Optimal",
             "badge_class": "bg-success-subtle text-success border border-success-subtle",
+            "contract_broken": False,
+            "min_temp": -2.0,
+            "max_temp": 8.0,
         }
     elif 8.0 < celsius <= 15.0:
         return {
@@ -178,6 +220,9 @@ def evaluate_temperature(temp_str: str | None) -> dict:
             "status": "elevated",
             "label": f"{celsius:.1f} °C • Cool / Ambient",
             "badge_class": "bg-warning-subtle text-warning-emphasis border border-warning-subtle",
+            "contract_broken": False,
+            "min_temp": -2.0,
+            "max_temp": 8.0,
         }
     else:
         return {
@@ -185,6 +230,9 @@ def evaluate_temperature(temp_str: str | None) -> dict:
             "status": "breach",
             "label": f"{celsius:.1f} °C • Cold-Chain Breach",
             "badge_class": "bg-danger-subtle text-danger border border-danger-subtle fw-semibold",
+            "contract_broken": True,
+            "min_temp": -2.0,
+            "max_temp": 8.0,
         }
 
 

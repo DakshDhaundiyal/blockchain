@@ -107,9 +107,37 @@
       {% else %}
         <span class="chip chip--wait"><span class="chip__dot"></span>Can&rsquo;t verify right now</span>
       {% endif %}
+      {% if cold_chain_contract and cold_chain_contract.broken %}
+        <span class="chip chip--bad"><span class="chip__dot"></span>Cold-Chain Contract Broken</span>
+      {% elif cold_chain_contract %}
+        <div class="hd-note">Cold contract: {{ cold_chain_contract.range_label }}</div>
+      {% endif %}
     </div>
   </div>
 </section>
+
+<!-- ============ COLD-CHAIN SMART CONTRACT BROKEN BANNER ============ -->
+{% if cold_chain_contract and cold_chain_contract.broken %}
+<div class="shell" style="padding-top:16px">
+  <section class="panel" style="border-color:var(--bad-line)" role="region" aria-label="Cold-Chain Smart Contract Status">
+    <div class="panel__hd" style="background:var(--bad-wash);border-bottom-color:var(--bad-line)">
+      <h2 class="panel__title" style="color:var(--bad-ink)">Smart Contract Broken &mdash; Temperature Out of Range</h2>
+      <span class="chip chip--bad chip--sm">Required: {{ cold_chain_contract.range_label }}</span>
+    </div>
+    <div class="panel__bd">
+      <p class="t-sm" style="margin-bottom:10px">
+        This batch required storage between <strong>{{ cold_chain_contract.range_label }}</strong>. One or more transport stops went outside the agreed temperature rule:
+      </p>
+      {% for b in cold_chain_contract.breaches %}
+      <div style="padding:8px 12px;border-left:2px solid var(--bad-ink);background:var(--bad-wash);border-radius:0 4px 4px 0;font-size:13px;color:#7E3028;{% if not loop.last %}margin-bottom:8px{% endif %}">
+        <strong>Stop #{{ b.checkpoint_number }} ({{ b.location }}):</strong>
+        Recorded <strong class="mono">{{ b.temperature }}</strong> &mdash; outside required <strong>{{ cold_chain_contract.range_label }}</strong>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+</div>
+{% endif %}
 
 <!-- ============ TAMPER ALERT (ONLY SHOWN WHEN SOMETHING CHANGED) ============ -->
 {% if is_tampered and tamper_incidents %}
@@ -189,7 +217,19 @@
             </div>
             <div>
               <div class="vmeta__k">Freshness &amp; Cold Chain</div>
-              <div class="vmeta__v">{{ transport_verifications[-1].temp_eval.label if transport_verifications else 'Not shipped yet' }}</div>
+              <div class="vmeta__v" id="vfLiveTempVal">{{ transport_verifications[-1].temp_eval.label if transport_verifications else 'Not shipped yet' }}</div>
+              {% if transport_verifications and transport_verifications[-1].temp_eval.celsius is not none %}
+              <div
+                class="sensor-live-tag sensor-live-tag--light no-print"
+                id="vfLiveSensor"
+                data-base-temp="{{ transport_verifications[-1].temp_eval.celsius }}"
+                data-min-temp="{{ cold_chain_contract.min_temp if cold_chain_contract else 2.0 }}"
+                data-max-temp="{{ cold_chain_contract.max_temp if cold_chain_contract else 6.0 }}"
+                data-broken="{{ 'true' if transport_verifications[-1].temp_eval.contract_broken else 'false' }}"
+              >
+                <i></i><span id="vfLiveSensorText">Live sensor: {{ '%.1f'|format(transport_verifications[-1].temp_eval.celsius) }} &deg;C</span>
+              </div>
+              {% endif %}
             </div>
             <div>
               <div class="vmeta__k">Packed</div>
@@ -728,6 +768,38 @@
       const target = document.getElementById(button.getAttribute('commandfor'));
       if (target) copyHash(button, target);
     });
+  }
+
+  // Gentle simulated live IoT sensor flicker (0.0–0.5 °C every 2s, staying in range)
+  const sensorEl = document.getElementById('vfLiveSensor');
+  const sensorTxt = document.getElementById('vfLiveSensorText');
+  if (sensorEl && sensorTxt) {
+    const base = parseFloat(sensorEl.dataset.baseTemp);
+    const minT = parseFloat(sensorEl.dataset.minTemp);
+    const maxT = parseFloat(sensorEl.dataset.maxTemp);
+    const isBroken = sensorEl.dataset.broken === 'true';
+    if (!isNaN(base)) {
+      let prev = Math.round(base * 10) / 10;
+      setInterval(() => {
+        let next = prev;
+        for (let tries = 0; tries < 6; tries++) {
+          let cand = base + (Math.random() - 0.5) * 0.5;
+          if (!isBroken) {
+            cand = Math.max(minT + 0.05, Math.min(maxT - 0.05, cand));
+          } else if (base > maxT) {
+            cand = Math.max(maxT + 0.2, cand);
+          } else if (base < minT) {
+            cand = Math.min(minT - 0.2, cand);
+          }
+          cand = Math.round(cand * 10) / 10;
+          if (cand !== prev) { next = cand; break; }
+        }
+        prev = next;
+        sensorTxt.classList.add('temp-flicker-flash');
+        sensorTxt.textContent = 'Live sensor: ' + next.toFixed(1) + ' \u00b0C';
+        setTimeout(() => sensorTxt.classList.remove('temp-flicker-flash'), 220);
+      }, 2000);
+    }
   }
 })();
 </script>
