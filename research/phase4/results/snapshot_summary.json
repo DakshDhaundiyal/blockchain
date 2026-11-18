@@ -1,0 +1,98 @@
+{
+  "metadata": {
+    "experiment_id": "EXP-SNAP-20261117-150227",
+    "generated_at": "2026-11-17T15:03:07.932225+00:00",
+    "batches_tested": 10,
+    "total_trials": 80
+  },
+  "overall": {
+    "tamper_detection_accuracy": 1.0,
+    "snapshot_trustworthiness_accuracy": 1.0,
+    "diagnosis_accuracy": 1.0,
+    "field_level_precision": 1.0,
+    "field_level_recall": 1.0,
+    "field_level_f1": 1.0
+  },
+  "scenarios": {
+    "scenario_1": {
+      "name": "Baseline Authentic (Valid Snapshot)",
+      "trials": 10,
+      "tamper_detected_correct": 10,
+      "snapshot_trusted_correct": 10,
+      "diagnosis_correct": 10,
+      "field_tp": 0,
+      "field_fp": 0,
+      "field_fn": 0
+    },
+    "scenario_2": {
+      "name": "Single Hashed Field Tampered",
+      "trials": 10,
+      "tamper_detected_correct": 10,
+      "snapshot_trusted_correct": 10,
+      "diagnosis_correct": 10,
+      "field_tp": 10,
+      "field_fp": 0,
+      "field_fn": 0
+    },
+    "scenario_3": {
+      "name": "Multiple Hashed Fields Tampered",
+      "trials": 10,
+      "tamper_detected_correct": 10,
+      "snapshot_trusted_correct": 10,
+      "diagnosis_correct": 10,
+      "field_tp": 20,
+      "field_fp": 0,
+      "field_fn": 0
+    },
+    "scenario_4": {
+      "name": "Snapshot Corrupted Independently",
+      "trials": 10,
+      "tamper_detected_correct": 10,
+      "snapshot_trusted_correct": 10,
+      "diagnosis_correct": 10,
+      "field_tp": 0,
+      "field_fp": 0,
+      "field_fn": 0
+    },
+    "scenario_5": {
+      "name": "Snapshot Missing",
+      "trials": 10,
+      "tamper_detected_correct": 10,
+      "snapshot_trusted_correct": 10,
+      "diagnosis_correct": 10,
+      "field_tp": 0,
+      "field_fp": 0,
+      "field_fn": 0
+    },
+    "scenario_6": {
+      "name": "Snapshot Corrupted JSON",
+      "trials": 10,
+      "tamper_detected_correct": 10,
+      "snapshot_trusted_correct": 10,
+      "diagnosis_correct": 10,
+      "field_tp": 0,
+      "field_fp": 0,
+      "field_fn": 0
+    },
+    "scenario_7": {
+      "name": "Unhashed Field Modified",
+      "trials": 10,
+      "tamper_detected_correct": 10,
+      "snapshot_trusted_correct": 10,
+      "diagnosis_correct": 10,
+      "field_tp": 0,
+      "field_fp": 0,
+      "field_fn": 0
+    },
+    "scenario_8": {
+      "name": "Collusion: DB & Snapshot Modified Together",
+      "trials": 10,
+      "tamper_detected_correct": 10,
+      "snapshot_trusted_correct": 10,
+      "diagnosis_correct": 10,
+      "field_tp": 0,
+      "field_fp": 0,
+      "field_fn": 0
+    }
+  }
+}

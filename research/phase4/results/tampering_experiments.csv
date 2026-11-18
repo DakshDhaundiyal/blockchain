@@ -1,0 +1,291 @@
+experiment_id,batch_id,stage,scenario,expected_outcome,actual_outcome,success,latency_ms,timestamp,error_message
+EXP-TAMPER-20261117-145616,TH-SYN-001,HARVEST,harvest_single_name,tampered,tampered,True,308.942,2026-11-17T14:56:16.743278+00:00,Tampered field(s): name; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-001,HARVEST,harvest_single_quantity,tampered,tampered,True,208.823,2026-11-17T14:56:16.999387+00:00,Tampered field(s): quantity; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-001,HARVEST,harvest_single_farming_method,tampered,tampered,True,213.057,2026-11-17T14:56:17.245471+00:00,Tampered field(s): farming_method; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-001,HARVEST,harvest_single_packaging_date,tampered,tampered,True,232.79,2026-11-17T14:56:17.563003+00:00,Tampered field(s): packaging_date; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-001,HARVEST,harvest_multi_name_quantity,tampered,tampered,True,196.865,2026-11-17T14:56:17.842657+00:00,Tampered field(s): name+quantity; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-001,HARVEST,harvest_multi_method_date,tampered,tampered,True,184.059,2026-11-17T14:56:18.063227+00:00,Tampered field(s): farming_method+packaging_date; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-001,HARVEST,harvest_multi_all_harvest,tampered,tampered,True,210.159,2026-11-17T14:56:18.354993+00:00,Tampered field(s): all_harvest_fields; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-001,TRANSPORT,transport_single_temperature,tampered,tampered,True,222.193,2026-11-17T14:56:18.656357+00:00,Tampered field(s): temperature; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-001,TRANSPORT,transport_single_location,tampered,tampered,True,194.075,2026-11-17T14:56:18.899597+00:00,Tampered field(s): current_location; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-001,TRANSPORT,transport_single_notes,tampered,tampered,True,180.754,2026-11-17T14:56:19.165969+00:00,Tampered field(s): notes; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-001,TRANSPORT,transport_single_status,tampered,tampered,True,247.379,2026-11-17T14:56:19.487927+00:00,Tampered field(s): status; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-001,TRANSPORT,transport_single_vehicle_number,tampered,tampered,True,200.43,2026-11-17T14:56:19.772015+00:00,Tampered field(s): vehicle_number; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-001,TRANSPORT,transport_single_transporter_id,tampered,tampered,True,136.245,2026-11-17T14:56:19.934512+00:00,Tampered field(s): transporter_id; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-001,TRANSPORT,transport_multi_temp_location,tampered,tampered,True,312.726,2026-11-17T14:56:20.308190+00:00,Tampered field(s): temp+location; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-001,TRANSPORT,transport_multi_status_vehicle,tampered,tampered,True,282.22,2026-11-17T14:56:20.640181+00:00,Tampered field(s): status+vehicle; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-001,TRANSPORT,transport_multi_all_transport,tampered,tampered,True,352.601,2026-11-17T14:56:21.084064+00:00,Tampered field(s): all_transport_fields; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-001,RETAIL,retail_single_price,tampered,tampered,True,285.554,2026-11-17T14:56:21.474598+00:00,Tampered field(s): price; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-001,RETAIL,retail_single_store_name,tampered,tampered,True,316.835,2026-11-17T14:56:21.857766+00:00,Tampered field(s): store_name; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-001,RETAIL,retail_single_store_location,tampered,tampered,True,339.924,2026-11-17T14:56:22.250082+00:00,Tampered field(s): store_location; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-001,RETAIL,retail_single_stock_quantity,tampered,tampered,True,309.692,2026-11-17T14:56:22.620572+00:00,Tampered field(s): stock_quantity; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-001,RETAIL,retail_single_arrival_date,tampered,tampered,True,340.922,2026-11-17T14:56:23.019506+00:00,Tampered field(s): arrival_date; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-001,RETAIL,retail_single_shelf_life,tampered,tampered,True,271.372,2026-11-17T14:56:23.348201+00:00,Tampered field(s): shelf_life; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-001,RETAIL,retail_multi_price_stock,tampered,tampered,True,480.435,2026-11-17T14:56:23.872240+00:00,Tampered field(s): price+stock; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-001,RETAIL,retail_multi_store_location,tampered,tampered,True,477.003,2026-11-17T14:56:24.424999+00:00,Tampered field(s): store_name+location; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-001,RETAIL,retail_multi_all_retail,tampered,tampered,True,544.538,2026-11-17T14:56:25.066500+00:00,Tampered field(s): all_retail_fields; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-001,HARVEST,negative_control_neg_farmer_certifications,verified,verified,True,507.692,2026-11-17T14:56:25.708918+00:00,Unhashed field: certifications (unhashed); outside hash boundary
+EXP-TAMPER-20261117-145616,TH-SYN-001,HARVEST,negative_control_neg_farmer_notes,verified,verified,True,514.608,2026-11-17T14:56:26.288616+00:00,Unhashed field: notes (unhashed); outside hash boundary
+EXP-TAMPER-20261117-145616,TH-SYN-001,TRANSPORT,negative_control_neg_transport_timestamp,verified,verified,True,452.254,2026-11-17T14:56:26.824874+00:00,Unhashed field: timestamp (unhashed); outside hash boundary
+EXP-TAMPER-20261117-145616,TH-SYN-001,RETAIL,negative_control_neg_retail_updated_at,verified,verified,True,491.819,2026-11-17T14:56:27.397752+00:00,Unhashed field: updated_at (unhashed); outside hash boundary
+EXP-TAMPER-20261117-145616,TH-SYN-002,HARVEST,harvest_single_name,tampered,tampered,True,522.889,2026-11-17T14:56:28.670505+00:00,Tampered field(s): name; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-002,HARVEST,harvest_single_quantity,tampered,tampered,True,621.167,2026-11-17T14:56:29.350058+00:00,Tampered field(s): quantity; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-002,HARVEST,harvest_single_farming_method,tampered,tampered,True,635.358,2026-11-17T14:56:30.050294+00:00,Tampered field(s): farming_method; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-002,HARVEST,harvest_single_packaging_date,tampered,tampered,True,638.876,2026-11-17T14:56:30.738357+00:00,Tampered field(s): packaging_date; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-002,HARVEST,harvest_multi_name_quantity,tampered,tampered,True,624.198,2026-11-17T14:56:31.444762+00:00,Tampered field(s): name+quantity; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-002,HARVEST,harvest_multi_method_date,tampered,tampered,True,724.22,2026-11-17T14:56:32.241045+00:00,Tampered field(s): farming_method+packaging_date; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-002,HARVEST,harvest_multi_all_harvest,tampered,tampered,True,634.582,2026-11-17T14:56:32.944585+00:00,Tampered field(s): all_harvest_fields; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-002,TRANSPORT,transport_single_temperature,tampered,tampered,True,582.681,2026-11-17T14:56:33.575750+00:00,Tampered field(s): temperature; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-002,TRANSPORT,transport_single_location,tampered,tampered,True,637.125,2026-11-17T14:56:34.276831+00:00,Tampered field(s): current_location; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-002,TRANSPORT,transport_single_notes,tampered,tampered,True,654.501,2026-11-17T14:56:34.989456+00:00,Tampered field(s): notes; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-002,TRANSPORT,transport_single_status,tampered,tampered,True,544.426,2026-11-17T14:56:35.594872+00:00,Tampered field(s): status; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-002,TRANSPORT,transport_single_vehicle_number,tampered,tampered,True,655.115,2026-11-17T14:56:36.294668+00:00,Tampered field(s): vehicle_number; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-002,TRANSPORT,transport_single_transporter_id,tampered,tampered,True,579.364,2026-11-17T14:56:36.916149+00:00,Tampered field(s): transporter_id; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-002,TRANSPORT,transport_multi_temp_location,tampered,tampered,True,571.214,2026-11-17T14:56:37.546067+00:00,Tampered field(s): temp+location; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-002,TRANSPORT,transport_multi_status_vehicle,tampered,tampered,True,757.598,2026-11-17T14:56:38.370591+00:00,Tampered field(s): status+vehicle; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-002,TRANSPORT,transport_multi_all_transport,tampered,tampered,True,538.41,2026-11-17T14:56:38.956057+00:00,Tampered field(s): all_transport_fields; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-002,RETAIL,retail_single_price,tampered,tampered,True,667.927,2026-11-17T14:56:39.675031+00:00,Tampered field(s): price; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-002,RETAIL,retail_single_store_name,tampered,tampered,True,608.092,2026-11-17T14:56:40.389956+00:00,Tampered field(s): store_name; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-002,RETAIL,retail_single_store_location,tampered,tampered,True,673.808,2026-11-17T14:56:41.173828+00:00,Tampered field(s): store_location; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-002,RETAIL,retail_single_stock_quantity,tampered,tampered,True,605.461,2026-11-17T14:56:41.865673+00:00,Tampered field(s): stock_quantity; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-002,RETAIL,retail_single_arrival_date,tampered,tampered,True,575.377,2026-11-17T14:56:42.533828+00:00,Tampered field(s): arrival_date; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-002,RETAIL,retail_single_shelf_life,tampered,tampered,True,640.022,2026-11-17T14:56:43.223004+00:00,Tampered field(s): shelf_life; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-002,RETAIL,retail_multi_price_stock,tampered,tampered,True,639.981,2026-11-17T14:56:43.943357+00:00,Tampered field(s): price+stock; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-002,RETAIL,retail_multi_store_location,tampered,tampered,True,606.744,2026-11-17T14:56:44.667483+00:00,Tampered field(s): store_name+location; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-002,RETAIL,retail_multi_all_retail,tampered,tampered,True,519.023,2026-11-17T14:56:45.274664+00:00,Tampered field(s): all_retail_fields; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-002,HARVEST,negative_control_neg_farmer_certifications,verified,verified,True,584.454,2026-11-17T14:56:45.921439+00:00,Unhashed field: certifications (unhashed); outside hash boundary
+EXP-TAMPER-20261117-145616,TH-SYN-002,HARVEST,negative_control_neg_farmer_notes,verified,verified,True,821.918,2026-11-17T14:56:46.804084+00:00,Unhashed field: notes (unhashed); outside hash boundary
+EXP-TAMPER-20261117-145616,TH-SYN-002,TRANSPORT,negative_control_neg_transport_timestamp,verified,verified,True,661.045,2026-11-17T14:56:47.538141+00:00,Unhashed field: timestamp (unhashed); outside hash boundary
+EXP-TAMPER-20261117-145616,TH-SYN-002,RETAIL,negative_control_neg_retail_updated_at,verified,verified,True,595.501,2026-11-17T14:56:48.232600+00:00,Unhashed field: updated_at (unhashed); outside hash boundary
+EXP-TAMPER-20261117-145616,TH-SYN-003,HARVEST,harvest_single_name,tampered,tampered,True,579.89,2026-11-17T14:56:49.380785+00:00,Tampered field(s): name; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-003,HARVEST,harvest_single_quantity,tampered,tampered,True,436.277,2026-11-17T14:56:49.932290+00:00,Tampered field(s): quantity; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-003,HARVEST,harvest_single_farming_method,tampered,tampered,True,448.164,2026-11-17T14:56:50.438440+00:00,Tampered field(s): farming_method; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-003,HARVEST,harvest_single_packaging_date,tampered,tampered,True,492.127,2026-11-17T14:56:50.989738+00:00,Tampered field(s): packaging_date; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-003,HARVEST,harvest_multi_name_quantity,tampered,tampered,True,420.905,2026-11-17T14:56:51.480463+00:00,Tampered field(s): name+quantity; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-003,HARVEST,harvest_multi_method_date,tampered,tampered,True,523.945,2026-11-17T14:56:52.060334+00:00,Tampered field(s): farming_method+packaging_date; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-003,HARVEST,harvest_multi_all_harvest,tampered,tampered,True,521.085,2026-11-17T14:56:52.687131+00:00,Tampered field(s): all_harvest_fields; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-003,TRANSPORT,transport_single_temperature,tampered,tampered,True,484.779,2026-11-17T14:56:53.237937+00:00,Tampered field(s): temperature; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-003,TRANSPORT,transport_single_location,tampered,tampered,True,461.898,2026-11-17T14:56:53.750469+00:00,Tampered field(s): current_location; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-003,TRANSPORT,transport_single_notes,tampered,tampered,True,463.36,2026-11-17T14:56:54.293474+00:00,Tampered field(s): notes; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-003,TRANSPORT,transport_single_status,tampered,tampered,True,432.713,2026-11-17T14:56:54.778715+00:00,Tampered field(s): status; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-003,TRANSPORT,transport_single_vehicle_number,tampered,tampered,True,406.369,2026-11-17T14:56:55.233641+00:00,Tampered field(s): vehicle_number; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-003,TRANSPORT,transport_single_transporter_id,tampered,tampered,True,508.528,2026-11-17T14:56:55.804447+00:00,Tampered field(s): transporter_id; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-003,TRANSPORT,transport_multi_temp_location,tampered,tampered,True,503.176,2026-11-17T14:56:56.366336+00:00,Tampered field(s): temp+location; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-003,TRANSPORT,transport_multi_status_vehicle,tampered,tampered,True,521.594,2026-11-17T14:56:56.985664+00:00,Tampered field(s): status+vehicle; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-003,TRANSPORT,transport_multi_all_transport,tampered,tampered,True,443.594,2026-11-17T14:56:57.501227+00:00,Tampered field(s): all_transport_fields; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-003,RETAIL,retail_single_price,tampered,tampered,True,507.333,2026-11-17T14:56:58.073922+00:00,Tampered field(s): price; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-003,RETAIL,retail_single_store_name,tampered,tampered,True,551.188,2026-11-17T14:56:58.698840+00:00,Tampered field(s): store_name; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-003,RETAIL,retail_single_store_location,tampered,tampered,True,502.394,2026-11-17T14:56:59.262823+00:00,Tampered field(s): store_location; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-003,RETAIL,retail_single_stock_quantity,tampered,tampered,True,519.561,2026-11-17T14:56:59.839811+00:00,Tampered field(s): stock_quantity; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-003,RETAIL,retail_single_arrival_date,tampered,tampered,True,574.664,2026-11-17T14:57:00.531584+00:00,Tampered field(s): arrival_date; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-003,RETAIL,retail_single_shelf_life,tampered,tampered,True,455.318,2026-11-17T14:57:01.077192+00:00,Tampered field(s): shelf_life; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-003,RETAIL,retail_multi_price_stock,tampered,tampered,True,449.473,2026-11-17T14:57:01.585779+00:00,Tampered field(s): price+stock; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-003,RETAIL,retail_multi_store_location,tampered,tampered,True,523.28,2026-11-17T14:57:02.209515+00:00,Tampered field(s): store_name+location; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-003,RETAIL,retail_multi_all_retail,tampered,tampered,True,593.359,2026-11-17T14:57:02.896853+00:00,Tampered field(s): all_retail_fields; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-003,HARVEST,negative_control_neg_farmer_certifications,verified,verified,True,503.221,2026-11-17T14:57:03.472659+00:00,Unhashed field: certifications (unhashed); outside hash boundary
+EXP-TAMPER-20261117-145616,TH-SYN-003,HARVEST,negative_control_neg_farmer_notes,verified,verified,True,519.524,2026-11-17T14:57:04.067047+00:00,Unhashed field: notes (unhashed); outside hash boundary
+EXP-TAMPER-20261117-145616,TH-SYN-003,TRANSPORT,negative_control_neg_transport_timestamp,verified,verified,True,499.245,2026-11-17T14:57:04.672655+00:00,Unhashed field: timestamp (unhashed); outside hash boundary
+EXP-TAMPER-20261117-145616,TH-SYN-003,RETAIL,negative_control_neg_retail_updated_at,verified,verified,True,507.225,2026-11-17T14:57:05.234915+00:00,Unhashed field: updated_at (unhashed); outside hash boundary
+EXP-TAMPER-20261117-145616,TH-SYN-004,HARVEST,harvest_single_name,tampered,tampered,True,702.06,2026-11-17T14:57:06.422023+00:00,Tampered field(s): name; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-004,HARVEST,harvest_single_quantity,tampered,tampered,True,553.16,2026-11-17T14:57:07.059547+00:00,Tampered field(s): quantity; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-004,HARVEST,harvest_single_farming_method,tampered,tampered,True,535.475,2026-11-17T14:57:07.661023+00:00,Tampered field(s): farming_method; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-004,HARVEST,harvest_single_packaging_date,tampered,tampered,True,547.899,2026-11-17T14:57:08.276121+00:00,Tampered field(s): packaging_date; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-004,HARVEST,harvest_multi_name_quantity,tampered,tampered,True,544.777,2026-11-17T14:57:08.880670+00:00,Tampered field(s): name+quantity; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-004,HARVEST,harvest_multi_method_date,tampered,tampered,True,529.15,2026-11-17T14:57:09.466496+00:00,Tampered field(s): farming_method+packaging_date; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-004,HARVEST,harvest_multi_all_harvest,tampered,tampered,True,531.785,2026-11-17T14:57:10.061011+00:00,Tampered field(s): all_harvest_fields; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-004,TRANSPORT,transport_single_temperature,tampered,tampered,True,549.505,2026-11-17T14:57:10.682630+00:00,Tampered field(s): temperature; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-004,TRANSPORT,transport_single_location,tampered,tampered,True,551.359,2026-11-17T14:57:11.299247+00:00,Tampered field(s): current_location; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-004,TRANSPORT,transport_single_notes,tampered,tampered,True,654.595,2026-11-17T14:57:12.026564+00:00,Tampered field(s): notes; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-004,TRANSPORT,transport_single_status,tampered,tampered,True,525.686,2026-11-17T14:57:12.609564+00:00,Tampered field(s): status; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-004,TRANSPORT,transport_single_vehicle_number,tampered,tampered,True,616.607,2026-11-17T14:57:13.285421+00:00,Tampered field(s): vehicle_number; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-004,TRANSPORT,transport_single_transporter_id,tampered,tampered,True,530.16,2026-11-17T14:57:13.889168+00:00,Tampered field(s): transporter_id; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-004,TRANSPORT,transport_multi_temp_location,tampered,tampered,True,557.199,2026-11-17T14:57:14.509607+00:00,Tampered field(s): temp+location; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-004,TRANSPORT,transport_multi_status_vehicle,tampered,tampered,True,526.892,2026-11-17T14:57:15.119025+00:00,Tampered field(s): status+vehicle; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-004,TRANSPORT,transport_multi_all_transport,tampered,tampered,True,539.576,2026-11-17T14:57:15.734501+00:00,Tampered field(s): all_transport_fields; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-004,RETAIL,retail_single_price,tampered,tampered,True,648.572,2026-11-17T14:57:16.445087+00:00,Tampered field(s): price; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-004,RETAIL,retail_single_store_name,tampered,tampered,True,546.114,2026-11-17T14:57:17.059386+00:00,Tampered field(s): store_name; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-004,RETAIL,retail_single_store_location,tampered,tampered,True,511.114,2026-11-17T14:57:17.631646+00:00,Tampered field(s): store_location; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-004,RETAIL,retail_single_stock_quantity,tampered,tampered,True,509.868,2026-11-17T14:57:18.220796+00:00,Tampered field(s): stock_quantity; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-004,RETAIL,retail_single_arrival_date,tampered,tampered,True,555.67,2026-11-17T14:57:18.832401+00:00,Tampered field(s): arrival_date; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-004,RETAIL,retail_single_shelf_life,tampered,tampered,True,543.699,2026-11-17T14:57:19.444658+00:00,Tampered field(s): shelf_life; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-004,RETAIL,retail_multi_price_stock,tampered,tampered,True,558.083,2026-11-17T14:57:20.136627+00:00,Tampered field(s): price+stock; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-004,RETAIL,retail_multi_store_location,tampered,tampered,True,583.783,2026-11-17T14:57:20.791489+00:00,Tampered field(s): store_name+location; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-004,RETAIL,retail_multi_all_retail,tampered,tampered,True,610.986,2026-11-17T14:57:21.482827+00:00,Tampered field(s): all_retail_fields; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-004,HARVEST,negative_control_neg_farmer_certifications,verified,verified,True,553.933,2026-11-17T14:57:22.112048+00:00,Unhashed field: certifications (unhashed); outside hash boundary
+EXP-TAMPER-20261117-145616,TH-SYN-004,HARVEST,negative_control_neg_farmer_notes,verified,verified,True,539.77,2026-11-17T14:57:22.737277+00:00,Unhashed field: notes (unhashed); outside hash boundary
+EXP-TAMPER-20261117-145616,TH-SYN-004,TRANSPORT,negative_control_neg_transport_timestamp,verified,verified,True,524.549,2026-11-17T14:57:23.354805+00:00,Unhashed field: timestamp (unhashed); outside hash boundary
+EXP-TAMPER-20261117-145616,TH-SYN-004,RETAIL,negative_control_neg_retail_updated_at,verified,verified,True,537.304,2026-11-17T14:57:23.958353+00:00,Unhashed field: updated_at (unhashed); outside hash boundary
+EXP-TAMPER-20261117-145616,TH-SYN-005,HARVEST,harvest_single_name,tampered,tampered,True,690.217,2026-11-17T14:57:25.358381+00:00,Tampered field(s): name; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-005,HARVEST,harvest_single_quantity,tampered,tampered,True,646.919,2026-11-17T14:57:26.067915+00:00,Tampered field(s): quantity; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-005,HARVEST,harvest_single_farming_method,tampered,tampered,True,661.587,2026-11-17T14:57:26.801669+00:00,Tampered field(s): farming_method; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-005,HARVEST,harvest_single_packaging_date,tampered,tampered,True,737.843,2026-11-17T14:57:27.607971+00:00,Tampered field(s): packaging_date; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-005,HARVEST,harvest_multi_name_quantity,tampered,tampered,True,713.383,2026-11-17T14:57:28.400412+00:00,Tampered field(s): name+quantity; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-005,HARVEST,harvest_multi_method_date,tampered,tampered,True,630.542,2026-11-17T14:57:29.143347+00:00,Tampered field(s): farming_method+packaging_date; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-005,HARVEST,harvest_multi_all_harvest,tampered,tampered,True,801.384,2026-11-17T14:57:30.009066+00:00,Tampered field(s): all_harvest_fields; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-005,TRANSPORT,transport_single_temperature,tampered,tampered,True,715.951,2026-11-17T14:57:30.816050+00:00,Tampered field(s): temperature; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-005,TRANSPORT,transport_single_location,tampered,tampered,True,618.66,2026-11-17T14:57:31.503216+00:00,Tampered field(s): current_location; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-005,TRANSPORT,transport_single_notes,tampered,tampered,True,677.009,2026-11-17T14:57:32.247198+00:00,Tampered field(s): notes; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-005,TRANSPORT,transport_single_status,tampered,tampered,True,702.31,2026-11-17T14:57:33.007901+00:00,Tampered field(s): status; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-005,TRANSPORT,transport_single_vehicle_number,tampered,tampered,True,686.619,2026-11-17T14:57:33.755253+00:00,Tampered field(s): vehicle_number; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-005,TRANSPORT,transport_single_transporter_id,tampered,tampered,True,724.638,2026-11-17T14:57:34.538314+00:00,Tampered field(s): transporter_id; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-005,TRANSPORT,transport_multi_temp_location,tampered,tampered,True,737.883,2026-11-17T14:57:35.342114+00:00,Tampered field(s): temp+location; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-005,TRANSPORT,transport_multi_status_vehicle,tampered,tampered,True,740.773,2026-11-17T14:57:36.153802+00:00,Tampered field(s): status+vehicle; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-005,TRANSPORT,transport_multi_all_transport,tampered,tampered,True,723.986,2026-11-17T14:57:36.948264+00:00,Tampered field(s): all_transport_fields; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-005,RETAIL,retail_single_price,tampered,tampered,True,737.514,2026-11-17T14:57:37.748317+00:00,Tampered field(s): price; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-005,RETAIL,retail_single_store_name,tampered,tampered,True,719.576,2026-11-17T14:57:38.525283+00:00,Tampered field(s): store_name; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-005,RETAIL,retail_single_store_location,tampered,tampered,True,703.892,2026-11-17T14:57:39.290260+00:00,Tampered field(s): store_location; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-005,RETAIL,retail_single_stock_quantity,tampered,tampered,True,715.728,2026-11-17T14:57:40.359576+00:00,Tampered field(s): stock_quantity; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-005,RETAIL,retail_single_arrival_date,tampered,tampered,True,736.501,2026-11-17T14:57:41.650713+00:00,Tampered field(s): arrival_date; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-005,RETAIL,retail_single_shelf_life,tampered,tampered,True,639.878,2026-11-17T14:57:42.778360+00:00,Tampered field(s): shelf_life; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-005,RETAIL,retail_multi_price_stock,tampered,tampered,True,678.828,2026-11-17T14:57:43.997295+00:00,Tampered field(s): price+stock; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-005,RETAIL,retail_multi_store_location,tampered,tampered,True,686.243,2026-11-17T14:57:44.989585+00:00,Tampered field(s): store_name+location; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-005,RETAIL,retail_multi_all_retail,tampered,tampered,True,684.341,2026-11-17T14:57:45.999443+00:00,Tampered field(s): all_retail_fields; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-005,HARVEST,negative_control_neg_farmer_certifications,verified,verified,True,731.299,2026-11-17T14:57:47.072047+00:00,Unhashed field: certifications (unhashed); outside hash boundary
+EXP-TAMPER-20261117-145616,TH-SYN-005,HARVEST,negative_control_neg_farmer_notes,verified,verified,True,614.059,2026-11-17T14:57:47.980807+00:00,Unhashed field: notes (unhashed); outside hash boundary
+EXP-TAMPER-20261117-145616,TH-SYN-005,TRANSPORT,negative_control_neg_transport_timestamp,verified,verified,True,636.022,2026-11-17T14:57:48.988616+00:00,Unhashed field: timestamp (unhashed); outside hash boundary
+EXP-TAMPER-20261117-145616,TH-SYN-005,RETAIL,negative_control_neg_retail_updated_at,verified,verified,True,706.481,2026-11-17T14:57:50.084589+00:00,Unhashed field: updated_at (unhashed); outside hash boundary
+EXP-TAMPER-20261117-145616,TH-SYN-006,HARVEST,harvest_single_name,tampered,tampered,True,550.195,2026-11-17T14:57:51.691749+00:00,Tampered field(s): name; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-006,HARVEST,harvest_single_quantity,tampered,tampered,True,628.318,2026-11-17T14:57:52.681240+00:00,Tampered field(s): quantity; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-006,HARVEST,harvest_single_farming_method,tampered,tampered,True,569.576,2026-11-17T14:57:53.646048+00:00,Tampered field(s): farming_method; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-006,HARVEST,harvest_single_packaging_date,tampered,tampered,True,587.774,2026-11-17T14:57:54.500228+00:00,Tampered field(s): packaging_date; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-006,HARVEST,harvest_multi_name_quantity,tampered,tampered,True,625.361,2026-11-17T14:57:55.681398+00:00,Tampered field(s): name+quantity; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-006,HARVEST,harvest_multi_method_date,tampered,tampered,True,545.294,2026-11-17T14:57:56.657165+00:00,Tampered field(s): farming_method+packaging_date; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-006,HARVEST,harvest_multi_all_harvest,tampered,tampered,True,650.171,2026-11-17T14:57:57.977535+00:00,Tampered field(s): all_harvest_fields; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-006,TRANSPORT,transport_single_temperature,tampered,tampered,True,544.548,2026-11-17T14:57:59.016103+00:00,Tampered field(s): temperature; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-006,TRANSPORT,transport_single_location,tampered,tampered,True,568.822,2026-11-17T14:58:00.294839+00:00,Tampered field(s): current_location; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-006,TRANSPORT,transport_single_notes,tampered,tampered,True,603.211,2026-11-17T14:58:01.280048+00:00,Tampered field(s): notes; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-006,TRANSPORT,transport_single_status,tampered,tampered,True,589.432,2026-11-17T14:58:02.269133+00:00,Tampered field(s): status; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-006,TRANSPORT,transport_single_vehicle_number,tampered,tampered,True,527.799,2026-11-17T14:58:03.148598+00:00,Tampered field(s): vehicle_number; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-006,TRANSPORT,transport_single_transporter_id,tampered,tampered,True,556.711,2026-11-17T14:58:04.277450+00:00,Tampered field(s): transporter_id; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-006,TRANSPORT,transport_multi_temp_location,tampered,tampered,True,588.671,2026-11-17T14:58:05.130672+00:00,Tampered field(s): temp+location; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-006,TRANSPORT,transport_multi_status_vehicle,tampered,tampered,True,528.16,2026-11-17T14:58:05.963875+00:00,Tampered field(s): status+vehicle; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-006,TRANSPORT,transport_multi_all_transport,tampered,tampered,True,548.825,2026-11-17T14:58:06.566067+00:00,Tampered field(s): all_transport_fields; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-006,RETAIL,retail_single_price,tampered,tampered,True,600.228,2026-11-17T14:58:07.239420+00:00,Tampered field(s): price; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-006,RETAIL,retail_single_store_name,tampered,tampered,True,673.962,2026-11-17T14:58:08.103349+00:00,Tampered field(s): store_name; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-006,RETAIL,retail_single_store_location,tampered,tampered,True,603.545,2026-11-17T14:58:08.798876+00:00,Tampered field(s): store_location; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-006,RETAIL,retail_single_stock_quantity,tampered,tampered,True,554.201,2026-11-17T14:58:09.427098+00:00,Tampered field(s): stock_quantity; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-006,RETAIL,retail_single_arrival_date,tampered,tampered,True,594.292,2026-11-17T14:58:10.093090+00:00,Tampered field(s): arrival_date; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-006,RETAIL,retail_single_shelf_life,tampered,tampered,True,526.319,2026-11-17T14:58:10.685676+00:00,Tampered field(s): shelf_life; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-006,RETAIL,retail_multi_price_stock,tampered,tampered,True,592.387,2026-11-17T14:58:11.334310+00:00,Tampered field(s): price+stock; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-006,RETAIL,retail_multi_store_location,tampered,tampered,True,579.274,2026-11-17T14:58:11.993957+00:00,Tampered field(s): store_name+location; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-006,RETAIL,retail_multi_all_retail,tampered,tampered,True,553.334,2026-11-17T14:58:12.608895+00:00,Tampered field(s): all_retail_fields; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-006,HARVEST,negative_control_neg_farmer_certifications,verified,verified,True,546.856,2026-11-17T14:58:13.226097+00:00,Unhashed field: certifications (unhashed); outside hash boundary
+EXP-TAMPER-20261117-145616,TH-SYN-006,HARVEST,negative_control_neg_farmer_notes,verified,verified,True,573.093,2026-11-17T14:58:13.864012+00:00,Unhashed field: notes (unhashed); outside hash boundary
+EXP-TAMPER-20261117-145616,TH-SYN-006,TRANSPORT,negative_control_neg_transport_timestamp,verified,verified,True,547.702,2026-11-17T14:58:14.480787+00:00,Unhashed field: timestamp (unhashed); outside hash boundary
+EXP-TAMPER-20261117-145616,TH-SYN-006,RETAIL,negative_control_neg_retail_updated_at,verified,verified,True,625.885,2026-11-17T14:58:15.195290+00:00,Unhashed field: updated_at (unhashed); outside hash boundary
+EXP-TAMPER-20261117-145616,TH-SYN-007,HARVEST,harvest_single_name,tampered,tampered,True,446.072,2026-11-17T14:58:16.160917+00:00,Tampered field(s): name; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-007,HARVEST,harvest_single_quantity,tampered,tampered,True,367.535,2026-11-17T14:58:16.584482+00:00,Tampered field(s): quantity; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-007,HARVEST,harvest_single_farming_method,tampered,tampered,True,343.277,2026-11-17T14:58:16.988866+00:00,Tampered field(s): farming_method; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-007,HARVEST,harvest_single_packaging_date,tampered,tampered,True,484.874,2026-11-17T14:58:17.524877+00:00,Tampered field(s): packaging_date; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-007,HARVEST,harvest_multi_name_quantity,tampered,tampered,True,445.222,2026-11-17T14:58:18.042534+00:00,Tampered field(s): name+quantity; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-007,HARVEST,harvest_multi_method_date,tampered,tampered,True,436.959,2026-11-17T14:58:18.533157+00:00,Tampered field(s): farming_method+packaging_date; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-007,HARVEST,harvest_multi_all_harvest,tampered,tampered,True,420.163,2026-11-17T14:58:19.010848+00:00,Tampered field(s): all_harvest_fields; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-007,TRANSPORT,transport_single_temperature,tampered,tampered,True,414.002,2026-11-17T14:58:19.492622+00:00,Tampered field(s): temperature; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-007,TRANSPORT,transport_single_location,tampered,tampered,True,387.081,2026-11-17T14:58:19.946180+00:00,Tampered field(s): current_location; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-007,TRANSPORT,transport_single_notes,tampered,tampered,True,423.725,2026-11-17T14:58:20.445517+00:00,Tampered field(s): notes; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-007,TRANSPORT,transport_single_status,tampered,tampered,True,435.385,2026-11-17T14:58:20.951701+00:00,Tampered field(s): status; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-007,TRANSPORT,transport_single_vehicle_number,tampered,tampered,True,446.014,2026-11-17T14:58:21.463297+00:00,Tampered field(s): vehicle_number; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-007,TRANSPORT,transport_single_transporter_id,tampered,tampered,True,470.296,2026-11-17T14:58:21.995454+00:00,Tampered field(s): transporter_id; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-007,TRANSPORT,transport_multi_temp_location,tampered,tampered,True,428.45,2026-11-17T14:58:22.493608+00:00,Tampered field(s): temp+location; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-007,TRANSPORT,transport_multi_status_vehicle,tampered,tampered,True,410.095,2026-11-17T14:58:22.966937+00:00,Tampered field(s): status+vehicle; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-007,TRANSPORT,transport_multi_all_transport,tampered,tampered,True,413.123,2026-11-17T14:58:23.433242+00:00,Tampered field(s): all_transport_fields; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-007,RETAIL,retail_single_price,tampered,tampered,True,485.888,2026-11-17T14:58:23.993057+00:00,Tampered field(s): price; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-007,RETAIL,retail_single_store_name,tampered,tampered,True,417.579,2026-11-17T14:58:24.506396+00:00,Tampered field(s): store_name; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-007,RETAIL,retail_single_store_location,tampered,tampered,True,496.745,2026-11-17T14:58:25.084220+00:00,Tampered field(s): store_location; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-007,RETAIL,retail_single_stock_quantity,tampered,tampered,True,459.593,2026-11-17T14:58:25.607787+00:00,Tampered field(s): stock_quantity; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-007,RETAIL,retail_single_arrival_date,tampered,tampered,True,435.764,2026-11-17T14:58:26.102255+00:00,Tampered field(s): arrival_date; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-007,RETAIL,retail_single_shelf_life,tampered,tampered,True,470.1,2026-11-17T14:58:26.629128+00:00,Tampered field(s): shelf_life; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-007,RETAIL,retail_multi_price_stock,tampered,tampered,True,437.115,2026-11-17T14:58:27.120947+00:00,Tampered field(s): price+stock; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-007,RETAIL,retail_multi_store_location,tampered,tampered,True,432.426,2026-11-17T14:58:27.766043+00:00,Tampered field(s): store_name+location; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-007,RETAIL,retail_multi_all_retail,tampered,tampered,True,412.717,2026-11-17T14:58:28.254617+00:00,Tampered field(s): all_retail_fields; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-007,HARVEST,negative_control_neg_farmer_certifications,verified,verified,True,398.846,2026-11-17T14:58:28.724426+00:00,Unhashed field: certifications (unhashed); outside hash boundary
+EXP-TAMPER-20261117-145616,TH-SYN-007,HARVEST,negative_control_neg_farmer_notes,verified,verified,True,424.978,2026-11-17T14:58:29.203576+00:00,Unhashed field: notes (unhashed); outside hash boundary
+EXP-TAMPER-20261117-145616,TH-SYN-007,TRANSPORT,negative_control_neg_transport_timestamp,verified,verified,True,408.962,2026-11-17T14:58:29.672260+00:00,Unhashed field: timestamp (unhashed); outside hash boundary
+EXP-TAMPER-20261117-145616,TH-SYN-007,RETAIL,negative_control_neg_retail_updated_at,verified,verified,True,395.279,2026-11-17T14:58:30.146087+00:00,Unhashed field: updated_at (unhashed); outside hash boundary
+EXP-TAMPER-20261117-145616,TH-SYN-008,HARVEST,harvest_single_name,tampered,tampered,True,683.874,2026-11-17T14:58:31.534217+00:00,Tampered field(s): name; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-008,HARVEST,harvest_single_quantity,tampered,tampered,True,691.738,2026-11-17T14:58:32.287436+00:00,Tampered field(s): quantity; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-008,HARVEST,harvest_single_farming_method,tampered,tampered,True,609.903,2026-11-17T14:58:32.974155+00:00,Tampered field(s): farming_method; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-008,HARVEST,harvest_single_packaging_date,tampered,tampered,True,657.051,2026-11-17T14:58:33.698141+00:00,Tampered field(s): packaging_date; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-008,HARVEST,harvest_multi_name_quantity,tampered,tampered,True,589.915,2026-11-17T14:58:34.344530+00:00,Tampered field(s): name+quantity; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-008,HARVEST,harvest_multi_method_date,tampered,tampered,True,681.399,2026-11-17T14:58:35.079828+00:00,Tampered field(s): farming_method+packaging_date; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-008,HARVEST,harvest_multi_all_harvest,tampered,tampered,True,711.354,2026-11-17T14:58:35.864341+00:00,Tampered field(s): all_harvest_fields; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-008,TRANSPORT,transport_single_temperature,tampered,tampered,True,609.101,2026-11-17T14:58:36.548961+00:00,Tampered field(s): temperature; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-008,TRANSPORT,transport_single_location,tampered,tampered,True,662.636,2026-11-17T14:58:37.270179+00:00,Tampered field(s): current_location; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-008,TRANSPORT,transport_single_notes,tampered,tampered,True,638.588,2026-11-17T14:58:37.971816+00:00,Tampered field(s): notes; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-008,TRANSPORT,transport_single_status,tampered,tampered,True,692.196,2026-11-17T14:58:38.739822+00:00,Tampered field(s): status; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-008,TRANSPORT,transport_single_vehicle_number,tampered,tampered,True,654.459,2026-11-17T14:58:39.470057+00:00,Tampered field(s): vehicle_number; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-008,TRANSPORT,transport_single_transporter_id,tampered,tampered,True,682.518,2026-11-17T14:58:40.225771+00:00,Tampered field(s): transporter_id; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-008,TRANSPORT,transport_multi_temp_location,tampered,tampered,True,687.82,2026-11-17T14:58:40.977471+00:00,Tampered field(s): temp+location; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-008,TRANSPORT,transport_multi_status_vehicle,tampered,tampered,True,722.832,2026-11-17T14:58:41.769869+00:00,Tampered field(s): status+vehicle; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-008,TRANSPORT,transport_multi_all_transport,tampered,tampered,True,704.164,2026-11-17T14:58:42.544209+00:00,Tampered field(s): all_transport_fields; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-008,RETAIL,retail_single_price,tampered,tampered,True,665.792,2026-11-17T14:58:43.278708+00:00,Tampered field(s): price; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-008,RETAIL,retail_single_store_name,tampered,tampered,True,679.24,2026-11-17T14:58:44.036285+00:00,Tampered field(s): store_name; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-008,RETAIL,retail_single_store_location,tampered,tampered,True,685.893,2026-11-17T14:58:44.794684+00:00,Tampered field(s): store_location; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-008,RETAIL,retail_single_stock_quantity,tampered,tampered,True,690.122,2026-11-17T14:58:45.547550+00:00,Tampered field(s): stock_quantity; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-008,RETAIL,retail_single_arrival_date,tampered,tampered,True,676.323,2026-11-17T14:58:46.302850+00:00,Tampered field(s): arrival_date; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-008,RETAIL,retail_single_shelf_life,tampered,tampered,True,483.207,2026-11-17T14:58:46.845077+00:00,Tampered field(s): shelf_life; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-008,RETAIL,retail_multi_price_stock,tampered,tampered,True,520.84,2026-11-17T14:58:47.424332+00:00,Tampered field(s): price+stock; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-008,RETAIL,retail_multi_store_location,tampered,tampered,True,517.336,2026-11-17T14:58:48.037963+00:00,Tampered field(s): store_name+location; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-008,RETAIL,retail_multi_all_retail,tampered,tampered,True,509.895,2026-11-17T14:58:48.644833+00:00,Tampered field(s): all_retail_fields; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-008,HARVEST,negative_control_neg_farmer_certifications,verified,verified,True,587.988,2026-11-17T14:58:49.325638+00:00,Unhashed field: certifications (unhashed); outside hash boundary
+EXP-TAMPER-20261117-145616,TH-SYN-008,HARVEST,negative_control_neg_farmer_notes,verified,verified,True,551.972,2026-11-17T14:58:49.979694+00:00,Unhashed field: notes (unhashed); outside hash boundary
+EXP-TAMPER-20261117-145616,TH-SYN-008,TRANSPORT,negative_control_neg_transport_timestamp,verified,verified,True,553.994,2026-11-17T14:58:50.616412+00:00,Unhashed field: timestamp (unhashed); outside hash boundary
+EXP-TAMPER-20261117-145616,TH-SYN-008,RETAIL,negative_control_neg_retail_updated_at,verified,verified,True,501.081,2026-11-17T14:58:51.175188+00:00,Unhashed field: updated_at (unhashed); outside hash boundary
+EXP-TAMPER-20261117-145616,TH-SYN-009,HARVEST,harvest_single_name,tampered,tampered,True,498.752,2026-11-17T14:58:52.243844+00:00,Tampered field(s): name; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-009,HARVEST,harvest_single_quantity,tampered,tampered,True,529.29,2026-11-17T14:58:52.837066+00:00,Tampered field(s): quantity; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-009,HARVEST,harvest_single_farming_method,tampered,tampered,True,807.446,2026-11-17T14:58:53.706987+00:00,Tampered field(s): farming_method; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-009,HARVEST,harvest_single_packaging_date,tampered,tampered,True,551.906,2026-11-17T14:58:54.702795+00:00,Tampered field(s): packaging_date; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-009,HARVEST,harvest_multi_name_quantity,tampered,tampered,True,538.152,2026-11-17T14:58:55.721958+00:00,Tampered field(s): name+quantity; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-009,HARVEST,harvest_multi_method_date,tampered,tampered,True,452.646,2026-11-17T14:58:56.571815+00:00,Tampered field(s): farming_method+packaging_date; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-009,HARVEST,harvest_multi_all_harvest,tampered,tampered,True,485.246,2026-11-17T14:58:57.757926+00:00,Tampered field(s): all_harvest_fields; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-009,TRANSPORT,transport_single_temperature,tampered,tampered,True,503.023,2026-11-17T14:58:58.328357+00:00,Tampered field(s): temperature; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-009,TRANSPORT,transport_single_location,tampered,tampered,True,519.352,2026-11-17T14:58:58.937750+00:00,Tampered field(s): current_location; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-009,TRANSPORT,transport_single_notes,tampered,tampered,True,509.835,2026-11-17T14:58:59.502482+00:00,Tampered field(s): notes; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-009,TRANSPORT,transport_single_status,tampered,tampered,True,534.523,2026-11-17T14:59:00.104305+00:00,Tampered field(s): status; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-009,TRANSPORT,transport_single_vehicle_number,tampered,tampered,True,544.16,2026-11-17T14:59:00.704714+00:00,Tampered field(s): vehicle_number; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-009,TRANSPORT,transport_single_transporter_id,tampered,tampered,True,530.703,2026-11-17T14:59:01.300073+00:00,Tampered field(s): transporter_id; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-009,TRANSPORT,transport_multi_temp_location,tampered,tampered,True,588.382,2026-11-17T14:59:01.967590+00:00,Tampered field(s): temp+location; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-009,TRANSPORT,transport_multi_status_vehicle,tampered,tampered,True,558.151,2026-11-17T14:59:02.581014+00:00,Tampered field(s): status+vehicle; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-009,TRANSPORT,transport_multi_all_transport,tampered,tampered,True,600.591,2026-11-17T14:59:03.228795+00:00,Tampered field(s): all_transport_fields; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-009,RETAIL,retail_single_price,tampered,tampered,True,531.677,2026-11-17T14:59:03.820222+00:00,Tampered field(s): price; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-009,RETAIL,retail_single_store_name,tampered,tampered,True,517.556,2026-11-17T14:59:04.395925+00:00,Tampered field(s): store_name; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-009,RETAIL,retail_single_store_location,tampered,tampered,True,520.967,2026-11-17T14:59:04.973073+00:00,Tampered field(s): store_location; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-009,RETAIL,retail_single_stock_quantity,tampered,tampered,True,561.662,2026-11-17T14:59:05.589961+00:00,Tampered field(s): stock_quantity; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-009,RETAIL,retail_single_arrival_date,tampered,tampered,True,571.675,2026-11-17T14:59:06.240517+00:00,Tampered field(s): arrival_date; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-009,RETAIL,retail_single_shelf_life,tampered,tampered,True,560.96,2026-11-17T14:59:06.899175+00:00,Tampered field(s): shelf_life; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-009,RETAIL,retail_multi_price_stock,tampered,tampered,True,509.584,2026-11-17T14:59:07.469881+00:00,Tampered field(s): price+stock; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-009,RETAIL,retail_multi_store_location,tampered,tampered,True,535.708,2026-11-17T14:59:08.061700+00:00,Tampered field(s): store_name+location; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-009,RETAIL,retail_multi_all_retail,tampered,tampered,True,492.596,2026-11-17T14:59:08.785270+00:00,Tampered field(s): all_retail_fields; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-009,HARVEST,negative_control_neg_farmer_certifications,verified,verified,True,533.395,2026-11-17T14:59:09.368786+00:00,Unhashed field: certifications (unhashed); outside hash boundary
+EXP-TAMPER-20261117-145616,TH-SYN-009,HARVEST,negative_control_neg_farmer_notes,verified,verified,True,534.998,2026-11-17T14:59:09.962576+00:00,Unhashed field: notes (unhashed); outside hash boundary
+EXP-TAMPER-20261117-145616,TH-SYN-009,TRANSPORT,negative_control_neg_transport_timestamp,verified,verified,True,506.921,2026-11-17T14:59:10.528248+00:00,Unhashed field: timestamp (unhashed); outside hash boundary
+EXP-TAMPER-20261117-145616,TH-SYN-009,RETAIL,negative_control_neg_retail_updated_at,verified,verified,True,495.999,2026-11-17T14:59:11.080940+00:00,Unhashed field: updated_at (unhashed); outside hash boundary
+EXP-TAMPER-20261117-145616,TH-SYN-010,HARVEST,harvest_single_name,tampered,tampered,True,381.645,2026-11-17T14:59:11.929882+00:00,Tampered field(s): name; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-010,HARVEST,harvest_single_quantity,tampered,tampered,True,369.335,2026-11-17T14:59:12.361346+00:00,Tampered field(s): quantity; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-010,HARVEST,harvest_single_farming_method,tampered,tampered,True,372.686,2026-11-17T14:59:12.784063+00:00,Tampered field(s): farming_method; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-010,HARVEST,harvest_single_packaging_date,tampered,tampered,True,391.996,2026-11-17T14:59:13.227822+00:00,Tampered field(s): packaging_date; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-010,HARVEST,harvest_multi_name_quantity,tampered,tampered,True,377.075,2026-11-17T14:59:13.651300+00:00,Tampered field(s): name+quantity; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-010,HARVEST,harvest_multi_method_date,tampered,tampered,True,395.993,2026-11-17T14:59:14.096072+00:00,Tampered field(s): farming_method+packaging_date; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-010,HARVEST,harvest_multi_all_harvest,tampered,tampered,True,386.392,2026-11-17T14:59:14.536071+00:00,Tampered field(s): all_harvest_fields; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-010,TRANSPORT,transport_single_temperature,tampered,tampered,True,371.501,2026-11-17T14:59:14.958357+00:00,Tampered field(s): temperature; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-010,TRANSPORT,transport_single_location,tampered,tampered,True,369.917,2026-11-17T14:59:15.505400+00:00,Tampered field(s): current_location; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-010,TRANSPORT,transport_single_notes,tampered,tampered,True,376.682,2026-11-17T14:59:15.935957+00:00,Tampered field(s): notes; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-010,TRANSPORT,transport_single_status,tampered,tampered,True,399.042,2026-11-17T14:59:16.388926+00:00,Tampered field(s): status; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-010,TRANSPORT,transport_single_vehicle_number,tampered,tampered,True,392.124,2026-11-17T14:59:16.838507+00:00,Tampered field(s): vehicle_number; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-010,TRANSPORT,transport_single_transporter_id,tampered,tampered,True,427.978,2026-11-17T14:59:17.320954+00:00,Tampered field(s): transporter_id; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-010,TRANSPORT,transport_multi_temp_location,tampered,tampered,True,363.236,2026-11-17T14:59:17.741641+00:00,Tampered field(s): temp+location; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-010,TRANSPORT,transport_multi_status_vehicle,tampered,tampered,True,464.479,2026-11-17T14:59:18.270987+00:00,Tampered field(s): status+vehicle; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-010,TRANSPORT,transport_multi_all_transport,tampered,tampered,True,406.124,2026-11-17T14:59:18.751993+00:00,Tampered field(s): all_transport_fields; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-010,RETAIL,retail_single_price,tampered,tampered,True,414.377,2026-11-17T14:59:19.228929+00:00,Tampered field(s): price; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-010,RETAIL,retail_single_store_name,tampered,tampered,True,390.915,2026-11-17T14:59:19.684584+00:00,Tampered field(s): store_name; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-010,RETAIL,retail_single_store_location,tampered,tampered,True,424.905,2026-11-17T14:59:20.219364+00:00,Tampered field(s): store_location; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-010,RETAIL,retail_single_stock_quantity,tampered,tampered,True,384.525,2026-11-17T14:59:20.666328+00:00,Tampered field(s): stock_quantity; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-010,RETAIL,retail_single_arrival_date,tampered,tampered,True,365.596,2026-11-17T14:59:21.082997+00:00,Tampered field(s): arrival_date; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-010,RETAIL,retail_single_shelf_life,tampered,tampered,True,362.079,2026-11-17T14:59:21.496534+00:00,Tampered field(s): shelf_life; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-010,RETAIL,retail_multi_price_stock,tampered,tampered,True,374.18,2026-11-17T14:59:21.922841+00:00,Tampered field(s): price+stock; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-010,RETAIL,retail_multi_store_location,tampered,tampered,True,436.44,2026-11-17T14:59:22.412043+00:00,Tampered field(s): store_name+location; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-010,RETAIL,retail_multi_all_retail,tampered,tampered,True,375.219,2026-11-17T14:59:22.852252+00:00,Tampered field(s): all_retail_fields; overall: tampered
+EXP-TAMPER-20261117-145616,TH-SYN-010,HARVEST,negative_control_neg_farmer_certifications,verified,verified,True,454.107,2026-11-17T14:59:23.363701+00:00,Unhashed field: certifications (unhashed); outside hash boundary
+EXP-TAMPER-20261117-145616,TH-SYN-010,HARVEST,negative_control_neg_farmer_notes,verified,verified,True,382.82,2026-11-17T14:59:23.821243+00:00,Unhashed field: notes (unhashed); outside hash boundary
+EXP-TAMPER-20261117-145616,TH-SYN-010,TRANSPORT,negative_control_neg_transport_timestamp,verified,verified,True,395.37,2026-11-17T14:59:24.274609+00:00,Unhashed field: timestamp (unhashed); outside hash boundary
+EXP-TAMPER-20261117-145616,TH-SYN-010,RETAIL,negative_control_neg_retail_updated_at,verified,verified,True,445.937,2026-11-17T14:59:24.783433+00:00,Unhashed field: updated_at (unhashed); outside hash boundary

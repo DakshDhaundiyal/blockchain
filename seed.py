@@ -20,6 +20,14 @@ def seed():
         db.drop_all()
         db.create_all()
 
+        # Remove local config.json so a clean contract is deployed to local chain
+        from blockchain import CONFIG_PATH
+        if os.path.exists(CONFIG_PATH) and not os.environ.get("CONTRACT_ADDRESS"):
+            try:
+                os.remove(CONFIG_PATH)
+            except Exception:
+                pass
+
         print("Seeding demo users (DEMO_MODE enabled)...")
         admin = User(username='admin', role='admin', full_name='Global Admin', contact='admin@trustharvest.org')
         admin.set_password(os.environ.get('DEMO_ADMIN_PASSWORD', 'admin123'))

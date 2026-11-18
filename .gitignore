@@ -52,3 +52,6 @@ test_e2e_flow.py
 .pytest_cache/
 .coverage
 htmlcov/
+
+# Node modules
+node_modules/

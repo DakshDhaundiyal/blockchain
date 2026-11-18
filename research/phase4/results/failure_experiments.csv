@@ -1,0 +1,51 @@
+experiment_id,batch_id,stage,scenario,expected_outcome,actual_outcome,success,latency_ms,timestamp,error_message
+EXP-FAIL-20261117-150554,TH-SYN-001,OVERALL,e4_1_rpc_node_offline,cannot_verify,cannot_verify,True,8.35,2026-11-17T15:05:54.861862+00:00,RPC node offline; must return cannot_verify
+EXP-FAIL-20261117-150554,TH-SYN-001,OVERALL,e4_1_rpc_invalid_endpoint,cannot_verify,cannot_verify,True,0.662,2026-11-17T15:05:54.864777+00:00,Invalid RPC endpoint; must return cannot_verify
+EXP-FAIL-20261117-150554,TH-SYN-001,OVERALL,e4_1_rpc_timeout,cannot_verify,cannot_verify,True,0.576,2026-11-17T15:05:54.867374+00:00,RPC timeout; must return cannot_verify
+EXP-FAIL-20261117-150554,TH-SYN-001,OVERALL,e4_1_contract_read_revert,cannot_verify,cannot_verify,True,0.597,2026-11-17T15:05:54.871479+00:00,Contract read revert; must return cannot_verify
+EXP-FAIL-20261117-150554,TH-SYN-001,OVERALL,e4_2_missing_blockchain_anchor,cannot_verify,cannot_verify,True,0.469,2026-11-17T15:05:54.874605+00:00,Batch unrecorded on-chain; must return cannot_verify
+EXP-FAIL-20261117-150554,TH-SYN-001,OVERALL,e4_2_stages_missing_onchain,cannot_verify,cannot_verify,True,0.787,2026-11-17T15:05:54.877171+00:00,Transport checkpoints exist in DB but missing on-chain; must return cannot_verify
+EXP-FAIL-20261117-150554,TH-SYN-001,TRANSPORT,e4_3_unexpected_transporter_signer,cannot_verify,cannot_verify,True,0.629,2026-11-17T15:05:54.882168+00:00,Unexpected signer; must flag conflict and report cannot_verify
+EXP-FAIL-20261117-150554,TH-SYN-001,OVERALL,e4_3_unexpected_stage_onchain,cannot_verify,cannot_verify,True,0.706,2026-11-17T15:05:54.885810+00:00,Unrecognized stage on-chain; must return cannot_verify
+EXP-FAIL-20261117-150554,TH-SYN-001,TRANSPORT,e4_3_extra_transport_onchain,cannot_verify,tampered,False,9.101,2026-11-17T15:05:54.897436+00:00,Extra stages on-chain: actual=tampered; reasons=
+EXP-FAIL-20261117-150554,TH-SYN-001,OVERALL,e4_4_db_saved_chain_reverted,cannot_verify,cannot_verify,True,2.685,2026-11-17T15:05:54.923850+00:00,Database saved without blockchain confirmation; must return cannot_verify
+EXP-FAIL-20261117-150554,TH-SYN-002,OVERALL,e4_1_rpc_node_offline,cannot_verify,cannot_verify,True,3.405,2026-11-17T15:05:54.945717+00:00,RPC node offline; must return cannot_verify
+EXP-FAIL-20261117-150554,TH-SYN-002,OVERALL,e4_1_rpc_invalid_endpoint,cannot_verify,cannot_verify,True,0.783,2026-11-17T15:05:54.948893+00:00,Invalid RPC endpoint; must return cannot_verify
+EXP-FAIL-20261117-150554,TH-SYN-002,OVERALL,e4_1_rpc_timeout,cannot_verify,cannot_verify,True,0.753,2026-11-17T15:05:54.951944+00:00,RPC timeout; must return cannot_verify
+EXP-FAIL-20261117-150554,TH-SYN-002,OVERALL,e4_1_contract_read_revert,cannot_verify,cannot_verify,True,0.794,2026-11-17T15:05:54.955940+00:00,Contract read revert; must return cannot_verify
+EXP-FAIL-20261117-150554,TH-SYN-002,OVERALL,e4_2_missing_blockchain_anchor,cannot_verify,cannot_verify,True,0.808,2026-11-17T15:05:54.959045+00:00,Batch unrecorded on-chain; must return cannot_verify
+EXP-FAIL-20261117-150554,TH-SYN-002,OVERALL,e4_2_stages_missing_onchain,cannot_verify,cannot_verify,True,0.74,2026-11-17T15:05:54.962081+00:00,Transport checkpoints exist in DB but missing on-chain; must return cannot_verify
+EXP-FAIL-20261117-150554,TH-SYN-002,TRANSPORT,e4_3_unexpected_transporter_signer,cannot_verify,cannot_verify,True,0.715,2026-11-17T15:05:54.965715+00:00,Unexpected signer; must flag conflict and report cannot_verify
+EXP-FAIL-20261117-150554,TH-SYN-002,OVERALL,e4_3_unexpected_stage_onchain,cannot_verify,cannot_verify,True,0.794,2026-11-17T15:05:54.969945+00:00,Unrecognized stage on-chain; must return cannot_verify
+EXP-FAIL-20261117-150554,TH-SYN-002,TRANSPORT,e4_3_extra_transport_onchain,cannot_verify,tampered,False,9.287,2026-11-17T15:05:54.981176+00:00,Extra stages on-chain: actual=tampered; reasons=
+EXP-FAIL-20261117-150554,TH-SYN-002,OVERALL,e4_4_db_saved_chain_reverted,cannot_verify,cannot_verify,True,4.202,2026-11-17T15:05:55.003133+00:00,Database saved without blockchain confirmation; must return cannot_verify
+EXP-FAIL-20261117-150554,TH-SYN-003,OVERALL,e4_1_rpc_node_offline,cannot_verify,cannot_verify,True,4.064,2026-11-17T15:05:55.024615+00:00,RPC node offline; must return cannot_verify
+EXP-FAIL-20261117-150554,TH-SYN-003,OVERALL,e4_1_rpc_invalid_endpoint,cannot_verify,cannot_verify,True,0.735,2026-11-17T15:05:55.028167+00:00,Invalid RPC endpoint; must return cannot_verify
+EXP-FAIL-20261117-150554,TH-SYN-003,OVERALL,e4_1_rpc_timeout,cannot_verify,cannot_verify,True,0.482,2026-11-17T15:05:55.031171+00:00,RPC timeout; must return cannot_verify
+EXP-FAIL-20261117-150554,TH-SYN-003,OVERALL,e4_1_contract_read_revert,cannot_verify,cannot_verify,True,0.934,2026-11-17T15:05:55.034174+00:00,Contract read revert; must return cannot_verify
+EXP-FAIL-20261117-150554,TH-SYN-003,OVERALL,e4_2_missing_blockchain_anchor,cannot_verify,cannot_verify,True,0.647,2026-11-17T15:05:55.037537+00:00,Batch unrecorded on-chain; must return cannot_verify
+EXP-FAIL-20261117-150554,TH-SYN-003,OVERALL,e4_2_stages_missing_onchain,cannot_verify,cannot_verify,True,0.759,2026-11-17T15:05:55.042095+00:00,Transport checkpoints exist in DB but missing on-chain; must return cannot_verify
+EXP-FAIL-20261117-150554,TH-SYN-003,TRANSPORT,e4_3_unexpected_transporter_signer,cannot_verify,cannot_verify,True,0.458,2026-11-17T15:05:55.044099+00:00,Unexpected signer; must flag conflict and report cannot_verify
+EXP-FAIL-20261117-150554,TH-SYN-003,OVERALL,e4_3_unexpected_stage_onchain,cannot_verify,cannot_verify,True,0.621,2026-11-17T15:05:55.047479+00:00,Unrecognized stage on-chain; must return cannot_verify
+EXP-FAIL-20261117-150554,TH-SYN-003,TRANSPORT,e4_3_extra_transport_onchain,cannot_verify,tampered,False,6.229,2026-11-17T15:05:55.055936+00:00,Extra stages on-chain: actual=tampered; reasons=
+EXP-FAIL-20261117-150554,TH-SYN-003,OVERALL,e4_4_db_saved_chain_reverted,cannot_verify,cannot_verify,True,4.204,2026-11-17T15:05:55.076262+00:00,Database saved without blockchain confirmation; must return cannot_verify
+EXP-FAIL-20261117-150554,TH-SYN-004,OVERALL,e4_1_rpc_node_offline,cannot_verify,cannot_verify,True,3.979,2026-11-17T15:05:55.095855+00:00,RPC node offline; must return cannot_verify
+EXP-FAIL-20261117-150554,TH-SYN-004,OVERALL,e4_1_rpc_invalid_endpoint,cannot_verify,cannot_verify,True,0.288,2026-11-17T15:05:55.097364+00:00,Invalid RPC endpoint; must return cannot_verify
+EXP-FAIL-20261117-150554,TH-SYN-004,OVERALL,e4_1_rpc_timeout,cannot_verify,cannot_verify,True,0.336,2026-11-17T15:05:55.100895+00:00,RPC timeout; must return cannot_verify
+EXP-FAIL-20261117-150554,TH-SYN-004,OVERALL,e4_1_contract_read_revert,cannot_verify,cannot_verify,True,0.607,2026-11-17T15:05:55.103912+00:00,Contract read revert; must return cannot_verify
+EXP-FAIL-20261117-150554,TH-SYN-004,OVERALL,e4_2_missing_blockchain_anchor,cannot_verify,cannot_verify,True,0.608,2026-11-17T15:05:55.106429+00:00,Batch unrecorded on-chain; must return cannot_verify
+EXP-FAIL-20261117-150554,TH-SYN-004,OVERALL,e4_2_stages_missing_onchain,cannot_verify,cannot_verify,True,0.606,2026-11-17T15:05:55.110033+00:00,Transport checkpoints exist in DB but missing on-chain; must return cannot_verify
+EXP-FAIL-20261117-150554,TH-SYN-004,TRANSPORT,e4_3_unexpected_transporter_signer,cannot_verify,cannot_verify,True,0.677,2026-11-17T15:05:55.114041+00:00,Unexpected signer; must flag conflict and report cannot_verify
+EXP-FAIL-20261117-150554,TH-SYN-004,OVERALL,e4_3_unexpected_stage_onchain,cannot_verify,cannot_verify,True,0.624,2026-11-17T15:05:55.117564+00:00,Unrecognized stage on-chain; must return cannot_verify
+EXP-FAIL-20261117-150554,TH-SYN-004,TRANSPORT,e4_3_extra_transport_onchain,cannot_verify,tampered,False,6.679,2026-11-17T15:05:55.126100+00:00,Extra stages on-chain: actual=tampered; reasons=
+EXP-FAIL-20261117-150554,TH-SYN-004,OVERALL,e4_4_db_saved_chain_reverted,cannot_verify,cannot_verify,True,5.509,2026-11-17T15:05:55.146965+00:00,Database saved without blockchain confirmation; must return cannot_verify
+EXP-FAIL-20261117-150554,TH-SYN-005,OVERALL,e4_1_rpc_node_offline,cannot_verify,cannot_verify,True,1.494,2026-11-17T15:05:55.160113+00:00,RPC node offline; must return cannot_verify
+EXP-FAIL-20261117-150554,TH-SYN-005,OVERALL,e4_1_rpc_invalid_endpoint,cannot_verify,cannot_verify,True,0.818,2026-11-17T15:05:55.163102+00:00,Invalid RPC endpoint; must return cannot_verify
+EXP-FAIL-20261117-150554,TH-SYN-005,OVERALL,e4_1_rpc_timeout,cannot_verify,cannot_verify,True,0.732,2026-11-17T15:05:55.166108+00:00,RPC timeout; must return cannot_verify
+EXP-FAIL-20261117-150554,TH-SYN-005,OVERALL,e4_1_contract_read_revert,cannot_verify,cannot_verify,True,0.417,2026-11-17T15:05:55.167646+00:00,Contract read revert; must return cannot_verify
+EXP-FAIL-20261117-150554,TH-SYN-005,OVERALL,e4_2_missing_blockchain_anchor,cannot_verify,cannot_verify,True,0.475,2026-11-17T15:05:55.170232+00:00,Batch unrecorded on-chain; must return cannot_verify
+EXP-FAIL-20261117-150554,TH-SYN-005,OVERALL,e4_2_stages_missing_onchain,cannot_verify,cannot_verify,True,0.71,2026-11-17T15:05:55.172810+00:00,Transport checkpoints exist in DB but missing on-chain; must return cannot_verify
+EXP-FAIL-20261117-150554,TH-SYN-005,TRANSPORT,e4_3_unexpected_transporter_signer,cannot_verify,cannot_verify,True,0.663,2026-11-17T15:05:55.175804+00:00,Unexpected signer; must flag conflict and report cannot_verify
+EXP-FAIL-20261117-150554,TH-SYN-005,OVERALL,e4_3_unexpected_stage_onchain,cannot_verify,cannot_verify,True,0.416,2026-11-17T15:05:55.177347+00:00,Unrecognized stage on-chain; must return cannot_verify
+EXP-FAIL-20261117-150554,TH-SYN-005,TRANSPORT,e4_3_extra_transport_onchain,cannot_verify,tampered,False,7.586,2026-11-17T15:05:55.187980+00:00,Extra stages on-chain: actual=tampered; reasons=
+EXP-FAIL-20261117-150554,TH-SYN-005,OVERALL,e4_4_db_saved_chain_reverted,cannot_verify,cannot_verify,True,3.916,2026-11-17T15:05:55.207465+00:00,Database saved without blockchain confirmation; must return cannot_verify

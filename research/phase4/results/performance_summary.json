@@ -1,0 +1,297 @@
+{
+  "metadata": {
+    "experiment_id": "EXP-PERF-20261117-153122",
+    "timestamp": "2026-11-17T15:34:23.612686+00:00",
+    "workload_sizes": [
+      10,
+      30,
+      50,
+      100,
+      200
+    ],
+    "repetitions": 3,
+    "environment": "Local Ganache (Chain ID 1337)"
+  },
+  "workloads": {
+    "10_batches": {
+      "repetitions": [
+        {
+          "rep": 1,
+          "duration_sec": 4.865,
+          "throughput_batches_sec": 2.06,
+          "mean_latency_ms": 247.606,
+          "median_latency_ms": 259.431,
+          "mean_hash_ms": 0.207,
+          "mean_chain_read_ms": 232.567,
+          "successful_verifications": 10,
+          "tampered_verifications": 0,
+          "inconclusive_verifications": 0
+        },
+        {
+          "rep": 2,
+          "duration_sec": 4.897,
+          "throughput_batches_sec": 2.04,
+          "mean_latency_ms": 243.532,
+          "median_latency_ms": 243.749,
+          "mean_hash_ms": 0.205,
+          "mean_chain_read_ms": 239.905,
+          "successful_verifications": 10,
+          "tampered_verifications": 0,
+          "inconclusive_verifications": 0
+        },
+        {
+          "rep": 3,
+          "duration_sec": 5.144,
+          "throughput_batches_sec": 1.94,
+          "mean_latency_ms": 247.961,
+          "median_latency_ms": 246.392,
+          "mean_hash_ms": 0.2,
+          "mean_chain_read_ms": 260.403,
+          "successful_verifications": 10,
+          "tampered_verifications": 0,
+          "inconclusive_verifications": 0
+        }
+      ],
+      "aggregate": {
+        "batch_count": 10,
+        "repetitions": 3,
+        "mean_total_duration_sec": 4.969,
+        "mean_throughput_batches_sec": 2.01,
+        "mean_latency_ms": 246.366,
+        "median_latency_ms": 246.392,
+        "p95_latency_ms": 304.819,
+        "min_latency_ms": 191.443,
+        "max_latency_ms": 310.803,
+        "component_breakdown": {
+          "hash_computation_mean_ms": 0.204,
+          "blockchain_read_mean_ms": 244.292,
+          "verification_logic_overhead_ms": 1.87
+        }
+      }
+    },
+    "30_batches": {
+      "repetitions": [
+        {
+          "rep": 1,
+          "duration_sec": 14.163,
+          "throughput_batches_sec": 2.12,
+          "mean_latency_ms": 237.85,
+          "median_latency_ms": 231.736,
+          "mean_hash_ms": 0.188,
+          "mean_chain_read_ms": 228.257,
+          "successful_verifications": 30,
+          "tampered_verifications": 0,
+          "inconclusive_verifications": 0
+        },
+        {
+          "rep": 2,
+          "duration_sec": 13.828,
+          "throughput_batches_sec": 2.17,
+          "mean_latency_ms": 225.848,
+          "median_latency_ms": 214.257,
+          "mean_hash_ms": 0.206,
+          "mean_chain_read_ms": 228.844,
+          "successful_verifications": 30,
+          "tampered_verifications": 0,
+          "inconclusive_verifications": 0
+        },
+        {
+          "rep": 3,
+          "duration_sec": 13.508,
+          "throughput_batches_sec": 2.22,
+          "mean_latency_ms": 227.276,
+          "median_latency_ms": 215.281,
+          "mean_hash_ms": 0.197,
+          "mean_chain_read_ms": 215.987,
+          "successful_verifications": 30,
+          "tampered_verifications": 0,
+          "inconclusive_verifications": 0
+        }
+      ],
+      "aggregate": {
+        "batch_count": 30,
+        "repetitions": 3,
+        "mean_total_duration_sec": 13.833,
+        "mean_throughput_batches_sec": 2.17,
+        "mean_latency_ms": 230.325,
+        "median_latency_ms": 215.281,
+        "p95_latency_ms": 334.076,
+        "min_latency_ms": 148.556,
+        "max_latency_ms": 357.021,
+        "component_breakdown": {
+          "hash_computation_mean_ms": 0.197,
+          "blockchain_read_mean_ms": 224.363,
+          "verification_logic_overhead_ms": 5.765
+        }
+      }
+    },
+    "50_batches": {
+      "repetitions": [
+        {
+          "rep": 1,
+          "duration_sec": 21.156,
+          "throughput_batches_sec": 2.36,
+          "mean_latency_ms": 204.059,
+          "median_latency_ms": 194.318,
+          "mean_hash_ms": 0.223,
+          "mean_chain_read_ms": 212.661,
+          "successful_verifications": 50,
+          "tampered_verifications": 0,
+          "inconclusive_verifications": 0
+        },
+        {
+          "rep": 2,
+          "duration_sec": 21.34,
+          "throughput_batches_sec": 2.34,
+          "mean_latency_ms": 211.049,
+          "median_latency_ms": 214.669,
+          "mean_hash_ms": 0.175,
+          "mean_chain_read_ms": 209.874,
+          "successful_verifications": 50,
+          "tampered_verifications": 0,
+          "inconclusive_verifications": 0
+        },
+        {
+          "rep": 3,
+          "duration_sec": 21.436,
+          "throughput_batches_sec": 2.33,
+          "mean_latency_ms": 213.56,
+          "median_latency_ms": 205.465,
+          "mean_hash_ms": 0.169,
+          "mean_chain_read_ms": 209.553,
+          "successful_verifications": 50,
+          "tampered_verifications": 0,
+          "inconclusive_verifications": 0
+        }
+      ],
+      "aggregate": {
+        "batch_count": 50,
+        "repetitions": 3,
+        "mean_total_duration_sec": 21.311,
+        "mean_throughput_batches_sec": 2.35,
+        "mean_latency_ms": 209.556,
+        "median_latency_ms": 205.465,
+        "p95_latency_ms": 292.733,
+        "min_latency_ms": 108.541,
+        "max_latency_ms": 367.906,
+        "component_breakdown": {
+          "hash_computation_mean_ms": 0.189,
+          "blockchain_read_mean_ms": 210.696,
+          "verification_logic_overhead_ms": -1.329
+        }
+      }
+    },
+    "100_batches": {
+      "repetitions": [
+        {
+          "rep": 1,
+          "duration_sec": 39.891,
+          "throughput_batches_sec": 2.51,
+          "mean_latency_ms": 199.152,
+          "median_latency_ms": 204.457,
+          "mean_hash_ms": 0.195,
+          "mean_chain_read_ms": 193.608,
+          "successful_verifications": 100,
+          "tampered_verifications": 0,
+          "inconclusive_verifications": 0
+        },
+        {
+          "rep": 2,
+          "duration_sec": 42.198,
+          "throughput_batches_sec": 2.37,
+          "mean_latency_ms": 209.762,
+          "median_latency_ms": 212.172,
+          "mean_hash_ms": 0.185,
+          "mean_chain_read_ms": 206.393,
+          "successful_verifications": 100,
+          "tampered_verifications": 0,
+          "inconclusive_verifications": 0
+        },
+        {
+          "rep": 3,
+          "duration_sec": 46.353,
+          "throughput_batches_sec": 2.16,
+          "mean_latency_ms": 225.414,
+          "median_latency_ms": 215.611,
+          "mean_hash_ms": 0.199,
+          "mean_chain_read_ms": 231.716,
+          "successful_verifications": 100,
+          "tampered_verifications": 0,
+          "inconclusive_verifications": 0
+        }
+      ],
+      "aggregate": {
+        "batch_count": 100,
+        "repetitions": 3,
+        "mean_total_duration_sec": 42.814,
+        "mean_throughput_batches_sec": 2.34,
+        "mean_latency_ms": 211.443,
+        "median_latency_ms": 215.611,
+        "p95_latency_ms": 342.473,
+        "min_latency_ms": 83.214,
+        "max_latency_ms": 384.885,
+        "component_breakdown": {
+          "hash_computation_mean_ms": 0.193,
+          "blockchain_read_mean_ms": 210.572,
+          "verification_logic_overhead_ms": 0.677
+        }
+      }
+    },
+    "200_batches": {
+      "repetitions": [
+        {
+          "rep": 1,
+          "duration_sec": 88.517,
+          "throughput_batches_sec": 2.26,
+          "mean_latency_ms": 215.899,
+          "median_latency_ms": 206.863,
+          "mean_hash_ms": 0.192,
+          "mean_chain_read_ms": 220.395,
+          "successful_verifications": 200,
+          "tampered_verifications": 0,
+          "inconclusive_verifications": 0
+        },
+        {
+          "rep": 2,
+          "duration_sec": 78.871,
+          "throughput_batches_sec": 2.54,
+          "mean_latency_ms": 194.733,
+          "median_latency_ms": 190.865,
+          "mean_hash_ms": 0.165,
+          "mean_chain_read_ms": 194.255,
+          "successful_verifications": 200,
+          "tampered_verifications": 0,
+          "inconclusive_verifications": 0
+        },
+        {
+          "rep": 3,
+          "duration_sec": 87.022,
+          "throughput_batches_sec": 2.3,
+          "mean_latency_ms": 215.917,
+          "median_latency_ms": 210.229,
+          "mean_hash_ms": 0.194,
+          "mean_chain_read_ms": 213.046,
+          "successful_verifications": 200,
+          "tampered_verifications": 0,
+          "inconclusive_verifications": 0
+        }
+      ],
+      "aggregate": {
+        "batch_count": 200,
+        "repetitions": 3,
+        "mean_total_duration_sec": 84.803,
+        "mean_throughput_batches_sec": 2.36,
+        "mean_latency_ms": 208.849,
+        "median_latency_ms": 210.229,
+        "p95_latency_ms": 316.948,
+        "min_latency_ms": 66.373,
+        "max_latency_ms": 375.014,
+        "component_breakdown": {
+          "hash_computation_mean_ms": 0.183,
+          "blockchain_read_mean_ms": 209.232,
+          "verification_logic_overhead_ms": -0.566
+        }
+      }
+    }
+  }
+}

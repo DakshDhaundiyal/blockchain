@@ -1,0 +1,97 @@
+{
+  "metadata": {
+    "experiment_id": "EXP-FAIL-20261117-150554",
+    "generated_at": "2026-11-17T15:05:55.220816+00:00",
+    "batches_tested": 5,
+    "total_trials": 50
+  },
+  "overall": {
+    "passed_trials": 45,
+    "accuracy": 0.9,
+    "false_tamper_alarms": 5,
+    "false_verified_leaks": 0,
+    "honest_inconclusive_rate": 0.9
+  },
+  "scenario_breakdown": {
+    "e4_1_rpc_node_offline": {
+      "category": "e4",
+      "expected": "cannot_verify",
+      "trials": 5,
+      "passed": 5,
+      "falsely_claimed_tampered": 0,
+      "falsely_claimed_verified": 0
+    },
+    "e4_1_rpc_invalid_endpoint": {
+      "category": "e4",
+      "expected": "cannot_verify",
+      "trials": 5,
+      "passed": 5,
+      "falsely_claimed_tampered": 0,
+      "falsely_claimed_verified": 0
+    },
+    "e4_1_rpc_timeout": {
+      "category": "e4",
+      "expected": "cannot_verify",
+      "trials": 5,
+      "passed": 5,
+      "falsely_claimed_tampered": 0,
+      "falsely_claimed_verified": 0
+    },
+    "e4_1_contract_read_revert": {
+      "category": "e4",
+      "expected": "cannot_verify",
+      "trials": 5,
+      "passed": 5,
+      "falsely_claimed_tampered": 0,
+      "falsely_claimed_verified": 0
+    },
+    "e4_2_missing_blockchain_anchor": {
+      "category": "e4",
+      "expected": "cannot_verify",
+      "trials": 5,
+      "passed": 5,
+      "falsely_claimed_tampered": 0,
+      "falsely_claimed_verified": 0
+    },
+    "e4_2_stages_missing_onchain": {
+      "category": "e4",
+      "expected": "cannot_verify",
+      "trials": 5,
+      "passed": 5,
+      "falsely_claimed_tampered": 0,
+      "falsely_claimed_verified": 0
+    },
+    "e4_3_unexpected_transporter_signer": {
+      "category": "e4",
+      "expected": "cannot_verify",
+      "trials": 5,
+      "passed": 5,
+      "falsely_claimed_tampered": 0,
+      "falsely_claimed_verified": 0
+    },
+    "e4_3_unexpected_stage_onchain": {
+      "category": "e4",
+      "expected": "cannot_verify",
+      "trials": 5,
+      "passed": 5,
+      "falsely_claimed_tampered": 0,
+      "falsely_claimed_verified": 0
+    },
+    "e4_3_extra_transport_onchain": {
+      "category": "e4",
+      "expected": "cannot_verify",
+      "trials": 5,
+      "passed": 0,
+      "falsely_claimed_tampered": 5,
+      "falsely_claimed_verified": 0
+    },
+    "e4_4_db_saved_chain_reverted": {
+      "category": "e4",
+      "expected": "cannot_verify",
+      "trials": 5,
+      "passed": 5,
+      "falsely_claimed_tampered": 0,
+      "falsely_claimed_verified": 0
+    }
+  }
+}

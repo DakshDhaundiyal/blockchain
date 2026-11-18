@@ -1,0 +1,99 @@
+{
+  "metadata": {
+    "experiment_id": "EXP-TAMPER-20261117-145616",
+    "generated_at": "2026-11-17T14:59:24.919069+00:00",
+    "batches_tested": 10,
+    "total_tamper_trials": 250,
+    "total_negative_control_trials": 40
+  },
+  "tampering_evaluation": {
+    "total_samples": 250,
+    "correct_predictions": 250,
+    "accuracy": 1.0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1_score": 1.0,
+    "specificity": 0.0,
+    "inconclusive_count": 0,
+    "confusion_matrix": {
+      "true_positives": 250,
+      "false_positives": 0,
+      "true_negatives": 0,
+      "false_negatives": 0,
+      "inconclusive": 0
+    },
+    "latency": {
+      "count": 250,
+      "mean_ms": 524.626,
+      "median_ms": 534.999,
+      "p95_ms": 719.576,
+      "min_ms": 136.245,
+      "max_ms": 807.446
+    },
+    "stage_breakdown": {
+      "HARVEST": {
+        "samples": 70,
+        "correct": 70,
+        "accuracy": 1.0,
+        "latency_mean_ms": 520.988
+      },
+      "RETAIL": {
+        "samples": 90,
+        "correct": 90,
+        "accuracy": 1.0,
+        "latency_mean_ms": 533.716
+      },
+      "TRANSPORT": {
+        "samples": 90,
+        "correct": 90,
+        "accuracy": 1.0,
+        "latency_mean_ms": 518.366
+      }
+    }
+  },
+  "negative_controls_evaluation": {
+    "total_samples": 40,
+    "correct_predictions": 40,
+    "accuracy": 1.0,
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1_score": 0.0,
+    "specificity": 1.0,
+    "inconclusive_count": 0,
+    "confusion_matrix": {
+      "true_positives": 0,
+      "false_positives": 0,
+      "true_negatives": 40,
+      "false_negatives": 0,
+      "inconclusive": 0
+    },
+    "latency": {
+      "count": 40,
+      "mean_ms": 534.203,
+      "median_ms": 528.972,
+      "p95_ms": 706.481,
+      "min_ms": 382.82,
+      "max_ms": 821.918
+    },
+    "stage_breakdown": {
+      "HARVEST": {
+        "samples": 20,
+        "correct": 20,
+        "accuracy": 1.0,
+        "latency_mean_ms": 543.977
+      },
+      "RETAIL": {
+        "samples": 10,
+        "correct": 10,
+        "accuracy": 1.0,
+        "latency_mean_ms": 530.251
+      },
+      "TRANSPORT": {
+        "samples": 10,
+        "correct": 10,
+        "accuracy": 1.0,
+        "latency_mean_ms": 518.606
+      }
+    }
+  }
+}

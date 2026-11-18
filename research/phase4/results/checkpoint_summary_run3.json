@@ -1,0 +1,67 @@
+{
+  "metadata": {
+    "experiment_id": "EXP-CHKPT-RUN3-20261117-162441",
+    "timestamp": "2026-11-17T16:24:53.603335+00:00",
+    "configurations": [
+      1,
+      2,
+      5,
+      10,
+      20
+    ],
+    "total_trials": 30,
+    "description": "Independently isolated clean Run 3 validation for E5 multi-checkpoint scaling."
+  },
+  "by_checkpoint_count": {
+    "1_checkpoints": {
+      "trials": 6,
+      "passed": 6,
+      "accuracy": 1.0,
+      "mean_latency_ms": 114.86,
+      "median_latency_ms": 104.346,
+      "p95_latency_ms": 167.072,
+      "min_latency_ms": 79.965,
+      "max_latency_ms": 167.072
+    },
+    "2_checkpoints": {
+      "trials": 6,
+      "passed": 6,
+      "accuracy": 1.0,
+      "mean_latency_ms": 131.053,
+      "median_latency_ms": 136.584,
+      "p95_latency_ms": 150.601,
+      "min_latency_ms": 95.792,
+      "max_latency_ms": 150.601
+    },
+    "5_checkpoints": {
+      "trials": 6,
+      "passed": 6,
+      "accuracy": 1.0,
+      "mean_latency_ms": 192.145,
+      "median_latency_ms": 174.776,
+      "p95_latency_ms": 277.421,
+      "min_latency_ms": 158.55,
+      "max_latency_ms": 277.421
+    },
+    "10_checkpoints": {
+      "trials": 6,
+      "passed": 6,
+      "accuracy": 1.0,
+      "mean_latency_ms": 301.271,
+      "median_latency_ms": 301.442,
+      "p95_latency_ms": 325.365,
+      "min_latency_ms": 279.435,
+      "max_latency_ms": 325.365
+    },
+    "20_checkpoints": {
+      "trials": 6,
+      "passed": 6,
+      "accuracy": 1.0,
+      "mean_latency_ms": 624.893,
+      "median_latency_ms": 529.404,
+      "p95_latency_ms": 827.106,
+      "min_latency_ms": 519.486,
+      "max_latency_ms": 827.106
+    }
+  }
+}

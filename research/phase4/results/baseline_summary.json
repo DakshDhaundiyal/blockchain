@@ -1,0 +1,51 @@
+{
+  "total_samples": 120,
+  "correct_predictions": 120,
+  "accuracy": 1.0,
+  "precision": 0.0,
+  "recall": 0.0,
+  "f1_score": 0.0,
+  "specificity": 1.0,
+  "inconclusive_count": 0,
+  "confusion_matrix": {
+    "true_positives": 0,
+    "false_positives": 0,
+    "true_negatives": 120,
+    "false_negatives": 0,
+    "inconclusive": 0
+  },
+  "latency": {
+    "count": 120,
+    "mean_ms": 169.49,
+    "median_ms": 120.797,
+    "p95_ms": 406.153,
+    "min_ms": 66.424,
+    "max_ms": 726.472
+  },
+  "stage_breakdown": {
+    "HARVEST": {
+      "samples": 30,
+      "correct": 30,
+      "accuracy": 1.0,
+      "latency_mean_ms": 112.993
+    },
+    "OVERALL": {
+      "samples": 30,
+      "correct": 30,
+      "accuracy": 1.0,
+      "latency_mean_ms": 338.98
+    },
+    "RETAIL": {
+      "samples": 30,
+      "correct": 30,
+      "accuracy": 1.0,
+      "latency_mean_ms": 112.993
+    },
+    "TRANSPORT": {
+      "samples": 30,
+      "correct": 30,
+      "accuracy": 1.0,
+      "latency_mean_ms": 112.993
+    }
+  }
+}

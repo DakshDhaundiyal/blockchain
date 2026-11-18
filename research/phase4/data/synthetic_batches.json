@@ -1,0 +1,2033 @@
+{
+  "metadata": {
+    "dataset_name": "TrustHarvest Synthetic Provenance Baseline Dataset",
+    "version": "1.0",
+    "generated_at": "2026-11-17T14:32:01.417172+00:00",
+    "total_batches": 30,
+    "seed": 42,
+    "is_synthetic": true,
+    "purpose": "Phase 4 baseline experiment evaluation without touching production or personal data."
+  },
+  "batches": [
+    {
+      "batch_id": "TH-SYN-001",
+      "is_synthetic": true,
+      "synthetic_id": 1,
+      "created_at_iso": "2026-10-01T08:00:00+00:00",
+      "harvest": {
+        "batch_id": "TH-SYN-001",
+        "name": "Synthetic Heirloom Vine Tomatoes",
+        "quantity": "350 kg",
+        "farming_method": "Hydroponic Greenhouse",
+        "packaging_date": "2026-10-01",
+        "farmer_id": 1,
+        "image": "default.jpg",
+        "farm_name": "Green Horizon Organic Orchards",
+        "farm_location": "Salinas Valley, CA",
+        "certifications": "Regenerative Organic Certified (ROC) Bronze; Fair Trade",
+        "notes": "Synthetic benchmark batch #1. Generated strictly for research evaluation."
+      },
+      "transport_checkpoints": [
+        {
+          "checkpoint_index": 0,
+          "status": "Picked Up from Farm",
+          "current_location": "Highway Temperature Inspection Station",
+          "temperature": "3.0 \u00b0C",
+          "vehicle_number": "WA-TRK-208",
+          "notes": "Checkpoint #1 telemetry confirmed within safe cold-chain band.",
+          "transporter_id": 2,
+          "timestamp_iso": "2026-10-01T14:00:00+00:00"
+        },
+        {
+          "checkpoint_index": 1,
+          "status": "In Transit - Regional Corridor",
+          "current_location": "Regional Pre-Cooling Center",
+          "temperature": "3.7 \u00b0C",
+          "vehicle_number": "WA-TRK-104",
+          "notes": "Checkpoint #2 telemetry confirmed within safe cold-chain band.",
+          "transporter_id": 2,
+          "timestamp_iso": "2026-10-02T01:00:00+00:00"
+        }
+      ],
+      "retail": {
+        "store_name": "Whole Harvest Organic Market",
+        "store_location": "Seattle Central Branch",
+        "price": "4.99",
+        "stock_quantity": "350 kg",
+        "arrival_date": "2026-10-02",
+        "shelf_life": "11 Days",
+        "retailer_id": 3
+      },
+      "expected_baseline": {
+        "harvest_outcome": "verified",
+        "transport_outcome": "verified",
+        "retail_outcome": "verified",
+        "overall_outcome": "verified"
+      }
+    },
+    {
+      "batch_id": "TH-SYN-002",
+      "is_synthetic": true,
+      "synthetic_id": 2,
+      "created_at_iso": "2026-10-03T08:00:00+00:00",
+      "harvest": {
+        "batch_id": "TH-SYN-002",
+        "name": "Synthetic Sweet Strawberries",
+        "quantity": "250 kg",
+        "farming_method": "Integrated Pest Management",
+        "packaging_date": "2026-10-03",
+        "farmer_id": 1,
+        "image": "default.jpg",
+        "farm_name": "Valley Crest Regenerative Farms",
+        "farm_location": "Watsonville Coastal Plains",
+        "certifications": "Safe Quality Food (SQF) Level 2; USDA Organic",
+        "notes": "Synthetic benchmark batch #2. Generated strictly for research evaluation."
+      },
+      "transport_checkpoints": [
+        {
+          "checkpoint_index": 0,
+          "status": "Picked Up from Farm",
+          "current_location": "Orchard Loading Depot",
+          "temperature": "3.7 \u00b0C",
+          "vehicle_number": "WA-TRK-104",
+          "notes": "Checkpoint #1 telemetry confirmed within safe cold-chain band.",
+          "transporter_id": 2,
+          "timestamp_iso": "2026-10-03T14:00:00+00:00"
+        },
+        {
+          "checkpoint_index": 1,
+          "status": "In Transit - Regional Corridor",
+          "current_location": "Highway Temperature Inspection Station",
+          "temperature": "3.5 \u00b0C",
+          "vehicle_number": "WA-TRK-208",
+          "notes": "Checkpoint #2 telemetry confirmed within safe cold-chain band.",
+          "transporter_id": 2,
+          "timestamp_iso": "2026-10-04T11:00:00+00:00"
+        },
+        {
+          "checkpoint_index": 2,
+          "status": "Customs & Quality Clearance Verified",
+          "current_location": "Orchard Loading Depot",
+          "temperature": "4.0 \u00b0C",
+          "vehicle_number": "WA-TRK-104",
+          "notes": "Checkpoint #3 telemetry confirmed within safe cold-chain band.",
+          "transporter_id": 2,
+          "timestamp_iso": "2026-10-05T03:00:00+00:00"
+        },
+        {
+          "checkpoint_index": 3,
+          "status": "Mid-Route Temperature Inspection Passed",
+          "current_location": "Central Valley Sorting Facility",
+          "temperature": "3.3 \u00b0C",
+          "vehicle_number": "CAL-LOG-712",
+          "notes": "Checkpoint #4 telemetry confirmed within safe cold-chain band.",
+          "transporter_id": 2,
+          "timestamp_iso": "2026-10-05T16:00:00+00:00"
+        },
+        {
+          "checkpoint_index": 4,
+          "status": "Arrived at Metropolitan Cross-Dock",
+          "current_location": "Highway Temperature Inspection Station",
+          "temperature": "4.3 \u00b0C",
+          "vehicle_number": "WA-TRK-208",
+          "notes": "Checkpoint #5 telemetry confirmed within safe cold-chain band.",
+          "transporter_id": 2,
+          "timestamp_iso": "2026-10-06T04:00:00+00:00"
+        }
+      ],
+      "retail": {
+        "store_name": "Whole Harvest Organic Market",
+        "store_location": "Seattle Central Branch",
+        "price": "4.99",
+        "stock_quantity": "250 kg",
+        "arrival_date": "2026-10-07",
+        "shelf_life": "11 Days",
+        "retailer_id": 3
+      },
+      "expected_baseline": {
+        "harvest_outcome": "verified",
+        "transport_outcome": "verified",
+        "retail_outcome": "verified",
+        "overall_outcome": "verified"
+      }
+    },
+    {
+      "batch_id": "TH-SYN-003",
+      "is_synthetic": true,
+      "synthetic_id": 3,
+      "created_at_iso": "2026-10-05T08:00:00+00:00",
+      "harvest": {
+        "batch_id": "TH-SYN-003",
+        "name": "Synthetic Golden Delicious Pears",
+        "quantity": "300 kg",
+        "farming_method": "Bio-Dynamic Certified",
+        "packaging_date": "2026-10-05",
+        "farmer_id": 1,
+        "image": "default.jpg",
+        "farm_name": "Green Horizon Organic Orchards",
+        "farm_location": "Hood River Valley, OR",
+        "certifications": "Regenerative Organic Certified (ROC) Bronze; Fair Trade",
+        "notes": "Synthetic benchmark batch #3. Generated strictly for research evaluation."
+      },
+      "transport_checkpoints": [
+        {
+          "checkpoint_index": 0,
+          "status": "Picked Up from Farm",
+          "current_location": "Metropolitan Logistics Cross-Dock",
+          "temperature": "4.1 \u00b0C",
+          "vehicle_number": "DIST-TRK-305",
+          "notes": "Checkpoint #1 telemetry confirmed within safe cold-chain band.",
+          "transporter_id": 2,
+          "timestamp_iso": "2026-10-05T14:00:00+00:00"
+        },
+        {
+          "checkpoint_index": 1,
+          "status": "In Transit - Regional Corridor",
+          "current_location": "Regional Pre-Cooling Center",
+          "temperature": "4.4 \u00b0C",
+          "vehicle_number": "WA-TRK-104",
+          "notes": "Checkpoint #2 telemetry confirmed within safe cold-chain band.",
+          "transporter_id": 2,
+          "timestamp_iso": "2026-10-06T12:00:00+00:00"
+        },
+        {
+          "checkpoint_index": 2,
+          "status": "Customs & Quality Clearance Verified",
+          "current_location": "Regional Pre-Cooling Center",
+          "temperature": "3.7 \u00b0C",
+          "vehicle_number": "WA-TRK-104",
+          "notes": "Checkpoint #3 telemetry confirmed within safe cold-chain band.",
+          "transporter_id": 2,
+          "timestamp_iso": "2026-10-07T08:00:00+00:00"
+        }
+      ],
+      "retail": {
+        "store_name": "Urban Farmstead Market",
+        "store_location": "Vancouver Main Street",
+        "price": "4.89",
+        "stock_quantity": "300 kg",
+        "arrival_date": "2026-10-08",
+        "shelf_life": "13 Days",
+        "retailer_id": 3
+      },
+      "expected_baseline": {
+        "harvest_outcome": "verified",
+        "transport_outcome": "verified",
+        "retail_outcome": "verified",
+        "overall_outcome": "verified"
+      }
+    },
+    {
+      "batch_id": "TH-SYN-004",
+      "is_synthetic": true,
+      "synthetic_id": 4,
+      "created_at_iso": "2026-10-07T08:00:00+00:00",
+      "harvest": {
+        "batch_id": "TH-SYN-004",
+        "name": "Synthetic Heirloom Vine Tomatoes",
+        "quantity": "350 kg",
+        "farming_method": "Hydroponic Greenhouse",
+        "packaging_date": "2026-10-07",
+        "farmer_id": 1,
+        "image": "default.jpg",
+        "farm_name": "Green Horizon Organic Orchards",
+        "farm_location": "Salinas Valley, CA",
+        "certifications": "GlobalGAP Food Safety Standard; USDA Organic",
+        "notes": "Synthetic benchmark batch #4. Generated strictly for research evaluation."
+      },
+      "transport_checkpoints": [
+        {
+          "checkpoint_index": 0,
+          "status": "Picked Up from Farm",
+          "current_location": "Regional Pre-Cooling Center",
+          "temperature": "4.2 \u00b0C",
+          "vehicle_number": "WA-TRK-104",
+          "notes": "Checkpoint #1 telemetry confirmed within safe cold-chain band.",
+          "transporter_id": 2,
+          "timestamp_iso": "2026-10-07T14:00:00+00:00"
+        },
+        {
+          "checkpoint_index": 1,
+          "status": "In Transit - Regional Corridor",
+          "current_location": "Central Valley Sorting Facility",
+          "temperature": "3.2 \u00b0C",
+          "vehicle_number": "CAL-LOG-712",
+          "notes": "Checkpoint #2 telemetry confirmed within safe cold-chain band.",
+          "transporter_id": 2,
+          "timestamp_iso": "2026-10-08T01:00:00+00:00"
+        },
+        {
+          "checkpoint_index": 2,
+          "status": "Customs & Quality Clearance Verified",
+          "current_location": "State Cold Storage Hub",
+          "temperature": "3.4 \u00b0C",
+          "vehicle_number": "WA-TRK-208",
+          "notes": "Checkpoint #3 telemetry confirmed within safe cold-chain band.",
+          "transporter_id": 2,
+          "timestamp_iso": "2026-10-08T20:00:00+00:00"
+        }
+      ],
+      "retail": {
+        "store_name": "Evergreen Neighborhood Grocer",
+        "store_location": "Bellevue Square Location",
+        "price": "5.29",
+        "stock_quantity": "350 kg",
+        "arrival_date": "2026-10-09",
+        "shelf_life": "21 Days",
+        "retailer_id": 3
+      },
+      "expected_baseline": {
+        "harvest_outcome": "verified",
+        "transport_outcome": "verified",
+        "retail_outcome": "verified",
+        "overall_outcome": "verified"
+      }
+    },
+    {
+      "batch_id": "TH-SYN-005",
+      "is_synthetic": true,
+      "synthetic_id": 5,
+      "created_at_iso": "2026-10-09T08:00:00+00:00",
+      "harvest": {
+        "batch_id": "TH-SYN-005",
+        "name": "Synthetic Heirloom Vine Tomatoes",
+        "quantity": "350 kg",
+        "farming_method": "Hydroponic Greenhouse",
+        "packaging_date": "2026-10-09",
+        "farmer_id": 1,
+        "image": "default.jpg",
+        "farm_name": "Emerald Canopy Micro-Growers",
+        "farm_location": "Salinas Valley, CA",
+        "certifications": "GlobalGAP Food Safety Standard; USDA Organic",
+        "notes": "Synthetic benchmark batch #5. Generated strictly for research evaluation."
+      },
+      "transport_checkpoints": [
+        {
+          "checkpoint_index": 0,
+          "status": "Picked Up from Farm",
+          "current_location": "Highway Temperature Inspection Station",
+          "temperature": "3.1 \u00b0C",
+          "vehicle_number": "WA-TRK-208",
+          "notes": "Checkpoint #1 telemetry confirmed within safe cold-chain band.",
+          "transporter_id": 2,
+          "timestamp_iso": "2026-10-09T14:00:00+00:00"
+        },
+        {
+          "checkpoint_index": 1,
+          "status": "In Transit - Regional Corridor",
+          "current_location": "Metropolitan Logistics Cross-Dock",
+          "temperature": "4.4 \u00b0C",
+          "vehicle_number": "DIST-TRK-305",
+          "notes": "Checkpoint #2 telemetry confirmed within safe cold-chain band.",
+          "transporter_id": 2,
+          "timestamp_iso": "2026-10-10T10:00:00+00:00"
+        },
+        {
+          "checkpoint_index": 2,
+          "status": "Customs & Quality Clearance Verified",
+          "current_location": "Port Intermodal Container Yard",
+          "temperature": "4.1 \u00b0C",
+          "vehicle_number": "DIST-TRK-401",
+          "notes": "Checkpoint #3 telemetry confirmed within safe cold-chain band.",
+          "transporter_id": 2,
+          "timestamp_iso": "2026-10-11T01:00:00+00:00"
+        },
+        {
+          "checkpoint_index": 3,
+          "status": "Mid-Route Temperature Inspection Passed",
+          "current_location": "Highway Temperature Inspection Station",
+          "temperature": "4.1 \u00b0C",
+          "vehicle_number": "WA-TRK-208",
+          "notes": "Checkpoint #4 telemetry confirmed within safe cold-chain band.",
+          "transporter_id": 2,
+          "timestamp_iso": "2026-10-11T10:00:00+00:00"
+        },
+        {
+          "checkpoint_index": 4,
+          "status": "Arrived at Metropolitan Cross-Dock",
+          "current_location": "Central Valley Sorting Facility",
+          "temperature": "3.2 \u00b0C",
+          "vehicle_number": "CAL-LOG-712",
+          "notes": "Checkpoint #5 telemetry confirmed within safe cold-chain band.",
+          "transporter_id": 2,
+          "timestamp_iso": "2026-10-12T04:00:00+00:00"
+        }
+      ],
+      "retail": {
+        "store_name": "Urban Farmstead Market",
+        "store_location": "Vancouver Main Street",
+        "price": "4.89",
+        "stock_quantity": "350 kg",
+        "arrival_date": "2026-10-12",
+        "shelf_life": "21 Days",
+        "retailer_id": 3
+      },
+      "expected_baseline": {
+        "harvest_outcome": "verified",
+        "transport_outcome": "verified",
+        "retail_outcome": "verified",
+        "overall_outcome": "verified"
+      }
+    },
+    {
+      "batch_id": "TH-SYN-006",
+      "is_synthetic": true,
+      "synthetic_id": 6,
+      "created_at_iso": "2026-10-11T08:00:00+00:00",
+      "harvest": {
+        "batch_id": "TH-SYN-006",
+        "name": "Synthetic Valencia Juicing Oranges",
+        "quantity": "600 kg",
+        "farming_method": "Conventional Sustainable",
+        "packaging_date": "2026-10-11",
+        "farmer_id": 1,
+        "image": "default.jpg",
+        "farm_name": "Valley Crest Regenerative Farms",
+        "farm_location": "Central Valley Citrus Belt",
+        "certifications": "Bio-Dynamic Demeter Standard; USDA Organic",
+        "notes": "Synthetic benchmark batch #6. Generated strictly for research evaluation."
+      },
+      "transport_checkpoints": [
+        {
+          "checkpoint_index": 0,
+          "status": "Picked Up from Farm",
+          "current_location": "Supermarket Distribution Center",
+          "temperature": "3.0 \u00b0C",
+          "vehicle_number": "STORE-FLT-900",
+          "notes": "Checkpoint #1 telemetry confirmed within safe cold-chain band.",
+          "transporter_id": 2,
+          "timestamp_iso": "2026-10-11T14:00:00+00:00"
+        },
+        {
+          "checkpoint_index": 1,
+          "status": "In Transit - Regional Corridor",
+          "current_location": "Highway Temperature Inspection Station",
+          "temperature": "4.0 \u00b0C",
+          "vehicle_number": "WA-TRK-208",
+          "notes": "Checkpoint #2 telemetry confirmed within safe cold-chain band.",
+          "transporter_id": 2,
+          "timestamp_iso": "2026-10-12T02:00:00+00:00"
+        },
+        {
+          "checkpoint_index": 2,
+          "status": "Customs & Quality Clearance Verified",
+          "current_location": "Central Valley Sorting Facility",
+          "temperature": "4.2 \u00b0C",
+          "vehicle_number": "CAL-LOG-712",
+          "notes": "Checkpoint #3 telemetry confirmed within safe cold-chain band.",
+          "transporter_id": 2,
+          "timestamp_iso": "2026-10-12T18:00:00+00:00"
+        },
+        {
+          "checkpoint_index": 3,
+          "status": "Mid-Route Temperature Inspection Passed",
+          "current_location": "Port Intermodal Container Yard",
+          "temperature": "3.2 \u00b0C",
+          "vehicle_number": "DIST-TRK-401",
+          "notes": "Checkpoint #4 telemetry confirmed within safe cold-chain band.",
+          "transporter_id": 2,
+          "timestamp_iso": "2026-10-13T14:00:00+00:00"
+        }
+      ],
+      "retail": {
+        "store_name": "Urban Farmstead Market",
+        "store_location": "Vancouver Main Street",
+        "price": "4.89",
+        "stock_quantity": "600 kg",
+        "arrival_date": "2026-10-14",
+        "shelf_life": "17 Days",
+        "retailer_id": 3
+      },
+      "expected_baseline": {
+        "harvest_outcome": "verified",
+        "transport_outcome": "verified",
+        "retail_outcome": "verified",
+        "overall_outcome": "verified"
+      }
+    },
+    {
+      "batch_id": "TH-SYN-007",
+      "is_synthetic": true,
+      "synthetic_id": 7,
+      "created_at_iso": "2026-10-13T08:00:00+00:00",
+      "harvest": {
+        "batch_id": "TH-SYN-007",
+        "name": "Synthetic Heirloom Vine Tomatoes",
+        "quantity": "350 kg",
+        "farming_method": "Hydroponic Greenhouse",
+        "packaging_date": "2026-10-13",
+        "farmer_id": 1,
+        "image": "default.jpg",
+        "farm_name": "Green Horizon Organic Orchards",
+        "farm_location": "Salinas Valley, CA",
+        "certifications": "USDA Organic; Non-GMO Project Verified; CCOF Certified",
+        "notes": "Synthetic benchmark batch #7. Generated strictly for research evaluation."
+      },
+      "transport_checkpoints": [
+        {
+          "checkpoint_index": 0,
+          "status": "Picked Up from Farm",
+          "current_location": "State Cold Storage Hub",
+          "temperature": "4.1 \u00b0C",
+          "vehicle_number": "WA-TRK-208",
+          "notes": "Checkpoint #1 telemetry confirmed within safe cold-chain band.",
+          "transporter_id": 2,
+          "timestamp_iso": "2026-10-13T14:00:00+00:00"
+        },
+        {
+          "checkpoint_index": 1,
+          "status": "In Transit - Regional Corridor",
+          "current_location": "Regional Pre-Cooling Center",
+          "temperature": "3.4 \u00b0C",
+          "vehicle_number": "WA-TRK-104",
+          "notes": "Checkpoint #2 telemetry confirmed within safe cold-chain band.",
+          "transporter_id": 2,
+          "timestamp_iso": "2026-10-14T11:00:00+00:00"
+        }
+      ],
+      "retail": {
+        "store_name": "Urban Farmstead Market",
+        "store_location": "Vancouver Main Street",
+        "price": "4.89",
+        "stock_quantity": "350 kg",
+        "arrival_date": "2026-10-15",
+        "shelf_life": "14 Days",
+        "retailer_id": 3
+      },
+      "expected_baseline": {
+        "harvest_outcome": "verified",
+        "transport_outcome": "verified",
+        "retail_outcome": "verified",
+        "overall_outcome": "verified"
+      }
+    },
+    {
+      "batch_id": "TH-SYN-008",
+      "is_synthetic": true,
+      "synthetic_id": 8,
+      "created_at_iso": "2026-10-15T08:00:00+00:00",
+      "harvest": {
+        "batch_id": "TH-SYN-008",
+        "name": "Synthetic Fresh Wild Blueberries",
+        "quantity": "150 kg",
+        "farming_method": "Organic Cold-Hardy",
+        "packaging_date": "2026-10-15",
+        "farmer_id": 1,
+        "image": "default.jpg",
+        "farm_name": "Green Horizon Organic Orchards",
+        "farm_location": "Northwest Berry Co-op",
+        "certifications": "USDA Organic; Non-GMO Project Verified; CCOF Certified",
+        "notes": "Synthetic benchmark batch #8. Generated strictly for research evaluation."
+      },
+      "transport_checkpoints": [
+        {
+          "checkpoint_index": 0,
+          "status": "Picked Up from Farm",
+          "current_location": "Metropolitan Logistics Cross-Dock",
+          "temperature": "4.0 \u00b0C",
+          "vehicle_number": "DIST-TRK-305",
+          "notes": "Checkpoint #1 telemetry confirmed within safe cold-chain band.",
+          "transporter_id": 2,
+          "timestamp_iso": "2026-10-15T14:00:00+00:00"
+        },
+        {
+          "checkpoint_index": 1,
+          "status": "In Transit - Regional Corridor",
+          "current_location": "Regional Pre-Cooling Center",
+          "temperature": "3.3 \u00b0C",
+          "vehicle_number": "WA-TRK-104",
+          "notes": "Checkpoint #2 telemetry confirmed within safe cold-chain band.",
+          "transporter_id": 2,
+          "timestamp_iso": "2026-10-16T08:00:00+00:00"
+        },
+        {
+          "checkpoint_index": 2,
+          "status": "Customs & Quality Clearance Verified",
+          "current_location": "Supermarket Distribution Center",
+          "temperature": "2.8 \u00b0C",
+          "vehicle_number": "STORE-FLT-900",
+          "notes": "Checkpoint #3 telemetry confirmed within safe cold-chain band.",
+          "transporter_id": 2,
+          "timestamp_iso": "2026-10-16T21:00:00+00:00"
+        },
+        {
+          "checkpoint_index": 3,
+          "status": "Mid-Route Temperature Inspection Passed",
+          "current_location": "State Cold Storage Hub",
+          "temperature": "3.6 \u00b0C",
+          "vehicle_number": "WA-TRK-208",
+          "notes": "Checkpoint #4 telemetry confirmed within safe cold-chain band.",
+          "transporter_id": 2,
+          "timestamp_iso": "2026-10-17T13:00:00+00:00"
+        },
+        {
+          "checkpoint_index": 4,
+          "status": "Arrived at Metropolitan Cross-Dock",
+          "current_location": "Metropolitan Logistics Cross-Dock",
+          "temperature": "4.1 \u00b0C",
+          "vehicle_number": "DIST-TRK-305",
+          "notes": "Checkpoint #5 telemetry confirmed within safe cold-chain band.",
+          "transporter_id": 2,
+          "timestamp_iso": "2026-10-18T00:00:00+00:00"
+        }
+      ],
+      "retail": {
+        "store_name": "Urban Farmstead Market",
+        "store_location": "Vancouver Main Street",
+        "price": "4.89",
+        "stock_quantity": "150 kg",
+        "arrival_date": "2026-10-19",
+        "shelf_life": "13 Days",
+        "retailer_id": 3
+      },
+      "expected_baseline": {
+        "harvest_outcome": "verified",
+        "transport_outcome": "verified",
+        "retail_outcome": "verified",
+        "overall_outcome": "verified"
+      }
+    },
+    {
+      "batch_id": "TH-SYN-009",
+      "is_synthetic": true,
+      "synthetic_id": 9,
+      "created_at_iso": "2026-10-17T08:00:00+00:00",
+      "harvest": {
+        "batch_id": "TH-SYN-009",
+        "name": "Synthetic Organic Hass Avocados",
+        "quantity": "400 kg",
+        "farming_method": "Regenerative Organic",
+        "packaging_date": "2026-10-17",
+        "farmer_id": 1,
+        "image": "default.jpg",
+        "farm_name": "Cascadia Bio-Dynamic Fields",
+        "farm_location": "Michoac\u00e1n Micro-Farm #4",
+        "certifications": "GlobalGAP Food Safety Standard; USDA Organic",
+        "notes": "Synthetic benchmark batch #9. Generated strictly for research evaluation."
+      },
+      "transport_checkpoints": [
+        {
+          "checkpoint_index": 0,
+          "status": "Picked Up from Farm",
+          "current_location": "Orchard Loading Depot",
+          "temperature": "3.8 \u00b0C",
+          "vehicle_number": "WA-TRK-104",
+          "notes": "Checkpoint #1 telemetry confirmed within safe cold-chain band.",
+          "transporter_id": 2,
+          "timestamp_iso": "2026-10-17T14:00:00+00:00"
+        },
+        {
+          "checkpoint_index": 1,
+          "status": "In Transit - Regional Corridor",
+          "current_location": "Orchard Loading Depot",
+          "temperature": "3.0 \u00b0C",
+          "vehicle_number": "WA-TRK-104",
+          "notes": "Checkpoint #2 telemetry confirmed within safe cold-chain band.",
+          "transporter_id": 2,
+          "timestamp_iso": "2026-10-18T13:00:00+00:00"
+        },
+        {
+          "checkpoint_index": 2,
+          "status": "Customs & Quality Clearance Verified",
+          "current_location": "Metropolitan Logistics Cross-Dock",
+          "temperature": "3.2 \u00b0C",
+          "vehicle_number": "DIST-TRK-305",
+          "notes": "Checkpoint #3 telemetry confirmed within safe cold-chain band.",
+          "transporter_id": 2,
+          "timestamp_iso": "2026-10-19T08:00:00+00:00"
+        },
+        {
+          "checkpoint_index": 3,
+          "status": "Mid-Route Temperature Inspection Passed",
+          "current_location": "Regional Pre-Cooling Center",
+          "temperature": "2.9 \u00b0C",
+          "vehicle_number": "WA-TRK-104",
+          "notes": "Checkpoint #4 telemetry confirmed within safe cold-chain band.",
+          "transporter_id": 2,
+          "timestamp_iso": "2026-10-19T23:00:00+00:00"
+        },
+        {
+          "checkpoint_index": 4,
+          "status": "Arrived at Metropolitan Cross-Dock",
+          "current_location": "Regional Pre-Cooling Center",
+          "temperature": "4.4 \u00b0C",
+          "vehicle_number": "WA-TRK-104",
+          "notes": "Checkpoint #5 telemetry confirmed within safe cold-chain band.",
+          "transporter_id": 2,
+          "timestamp_iso": "2026-10-20T22:00:00+00:00"
+        }
+      ],
+      "retail": {
+        "store_name": "Pacific Fresh Foods",
+        "store_location": "Portland Downtown Market",
+        "price": "3.79",
+        "stock_quantity": "400 kg",
+        "arrival_date": "2026-10-21",
+        "shelf_life": "20 Days",
+        "retailer_id": 3
+      },
+      "expected_baseline": {
+        "harvest_outcome": "verified",
+        "transport_outcome": "verified",
+        "retail_outcome": "verified",
+        "overall_outcome": "verified"
+      }
+    },
+    {
+      "batch_id": "TH-SYN-010",
+      "is_synthetic": true,
+      "synthetic_id": 10,
+      "created_at_iso": "2026-10-19T08:00:00+00:00",
+      "harvest": {
+        "batch_id": "TH-SYN-010",
+        "name": "Synthetic Crisp Red Bell Peppers",
+        "quantity": "220 kg",
+        "farming_method": "Cover Crop Soil-Grown",
+        "packaging_date": "2026-10-19",
+        "farmer_id": 1,
+        "image": "default.jpg",
+        "farm_name": "Emerald Canopy Micro-Growers",
+        "farm_location": "Sonora Border Region",
+        "certifications": "GlobalGAP Food Safety Standard; USDA Organic",
+        "notes": "Synthetic benchmark batch #10. Generated strictly for research evaluation."
+      },
+      "transport_checkpoints": [
+        {
+          "checkpoint_index": 0,
+          "status": "Picked Up from Farm",
+          "current_location": "Central Valley Sorting Facility",
+          "temperature": "4.3 \u00b0C",
+          "vehicle_number": "CAL-LOG-712",
+          "notes": "Checkpoint #1 telemetry confirmed within safe cold-chain band.",
+          "transporter_id": 2,
+          "timestamp_iso": "2026-10-19T14:00:00+00:00"
+        },
+        {
+          "checkpoint_index": 1,
+          "status": "In Transit - Regional Corridor",
+          "current_location": "Metropolitan Logistics Cross-Dock",
+          "temperature": "3.4 \u00b0C",
+          "vehicle_number": "DIST-TRK-305",
+          "notes": "Checkpoint #2 telemetry confirmed within safe cold-chain band.",
+          "transporter_id": 2,
+          "timestamp_iso": "2026-10-20T04:00:00+00:00"
+        },
+        {
+          "checkpoint_index": 2,
+          "status": "Customs & Quality Clearance Verified",
+          "current_location": "Supermarket Distribution Center",
+          "temperature": "4.2 \u00b0C",
+          "vehicle_number": "STORE-FLT-900",
+          "notes": "Checkpoint #3 telemetry confirmed within safe cold-chain band.",
+          "transporter_id": 2,
+          "timestamp_iso": "2026-10-20T23:00:00+00:00"
+        }
+      ],
+      "retail": {
+        "store_name": "Whole Harvest Organic Market",
+        "store_location": "Seattle Central Branch",
+        "price": "4.99",
+        "stock_quantity": "220 kg",
+        "arrival_date": "2026-10-22",
+        "shelf_life": "13 Days",
+        "retailer_id": 3
+      },
+      "expected_baseline": {
+        "harvest_outcome": "verified",
+        "transport_outcome": "verified",
+        "retail_outcome": "verified",
+        "overall_outcome": "verified"
+      }
+    },
+    {
+      "batch_id": "TH-SYN-011",
+      "is_synthetic": true,
+      "synthetic_id": 11,
+      "created_at_iso": "2026-10-21T08:00:00+00:00",
+      "harvest": {
+        "batch_id": "TH-SYN-011",
+        "name": "Synthetic Sweet Strawberries",
+        "quantity": "250 kg",
+        "farming_method": "Integrated Pest Management",
+        "packaging_date": "2026-10-21",
+        "farmer_id": 1,
+        "image": "default.jpg",
+        "farm_name": "Green Horizon Organic Orchards",
+        "farm_location": "Watsonville Coastal Plains",
+        "certifications": "Regenerative Organic Certified (ROC) Bronze; Fair Trade",
+        "notes": "Synthetic benchmark batch #11. Generated strictly for research evaluation."
+      },
+      "transport_checkpoints": [
+        {
+          "checkpoint_index": 0,
+          "status": "Picked Up from Farm",
+          "current_location": "Highway Temperature Inspection Station",
+          "temperature": "3.7 \u00b0C",
+          "vehicle_number": "WA-TRK-208",
+          "notes": "Checkpoint #1 telemetry confirmed within safe cold-chain band.",
+          "transporter_id": 2,
+          "timestamp_iso": "2026-10-21T14:00:00+00:00"
+        }
+      ],
+      "retail": {
+        "store_name": "Whole Harvest Organic Market",
+        "store_location": "Seattle Central Branch",
+        "price": "4.99",
+        "stock_quantity": "250 kg",
+        "arrival_date": "2026-10-22",
+        "shelf_life": "21 Days",
+        "retailer_id": 3
+      },
+      "expected_baseline": {
+        "harvest_outcome": "verified",
+        "transport_outcome": "verified",
+        "retail_outcome": "verified",
+        "overall_outcome": "verified"
+      }
+    },
+    {
+      "batch_id": "TH-SYN-012",
+      "is_synthetic": true,
+      "synthetic_id": 12,
+      "created_at_iso": "2026-10-23T08:00:00+00:00",
+      "harvest": {
+        "batch_id": "TH-SYN-012",
+        "name": "Synthetic Organic Honeycrisp Apples",
+        "quantity": "500 kg",
+        "farming_method": "100% Certified Organic",
+        "packaging_date": "2026-10-23",
+        "farmer_id": 1,
+        "image": "default.jpg",
+        "farm_name": "Valley Crest Regenerative Farms",
+        "farm_location": "Yakima Valley, WA",
+        "certifications": "USDA Organic; Non-GMO Project Verified; CCOF Certified",
+        "notes": "Synthetic benchmark batch #12. Generated strictly for research evaluation."
+      },
+      "transport_checkpoints": [
+        {
+          "checkpoint_index": 0,
+          "status": "Picked Up from Farm",
+          "current_location": "Port Intermodal Container Yard",
+          "temperature": "2.9 \u00b0C",
+          "vehicle_number": "DIST-TRK-401",
+          "notes": "Checkpoint #1 telemetry confirmed within safe cold-chain band.",
+          "transporter_id": 2,
+          "timestamp_iso": "2026-10-23T14:00:00+00:00"
+        }
+      ],
+      "retail": {
+        "store_name": "Evergreen Neighborhood Grocer",
+        "store_location": "Bellevue Square Location",
+        "price": "5.29",
+        "stock_quantity": "500 kg",
+        "arrival_date": "2026-10-24",
+        "shelf_life": "20 Days",
+        "retailer_id": 3
+      },
+      "expected_baseline": {
+        "harvest_outcome": "verified",
+        "transport_outcome": "verified",
+        "retail_outcome": "verified",
+        "overall_outcome": "verified"
+      }
+    },
+    {
+      "batch_id": "TH-SYN-013",
+      "is_synthetic": true,
+      "synthetic_id": 13,
+      "created_at_iso": "2026-10-25T08:00:00+00:00",
+      "harvest": {
+        "batch_id": "TH-SYN-013",
+        "name": "Synthetic Crisp Red Bell Peppers",
+        "quantity": "220 kg",
+        "farming_method": "Cover Crop Soil-Grown",
+        "packaging_date": "2026-10-25",
+        "farmer_id": 1,
+        "image": "default.jpg",
+        "farm_name": "Valley Crest Regenerative Farms",
+        "farm_location": "Sonora Border Region",
+        "certifications": "Safe Quality Food (SQF) Level 2; USDA Organic",
+        "notes": "Synthetic benchmark batch #13. Generated strictly for research evaluation."
+      },
+      "transport_checkpoints": [
+        {
+          "checkpoint_index": 0,
+          "status": "Picked Up from Farm",
+          "current_location": "Supermarket Distribution Center",
+          "temperature": "3.2 \u00b0C",
+          "vehicle_number": "STORE-FLT-900",
+          "notes": "Checkpoint #1 telemetry confirmed within safe cold-chain band.",
+          "transporter_id": 2,
+          "timestamp_iso": "2026-10-25T14:00:00+00:00"
+        },
+        {
+          "checkpoint_index": 1,
+          "status": "In Transit - Regional Corridor",
+          "current_location": "Central Valley Sorting Facility",
+          "temperature": "3.1 \u00b0C",
+          "vehicle_number": "CAL-LOG-712",
+          "notes": "Checkpoint #2 telemetry confirmed within safe cold-chain band.",
+          "transporter_id": 2,
+          "timestamp_iso": "2026-10-26T13:00:00+00:00"
+        }
+      ],
+      "retail": {
+        "store_name": "Cornerstone Natural Foods",
+        "store_location": "Tacoma Harbor Store",
+        "price": "4.49",
+        "stock_quantity": "220 kg",
+        "arrival_date": "2026-10-27",
+        "shelf_life": "15 Days",
+        "retailer_id": 3
+      },
+      "expected_baseline": {
+        "harvest_outcome": "verified",
+        "transport_outcome": "verified",
+        "retail_outcome": "verified",
+        "overall_outcome": "verified"
+      }
+    },
+    {
+      "batch_id": "TH-SYN-014",
+      "is_synthetic": true,
+      "synthetic_id": 14,
+      "created_at_iso": "2026-10-27T08:00:00+00:00",
+      "harvest": {
+        "batch_id": "TH-SYN-014",
+        "name": "Synthetic Golden Delicious Pears",
+        "quantity": "300 kg",
+        "farming_method": "Bio-Dynamic Certified",
+        "packaging_date": "2026-10-27",
+        "farmer_id": 1,
+        "image": "default.jpg",
+        "farm_name": "Sunburst Agricultural Commons",
+        "farm_location": "Hood River Valley, OR",
+        "certifications": "Bio-Dynamic Demeter Standard; USDA Organic",
+        "notes": "Synthetic benchmark batch #14. Generated strictly for research evaluation."
+      },
+      "transport_checkpoints": [
+        {
+          "checkpoint_index": 0,
+          "status": "Picked Up from Farm",
+          "current_location": "Regional Pre-Cooling Center",
+          "temperature": "2.9 \u00b0C",
+          "vehicle_number": "WA-TRK-104",
+          "notes": "Checkpoint #1 telemetry confirmed within safe cold-chain band.",
+          "transporter_id": 2,
+          "timestamp_iso": "2026-10-27T14:00:00+00:00"
+        }
+      ],
+      "retail": {
+        "store_name": "Whole Harvest Organic Market",
+        "store_location": "Seattle Central Branch",
+        "price": "4.99",
+        "stock_quantity": "300 kg",
+        "arrival_date": "2026-10-28",
+        "shelf_life": "13 Days",
+        "retailer_id": 3
+      },
+      "expected_baseline": {
+        "harvest_outcome": "verified",
+        "transport_outcome": "verified",
+        "retail_outcome": "verified",
+        "overall_outcome": "verified"
+      }
+    },
+    {
+      "batch_id": "TH-SYN-015",
+      "is_synthetic": true,
+      "synthetic_id": 15,
+      "created_at_iso": "2026-10-29T08:00:00+00:00",
+      "harvest": {
+        "batch_id": "TH-SYN-015",
+        "name": "Synthetic Sweet Strawberries",
+        "quantity": "250 kg",
+        "farming_method": "Integrated Pest Management",
+        "packaging_date": "2026-10-29",
+        "farmer_id": 1,
+        "image": "default.jpg",
+        "farm_name": "Valley Crest Regenerative Farms",
+        "farm_location": "Watsonville Coastal Plains",
+        "certifications": "Safe Quality Food (SQF) Level 2; USDA Organic",
+        "notes": "Synthetic benchmark batch #15. Generated strictly for research evaluation."
+      },
+      "transport_checkpoints": [
+        {
+          "checkpoint_index": 0,
+          "status": "Picked Up from Farm",
+          "current_location": "State Cold Storage Hub",
+          "temperature": "3.5 \u00b0C",
+          "vehicle_number": "WA-TRK-208",
+          "notes": "Checkpoint #1 telemetry confirmed within safe cold-chain band.",
+          "transporter_id": 2,
+          "timestamp_iso": "2026-10-29T14:00:00+00:00"
+        },
+        {
+          "checkpoint_index": 1,
+          "status": "In Transit - Regional Corridor",
+          "current_location": "Supermarket Distribution Center",
+          "temperature": "3.2 \u00b0C",
+          "vehicle_number": "STORE-FLT-900",
+          "notes": "Checkpoint #2 telemetry confirmed within safe cold-chain band.",
+          "transporter_id": 2,
+          "timestamp_iso": "2026-10-30T06:00:00+00:00"
+        },
+        {
+          "checkpoint_index": 2,
+          "status": "Customs & Quality Clearance Verified",
+          "current_location": "Supermarket Distribution Center",
+          "temperature": "4.1 \u00b0C",
+          "vehicle_number": "STORE-FLT-900",
+          "notes": "Checkpoint #3 telemetry confirmed within safe cold-chain band.",
+          "transporter_id": 2,
+          "timestamp_iso": "2026-10-30T16:00:00+00:00"
+        },
+        {
+          "checkpoint_index": 3,
+          "status": "Mid-Route Temperature Inspection Passed",
+          "current_location": "Orchard Loading Depot",
+          "temperature": "3.8 \u00b0C",
+          "vehicle_number": "WA-TRK-104",
+          "notes": "Checkpoint #4 telemetry confirmed within safe cold-chain band.",
+          "transporter_id": 2,
+          "timestamp_iso": "2026-10-31T03:00:00+00:00"
+        }
+      ],
+      "retail": {
+        "store_name": "Whole Harvest Organic Market",
+        "store_location": "Seattle Central Branch",
+        "price": "4.99",
+        "stock_quantity": "250 kg",
+        "arrival_date": "2026-10-31",
+        "shelf_life": "13 Days",
+        "retailer_id": 3
+      },
+      "expected_baseline": {
+        "harvest_outcome": "verified",
+        "transport_outcome": "verified",
+        "retail_outcome": "verified",
+        "overall_outcome": "verified"
+      }
+    },
+    {
+      "batch_id": "TH-SYN-016",
+      "is_synthetic": true,
+      "synthetic_id": 16,
+      "created_at_iso": "2026-10-31T08:00:00+00:00",
+      "harvest": {
+        "batch_id": "TH-SYN-016",
+        "name": "Synthetic Organic Hass Avocados",
+        "quantity": "400 kg",
+        "farming_method": "Regenerative Organic",
+        "packaging_date": "2026-10-31",
+        "farmer_id": 1,
+        "image": "default.jpg",
+        "farm_name": "Sunburst Agricultural Commons",
+        "farm_location": "Michoac\u00e1n Micro-Farm #4",
+        "certifications": "Bio-Dynamic Demeter Standard; USDA Organic",
+        "notes": "Synthetic benchmark batch #16. Generated strictly for research evaluation."
+      },
+      "transport_checkpoints": [
+        {
+          "checkpoint_index": 0,
+          "status": "Picked Up from Farm",
+          "current_location": "Highway Temperature Inspection Station",
+          "temperature": "4.2 \u00b0C",
+          "vehicle_number": "WA-TRK-208",
+          "notes": "Checkpoint #1 telemetry confirmed within safe cold-chain band.",
+          "transporter_id": 2,
+          "timestamp_iso": "2026-10-31T14:00:00+00:00"
+        },
+        {
+          "checkpoint_index": 1,
+          "status": "In Transit - Regional Corridor",
+          "current_location": "State Cold Storage Hub",
+          "temperature": "3.4 \u00b0C",
+          "vehicle_number": "WA-TRK-208",
+          "notes": "Checkpoint #2 telemetry confirmed within safe cold-chain band.",
+          "transporter_id": 2,
+          "timestamp_iso": "2026-10-31T23:00:00+00:00"
+        },
+        {
+          "checkpoint_index": 2,
+          "status": "Customs & Quality Clearance Verified",
+          "current_location": "Metropolitan Logistics Cross-Dock",
+          "temperature": "4.3 \u00b0C",
+          "vehicle_number": "DIST-TRK-305",
+          "notes": "Checkpoint #3 telemetry confirmed within safe cold-chain band.",
+          "transporter_id": 2,
+          "timestamp_iso": "2026-11-01T19:00:00+00:00"
+        },
+        {
+          "checkpoint_index": 3,
+          "status": "Mid-Route Temperature Inspection Passed",
+          "current_location": "Metropolitan Logistics Cross-Dock",
+          "temperature": "3.5 \u00b0C",
+          "vehicle_number": "DIST-TRK-305",
+          "notes": "Checkpoint #4 telemetry confirmed within safe cold-chain band.",
+          "transporter_id": 2,
+          "timestamp_iso": "2026-11-02T17:00:00+00:00"
+        }
+      ],
+      "retail": {
+        "store_name": "Pacific Fresh Foods",
+        "store_location": "Portland Downtown Market",
+        "price": "3.79",
+        "stock_quantity": "400 kg",
+        "arrival_date": "2026-11-03",
+        "shelf_life": "13 Days",
+        "retailer_id": 3
+      },
+      "expected_baseline": {
+        "harvest_outcome": "verified",
+        "transport_outcome": "verified",
+        "retail_outcome": "verified",
+        "overall_outcome": "verified"
+      }
+    },
+    {
+      "batch_id": "TH-SYN-017",
+      "is_synthetic": true,
+      "synthetic_id": 17,
+      "created_at_iso": "2026-11-02T08:00:00+00:00",
+      "harvest": {
+        "batch_id": "TH-SYN-017",
+        "name": "Synthetic Baby Spinach Leaves",
+        "quantity": "180 kg",
+        "farming_method": "Certified Organic (USDA)",
+        "packaging_date": "2026-11-02",
+        "farmer_id": 1,
+        "image": "default.jpg",
+        "farm_name": "Valley Crest Regenerative Farms",
+        "farm_location": "Yuma Agricultural Zone",
+        "certifications": "USDA Organic; Non-GMO Project Verified; CCOF Certified",
+        "notes": "Synthetic benchmark batch #17. Generated strictly for research evaluation."
+      },
+      "transport_checkpoints": [
+        {
+          "checkpoint_index": 0,
+          "status": "Picked Up from Farm",
+          "current_location": "Orchard Loading Depot",
+          "temperature": "4.0 \u00b0C",
+          "vehicle_number": "WA-TRK-104",
+          "notes": "Checkpoint #1 telemetry confirmed within safe cold-chain band.",
+          "transporter_id": 2,
+          "timestamp_iso": "2026-11-02T14:00:00+00:00"
+        },
+        {
+          "checkpoint_index": 1,
+          "status": "In Transit - Regional Corridor",
+          "current_location": "Orchard Loading Depot",
+          "temperature": "3.7 \u00b0C",
+          "vehicle_number": "WA-TRK-104",
+          "notes": "Checkpoint #2 telemetry confirmed within safe cold-chain band.",
+          "transporter_id": 2,
+          "timestamp_iso": "2026-11-02T23:00:00+00:00"
+        },
+        {
+          "checkpoint_index": 2,
+          "status": "Customs & Quality Clearance Verified",
+          "current_location": "State Cold Storage Hub",
+          "temperature": "2.9 \u00b0C",
+          "vehicle_number": "WA-TRK-208",
+          "notes": "Checkpoint #3 telemetry confirmed within safe cold-chain band.",
+          "transporter_id": 2,
+          "timestamp_iso": "2026-11-03T23:00:00+00:00"
+        },
+        {
+          "checkpoint_index": 3,
+          "status": "Mid-Route Temperature Inspection Passed",
+          "current_location": "Regional Pre-Cooling Center",
+          "temperature": "4.2 \u00b0C",
+          "vehicle_number": "WA-TRK-104",
+          "notes": "Checkpoint #4 telemetry confirmed within safe cold-chain band.",
+          "transporter_id": 2,
+          "timestamp_iso": "2026-11-04T23:00:00+00:00"
+        },
+        {
+          "checkpoint_index": 4,
+          "status": "Arrived at Metropolitan Cross-Dock",
+          "current_location": "Regional Pre-Cooling Center",
+          "temperature": "3.9 \u00b0C",
+          "vehicle_number": "WA-TRK-104",
+          "notes": "Checkpoint #5 telemetry confirmed within safe cold-chain band.",
+          "transporter_id": 2,
+          "timestamp_iso": "2026-11-05T09:00:00+00:00"
+        }
+      ],
+      "retail": {
+        "store_name": "Cornerstone Natural Foods",
+        "store_location": "Tacoma Harbor Store",
+        "price": "4.49",
+        "stock_quantity": "180 kg",
+        "arrival_date": "2026-11-06",
+        "shelf_life": "11 Days",
+        "retailer_id": 3
+      },
+      "expected_baseline": {
+        "harvest_outcome": "verified",
+        "transport_outcome": "verified",
+        "retail_outcome": "verified",
+        "overall_outcome": "verified"
+      }
+    },
+    {
+      "batch_id": "TH-SYN-018",
+      "is_synthetic": true,
+      "synthetic_id": 18,
+      "created_at_iso": "2026-11-04T08:00:00+00:00",
+      "harvest": {
+        "batch_id": "TH-SYN-018",
+        "name": "Synthetic English Seedless Cucumbers",
+        "quantity": "280 kg",
+        "farming_method": "Clean Hydroponic",
+        "packaging_date": "2026-11-04",
+        "farmer_id": 1,
+        "image": "default.jpg",
+        "farm_name": "Valley Crest Regenerative Farms",
+        "farm_location": "Ontario Hothouse Sector B",
+        "certifications": "Safe Quality Food (SQF) Level 2; USDA Organic",
+        "notes": "Synthetic benchmark batch #18. Generated strictly for research evaluation."
+      },
+      "transport_checkpoints": [
+        {
+          "checkpoint_index": 0,
+          "status": "Picked Up from Farm",
+          "current_location": "Orchard Loading Depot",
+          "temperature": "3.8 \u00b0C",
+          "vehicle_number": "WA-TRK-104",
+          "notes": "Checkpoint #1 telemetry confirmed within safe cold-chain band.",
+          "transporter_id": 2,
+          "timestamp_iso": "2026-11-04T14:00:00+00:00"
+        },
+        {
+          "checkpoint_index": 1,
+          "status": "In Transit - Regional Corridor",
+          "current_location": "Port Intermodal Container Yard",
+          "temperature": "4.3 \u00b0C",
+          "vehicle_number": "DIST-TRK-401",
+          "notes": "Checkpoint #2 telemetry confirmed within safe cold-chain band.",
+          "transporter_id": 2,
+          "timestamp_iso": "2026-11-05T11:00:00+00:00"
+        },
+        {
+          "checkpoint_index": 2,
+          "status": "Customs & Quality Clearance Verified",
+          "current_location": "Port Intermodal Container Yard",
+          "temperature": "3.2 \u00b0C",
+          "vehicle_number": "DIST-TRK-401",
+          "notes": "Checkpoint #3 telemetry confirmed within safe cold-chain band.",
+          "transporter_id": 2,
+          "timestamp_iso": "2026-11-06T01:00:00+00:00"
+        },
+        {
+          "checkpoint_index": 3,
+          "status": "Mid-Route Temperature Inspection Passed",
+          "current_location": "State Cold Storage Hub",
+          "temperature": "3.9 \u00b0C",
+          "vehicle_number": "WA-TRK-208",
+          "notes": "Checkpoint #4 telemetry confirmed within safe cold-chain band.",
+          "transporter_id": 2,
+          "timestamp_iso": "2026-11-06T21:00:00+00:00"
+        },
+        {
+          "checkpoint_index": 4,
+          "status": "Arrived at Metropolitan Cross-Dock",
+          "current_location": "Supermarket Distribution Center",
+          "temperature": "3.3 \u00b0C",
+          "vehicle_number": "STORE-FLT-900",
+          "notes": "Checkpoint #5 telemetry confirmed within safe cold-chain band.",
+          "transporter_id": 2,
+          "timestamp_iso": "2026-11-07T14:00:00+00:00"
+        }
+      ],
+      "retail": {
+        "store_name": "Whole Harvest Organic Market",
+        "store_location": "Seattle Central Branch",
+        "price": "4.99",
+        "stock_quantity": "280 kg",
+        "arrival_date": "2026-11-08",
+        "shelf_life": "17 Days",
+        "retailer_id": 3
+      },
+      "expected_baseline": {
+        "harvest_outcome": "verified",
+        "transport_outcome": "verified",
+        "retail_outcome": "verified",
+        "overall_outcome": "verified"
+      }
+    },
+    {
+      "batch_id": "TH-SYN-019",
+      "is_synthetic": true,
+      "synthetic_id": 19,
+      "created_at_iso": "2026-11-06T08:00:00+00:00",
+      "harvest": {
+        "batch_id": "TH-SYN-019",
+        "name": "Synthetic English Seedless Cucumbers",
+        "quantity": "280 kg",
+        "farming_method": "Clean Hydroponic",
+        "packaging_date": "2026-11-06",
+        "farmer_id": 1,
+        "image": "default.jpg",
+        "farm_name": "Emerald Canopy Micro-Growers",
+        "farm_location": "Ontario Hothouse Sector B",
+        "certifications": "USDA Organic; Non-GMO Project Verified; CCOF Certified",
+        "notes": "Synthetic benchmark batch #19. Generated strictly for research evaluation."
+      },
+      "transport_checkpoints": [
+        {
+          "checkpoint_index": 0,
+          "status": "Picked Up from Farm",
+          "current_location": "Highway Temperature Inspection Station",
+          "temperature": "3.6 \u00b0C",
+          "vehicle_number": "WA-TRK-208",
+          "notes": "Checkpoint #1 telemetry confirmed within safe cold-chain band.",
+          "transporter_id": 2,
+          "timestamp_iso": "2026-11-06T14:00:00+00:00"
+        }
+      ],
+      "retail": {
+        "store_name": "Evergreen Neighborhood Grocer",
+        "store_location": "Bellevue Square Location",
+        "price": "5.29",
+        "stock_quantity": "280 kg",
+        "arrival_date": "2026-11-07",
+        "shelf_life": "11 Days",
+        "retailer_id": 3
+      },
+      "expected_baseline": {
+        "harvest_outcome": "verified",
+        "transport_outcome": "verified",
+        "retail_outcome": "verified",
+        "overall_outcome": "verified"
+      }
+    },
+    {
+      "batch_id": "TH-SYN-020",
+      "is_synthetic": true,
+      "synthetic_id": 20,
+      "created_at_iso": "2026-11-08T08:00:00+00:00",
+      "harvest": {
+        "batch_id": "TH-SYN-020",
+        "name": "Synthetic Sweet Strawberries",
+        "quantity": "250 kg",
+        "farming_method": "Integrated Pest Management",
+        "packaging_date": "2026-11-08",
+        "farmer_id": 1,
+        "image": "default.jpg",
+        "farm_name": "Cascadia Bio-Dynamic Fields",
+        "farm_location": "Watsonville Coastal Plains",
+        "certifications": "Regenerative Organic Certified (ROC) Bronze; Fair Trade",
+        "notes": "Synthetic benchmark batch #20. Generated strictly for research evaluation."
+      },
+      "transport_checkpoints": [
+        {
+          "checkpoint_index": 0,
+          "status": "Picked Up from Farm",
+          "current_location": "Supermarket Distribution Center",
+          "temperature": "4.1 \u00b0C",
+          "vehicle_number": "STORE-FLT-900",
+          "notes": "Checkpoint #1 telemetry confirmed within safe cold-chain band.",
+          "transporter_id": 2,
+          "timestamp_iso": "2026-11-08T14:00:00+00:00"
+        },
+        {
+          "checkpoint_index": 1,
+          "status": "In Transit - Regional Corridor",
+          "current_location": "Orchard Loading Depot",
+          "temperature": "3.9 \u00b0C",
+          "vehicle_number": "WA-TRK-104",
+          "notes": "Checkpoint #2 telemetry confirmed within safe cold-chain band.",
+          "transporter_id": 2,
+          "timestamp_iso": "2026-11-09T07:00:00+00:00"
+        }
+      ],
+      "retail": {
+        "store_name": "Whole Harvest Organic Market",
+        "store_location": "Seattle Central Branch",
+        "price": "4.99",
+        "stock_quantity": "250 kg",
+        "arrival_date": "2026-11-10",
+        "shelf_life": "12 Days",
+        "retailer_id": 3
+      },
+      "expected_baseline": {
+        "harvest_outcome": "verified",
+        "transport_outcome": "verified",
+        "retail_outcome": "verified",
+        "overall_outcome": "verified"
+      }
+    },
+    {
+      "batch_id": "TH-SYN-021",
+      "is_synthetic": true,
+      "synthetic_id": 21,
+      "created_at_iso": "2026-11-10T08:00:00+00:00",
+      "harvest": {
+        "batch_id": "TH-SYN-021",
+        "name": "Synthetic Baby Spinach Leaves",
+        "quantity": "180 kg",
+        "farming_method": "Certified Organic (USDA)",
+        "packaging_date": "2026-11-10",
+        "farmer_id": 1,
+        "image": "default.jpg",
+        "farm_name": "Green Horizon Organic Orchards",
+        "farm_location": "Yuma Agricultural Zone",
+        "certifications": "USDA Organic; Non-GMO Project Verified; CCOF Certified",
+        "notes": "Synthetic benchmark batch #21. Generated strictly for research evaluation."
+      },
+      "transport_checkpoints": [
+        {
+          "checkpoint_index": 0,
+          "status": "Picked Up from Farm",
+          "current_location": "State Cold Storage Hub",
+          "temperature": "3.2 \u00b0C",
+          "vehicle_number": "WA-TRK-208",
+          "notes": "Checkpoint #1 telemetry confirmed within safe cold-chain band.",
+          "transporter_id": 2,
+          "timestamp_iso": "2026-11-10T14:00:00+00:00"
+        },
+        {
+          "checkpoint_index": 1,
+          "status": "In Transit - Regional Corridor",
+          "current_location": "Port Intermodal Container Yard",
+          "temperature": "3.1 \u00b0C",
+          "vehicle_number": "DIST-TRK-401",
+          "notes": "Checkpoint #2 telemetry confirmed within safe cold-chain band.",
+          "transporter_id": 2,
+          "timestamp_iso": "2026-11-11T04:00:00+00:00"
+        },
+        {
+          "checkpoint_index": 2,
+          "status": "Customs & Quality Clearance Verified",
+          "current_location": "Supermarket Distribution Center",
+          "temperature": "3.2 \u00b0C",
+          "vehicle_number": "STORE-FLT-900",
+          "notes": "Checkpoint #3 telemetry confirmed within safe cold-chain band.",
+          "transporter_id": 2,
+          "timestamp_iso": "2026-11-11T20:00:00+00:00"
+        },
+        {
+          "checkpoint_index": 3,
+          "status": "Mid-Route Temperature Inspection Passed",
+          "current_location": "Regional Pre-Cooling Center",
+          "temperature": "3.8 \u00b0C",
+          "vehicle_number": "WA-TRK-104",
+          "notes": "Checkpoint #4 telemetry confirmed within safe cold-chain band.",
+          "transporter_id": 2,
+          "timestamp_iso": "2026-11-12T05:00:00+00:00"
+        },
+        {
+          "checkpoint_index": 4,
+          "status": "Arrived at Metropolitan Cross-Dock",
+          "current_location": "Orchard Loading Depot",
+          "temperature": "2.8 \u00b0C",
+          "vehicle_number": "WA-TRK-104",
+          "notes": "Checkpoint #5 telemetry confirmed within safe cold-chain band.",
+          "transporter_id": 2,
+          "timestamp_iso": "2026-11-12T21:00:00+00:00"
+        }
+      ],
+      "retail": {
+        "store_name": "Evergreen Neighborhood Grocer",
+        "store_location": "Bellevue Square Location",
+        "price": "5.29",
+        "stock_quantity": "180 kg",
+        "arrival_date": "2026-11-13",
+        "shelf_life": "12 Days",
+        "retailer_id": 3
+      },
+      "expected_baseline": {
+        "harvest_outcome": "verified",
+        "transport_outcome": "verified",
+        "retail_outcome": "verified",
+        "overall_outcome": "verified"
+      }
+    },
+    {
+      "batch_id": "TH-SYN-022",
+      "is_synthetic": true,
+      "synthetic_id": 22,
+      "created_at_iso": "2026-11-12T08:00:00+00:00",
+      "harvest": {
+        "batch_id": "TH-SYN-022",
+        "name": "Synthetic Crisp Red Bell Peppers",
+        "quantity": "220 kg",
+        "farming_method": "Cover Crop Soil-Grown",
+        "packaging_date": "2026-11-12",
+        "farmer_id": 1,
+        "image": "default.jpg",
+        "farm_name": "Emerald Canopy Micro-Growers",
+        "farm_location": "Sonora Border Region",
+        "certifications": "Bio-Dynamic Demeter Standard; USDA Organic",
+        "notes": "Synthetic benchmark batch #22. Generated strictly for research evaluation."
+      },
+      "transport_checkpoints": [
+        {
+          "checkpoint_index": 0,
+          "status": "Picked Up from Farm",
+          "current_location": "Orchard Loading Depot",
+          "temperature": "3.0 \u00b0C",
+          "vehicle_number": "WA-TRK-104",
+          "notes": "Checkpoint #1 telemetry confirmed within safe cold-chain band.",
+          "transporter_id": 2,
+          "timestamp_iso": "2026-11-12T14:00:00+00:00"
+        },
+        {
+          "checkpoint_index": 1,
+          "status": "In Transit - Regional Corridor",
+          "current_location": "Orchard Loading Depot",
+          "temperature": "4.1 \u00b0C",
+          "vehicle_number": "WA-TRK-104",
+          "notes": "Checkpoint #2 telemetry confirmed within safe cold-chain band.",
+          "transporter_id": 2,
+          "timestamp_iso": "2026-11-13T02:00:00+00:00"
+        },
+        {
+          "checkpoint_index": 2,
+          "status": "Customs & Quality Clearance Verified",
+          "current_location": "Central Valley Sorting Facility",
+          "temperature": "3.0 \u00b0C",
+          "vehicle_number": "CAL-LOG-712",
+          "notes": "Checkpoint #3 telemetry confirmed within safe cold-chain band.",
+          "transporter_id": 2,
+          "timestamp_iso": "2026-11-13T14:00:00+00:00"
+        },
+        {
+          "checkpoint_index": 3,
+          "status": "Mid-Route Temperature Inspection Passed",
+          "current_location": "Port Intermodal Container Yard",
+          "temperature": "4.2 \u00b0C",
+          "vehicle_number": "DIST-TRK-401",
+          "notes": "Checkpoint #4 telemetry confirmed within safe cold-chain band.",
+          "transporter_id": 2,
+          "timestamp_iso": "2026-11-14T07:00:00+00:00"
+        },
+        {
+          "checkpoint_index": 4,
+          "status": "Arrived at Metropolitan Cross-Dock",
+          "current_location": "Port Intermodal Container Yard",
+          "temperature": "3.1 \u00b0C",
+          "vehicle_number": "DIST-TRK-401",
+          "notes": "Checkpoint #5 telemetry confirmed within safe cold-chain band.",
+          "transporter_id": 2,
+          "timestamp_iso": "2026-11-14T16:00:00+00:00"
+        }
+      ],
+      "retail": {
+        "store_name": "Whole Harvest Organic Market",
+        "store_location": "Seattle Central Branch",
+        "price": "4.99",
+        "stock_quantity": "220 kg",
+        "arrival_date": "2026-11-15",
+        "shelf_life": "15 Days",
+        "retailer_id": 3
+      },
+      "expected_baseline": {
+        "harvest_outcome": "verified",
+        "transport_outcome": "verified",
+        "retail_outcome": "verified",
+        "overall_outcome": "verified"
+      }
+    },
+    {
+      "batch_id": "TH-SYN-023",
+      "is_synthetic": true,
+      "synthetic_id": 23,
+      "created_at_iso": "2026-11-14T08:00:00+00:00",
+      "harvest": {
+        "batch_id": "TH-SYN-023",
+        "name": "Synthetic Fresh Wild Blueberries",
+        "quantity": "150 kg",
+        "farming_method": "Organic Cold-Hardy",
+        "packaging_date": "2026-11-14",
+        "farmer_id": 1,
+        "image": "default.jpg",
+        "farm_name": "Sunburst Agricultural Commons",
+        "farm_location": "Northwest Berry Co-op",
+        "certifications": "Safe Quality Food (SQF) Level 2; USDA Organic",
+        "notes": "Synthetic benchmark batch #23. Generated strictly for research evaluation."
+      },
+      "transport_checkpoints": [
+        {
+          "checkpoint_index": 0,
+          "status": "Picked Up from Farm",
+          "current_location": "Highway Temperature Inspection Station",
+          "temperature": "4.2 \u00b0C",
+          "vehicle_number": "WA-TRK-208",
+          "notes": "Checkpoint #1 telemetry confirmed within safe cold-chain band.",
+          "transporter_id": 2,
+          "timestamp_iso": "2026-11-14T14:00:00+00:00"
+        },
+        {
+          "checkpoint_index": 1,
+          "status": "In Transit - Regional Corridor",
+          "current_location": "Central Valley Sorting Facility",
+          "temperature": "2.8 \u00b0C",
+          "vehicle_number": "CAL-LOG-712",
+          "notes": "Checkpoint #2 telemetry confirmed within safe cold-chain band.",
+          "transporter_id": 2,
+          "timestamp_iso": "2026-11-15T03:00:00+00:00"
+        }
+      ],
+      "retail": {
+        "store_name": "Cornerstone Natural Foods",
+        "store_location": "Tacoma Harbor Store",
+        "price": "4.49",
+        "stock_quantity": "150 kg",
+        "arrival_date": "2026-11-16",
+        "shelf_life": "20 Days",
+        "retailer_id": 3
+      },
+      "expected_baseline": {
+        "harvest_outcome": "verified",
+        "transport_outcome": "verified",
+        "retail_outcome": "verified",
+        "overall_outcome": "verified"
+      }
+    },
+    {
+      "batch_id": "TH-SYN-024",
+      "is_synthetic": true,
+      "synthetic_id": 24,
+      "created_at_iso": "2026-11-16T08:00:00+00:00",
+      "harvest": {
+        "batch_id": "TH-SYN-024",
+        "name": "Synthetic Sweet Strawberries",
+        "quantity": "250 kg",
+        "farming_method": "Integrated Pest Management",
+        "packaging_date": "2026-11-16",
+        "farmer_id": 1,
+        "image": "default.jpg",
+        "farm_name": "Cascadia Bio-Dynamic Fields",
+        "farm_location": "Watsonville Coastal Plains",
+        "certifications": "GlobalGAP Food Safety Standard; USDA Organic",
+        "notes": "Synthetic benchmark batch #24. Generated strictly for research evaluation."
+      },
+      "transport_checkpoints": [
+        {
+          "checkpoint_index": 0,
+          "status": "Picked Up from Farm",
+          "current_location": "Central Valley Sorting Facility",
+          "temperature": "4.2 \u00b0C",
+          "vehicle_number": "CAL-LOG-712",
+          "notes": "Checkpoint #1 telemetry confirmed within safe cold-chain band.",
+          "transporter_id": 2,
+          "timestamp_iso": "2026-11-16T14:00:00+00:00"
+        }
+      ],
+      "retail": {
+        "store_name": "Pacific Fresh Foods",
+        "store_location": "Portland Downtown Market",
+        "price": "3.79",
+        "stock_quantity": "250 kg",
+        "arrival_date": "2026-11-17",
+        "shelf_life": "13 Days",
+        "retailer_id": 3
+      },
+      "expected_baseline": {
+        "harvest_outcome": "verified",
+        "transport_outcome": "verified",
+        "retail_outcome": "verified",
+        "overall_outcome": "verified"
+      }
+    },
+    {
+      "batch_id": "TH-SYN-025",
+      "is_synthetic": true,
+      "synthetic_id": 25,
+      "created_at_iso": "2026-11-18T08:00:00+00:00",
+      "harvest": {
+        "batch_id": "TH-SYN-025",
+        "name": "Synthetic Crisp Red Bell Peppers",
+        "quantity": "220 kg",
+        "farming_method": "Cover Crop Soil-Grown",
+        "packaging_date": "2026-11-18",
+        "farmer_id": 1,
+        "image": "default.jpg",
+        "farm_name": "Cascadia Bio-Dynamic Fields",
+        "farm_location": "Sonora Border Region",
+        "certifications": "Regenerative Organic Certified (ROC) Bronze; Fair Trade",
+        "notes": "Synthetic benchmark batch #25. Generated strictly for research evaluation."
+      },
+      "transport_checkpoints": [
+        {
+          "checkpoint_index": 0,
+          "status": "Picked Up from Farm",
+          "current_location": "Highway Temperature Inspection Station",
+          "temperature": "2.8 \u00b0C",
+          "vehicle_number": "WA-TRK-208",
+          "notes": "Checkpoint #1 telemetry confirmed within safe cold-chain band.",
+          "transporter_id": 2,
+          "timestamp_iso": "2026-11-18T14:00:00+00:00"
+        },
+        {
+          "checkpoint_index": 1,
+          "status": "In Transit - Regional Corridor",
+          "current_location": "Central Valley Sorting Facility",
+          "temperature": "3.3 \u00b0C",
+          "vehicle_number": "CAL-LOG-712",
+          "notes": "Checkpoint #2 telemetry confirmed within safe cold-chain band.",
+          "transporter_id": 2,
+          "timestamp_iso": "2026-11-19T04:00:00+00:00"
+        }
+      ],
+      "retail": {
+        "store_name": "Evergreen Neighborhood Grocer",
+        "store_location": "Bellevue Square Location",
+        "price": "5.29",
+        "stock_quantity": "220 kg",
+        "arrival_date": "2026-11-19",
+        "shelf_life": "15 Days",
+        "retailer_id": 3
+      },
+      "expected_baseline": {
+        "harvest_outcome": "verified",
+        "transport_outcome": "verified",
+        "retail_outcome": "verified",
+        "overall_outcome": "verified"
+      }
+    },
+    {
+      "batch_id": "TH-SYN-026",
+      "is_synthetic": true,
+      "synthetic_id": 26,
+      "created_at_iso": "2026-11-20T08:00:00+00:00",
+      "harvest": {
+        "batch_id": "TH-SYN-026",
+        "name": "Synthetic Fresh Wild Blueberries",
+        "quantity": "150 kg",
+        "farming_method": "Organic Cold-Hardy",
+        "packaging_date": "2026-11-20",
+        "farmer_id": 1,
+        "image": "default.jpg",
+        "farm_name": "Sunburst Agricultural Commons",
+        "farm_location": "Northwest Berry Co-op",
+        "certifications": "Safe Quality Food (SQF) Level 2; USDA Organic",
+        "notes": "Synthetic benchmark batch #26. Generated strictly for research evaluation."
+      },
+      "transport_checkpoints": [
+        {
+          "checkpoint_index": 0,
+          "status": "Picked Up from Farm",
+          "current_location": "Orchard Loading Depot",
+          "temperature": "3.0 \u00b0C",
+          "vehicle_number": "WA-TRK-104",
+          "notes": "Checkpoint #1 telemetry confirmed within safe cold-chain band.",
+          "transporter_id": 2,
+          "timestamp_iso": "2026-11-20T14:00:00+00:00"
+        },
+        {
+          "checkpoint_index": 1,
+          "status": "In Transit - Regional Corridor",
+          "current_location": "State Cold Storage Hub",
+          "temperature": "3.7 \u00b0C",
+          "vehicle_number": "WA-TRK-208",
+          "notes": "Checkpoint #2 telemetry confirmed within safe cold-chain band.",
+          "transporter_id": 2,
+          "timestamp_iso": "2026-11-21T06:00:00+00:00"
+        },
+        {
+          "checkpoint_index": 2,
+          "status": "Customs & Quality Clearance Verified",
+          "current_location": "Orchard Loading Depot",
+          "temperature": "3.0 \u00b0C",
+          "vehicle_number": "WA-TRK-104",
+          "notes": "Checkpoint #3 telemetry confirmed within safe cold-chain band.",
+          "transporter_id": 2,
+          "timestamp_iso": "2026-11-21T22:00:00+00:00"
+        }
+      ],
+      "retail": {
+        "store_name": "Evergreen Neighborhood Grocer",
+        "store_location": "Bellevue Square Location",
+        "price": "5.29",
+        "stock_quantity": "150 kg",
+        "arrival_date": "2026-11-22",
+        "shelf_life": "21 Days",
+        "retailer_id": 3
+      },
+      "expected_baseline": {
+        "harvest_outcome": "verified",
+        "transport_outcome": "verified",
+        "retail_outcome": "verified",
+        "overall_outcome": "verified"
+      }
+    },
+    {
+      "batch_id": "TH-SYN-027",
+      "is_synthetic": true,
+      "synthetic_id": 27,
+      "created_at_iso": "2026-11-22T08:00:00+00:00",
+      "harvest": {
+        "batch_id": "TH-SYN-027",
+        "name": "Synthetic Valencia Juicing Oranges",
+        "quantity": "600 kg",
+        "farming_method": "Conventional Sustainable",
+        "packaging_date": "2026-11-22",
+        "farmer_id": 1,
+        "image": "default.jpg",
+        "farm_name": "Sunburst Agricultural Commons",
+        "farm_location": "Central Valley Citrus Belt",
+        "certifications": "Safe Quality Food (SQF) Level 2; USDA Organic",
+        "notes": "Synthetic benchmark batch #27. Generated strictly for research evaluation."
+      },
+      "transport_checkpoints": [
+        {
+          "checkpoint_index": 0,
+          "status": "Picked Up from Farm",
+          "current_location": "Regional Pre-Cooling Center",
+          "temperature": "3.4 \u00b0C",
+          "vehicle_number": "WA-TRK-104",
+          "notes": "Checkpoint #1 telemetry confirmed within safe cold-chain band.",
+          "transporter_id": 2,
+          "timestamp_iso": "2026-11-22T14:00:00+00:00"
+        },
+        {
+          "checkpoint_index": 1,
+          "status": "In Transit - Regional Corridor",
+          "current_location": "Metropolitan Logistics Cross-Dock",
+          "temperature": "2.9 \u00b0C",
+          "vehicle_number": "DIST-TRK-305",
+          "notes": "Checkpoint #2 telemetry confirmed within safe cold-chain band.",
+          "transporter_id": 2,
+          "timestamp_iso": "2026-11-23T04:00:00+00:00"
+        },
+        {
+          "checkpoint_index": 2,
+          "status": "Customs & Quality Clearance Verified",
+          "current_location": "Orchard Loading Depot",
+          "temperature": "3.6 \u00b0C",
+          "vehicle_number": "WA-TRK-104",
+          "notes": "Checkpoint #3 telemetry confirmed within safe cold-chain band.",
+          "transporter_id": 2,
+          "timestamp_iso": "2026-11-24T01:00:00+00:00"
+        },
+        {
+          "checkpoint_index": 3,
+          "status": "Mid-Route Temperature Inspection Passed",
+          "current_location": "Port Intermodal Container Yard",
+          "temperature": "3.5 \u00b0C",
+          "vehicle_number": "DIST-TRK-401",
+          "notes": "Checkpoint #4 telemetry confirmed within safe cold-chain band.",
+          "transporter_id": 2,
+          "timestamp_iso": "2026-11-24T15:00:00+00:00"
+        },
+        {
+          "checkpoint_index": 4,
+          "status": "Arrived at Metropolitan Cross-Dock",
+          "current_location": "Port Intermodal Container Yard",
+          "temperature": "3.9 \u00b0C",
+          "vehicle_number": "DIST-TRK-401",
+          "notes": "Checkpoint #5 telemetry confirmed within safe cold-chain band.",
+          "transporter_id": 2,
+          "timestamp_iso": "2026-11-25T09:00:00+00:00"
+        }
+      ],
+      "retail": {
+        "store_name": "Evergreen Neighborhood Grocer",
+        "store_location": "Bellevue Square Location",
+        "price": "5.29",
+        "stock_quantity": "600 kg",
+        "arrival_date": "2026-11-26",
+        "shelf_life": "18 Days",
+        "retailer_id": 3
+      },
+      "expected_baseline": {
+        "harvest_outcome": "verified",
+        "transport_outcome": "verified",
+        "retail_outcome": "verified",
+        "overall_outcome": "verified"
+      }
+    },
+    {
+      "batch_id": "TH-SYN-028",
+      "is_synthetic": true,
+      "synthetic_id": 28,
+      "created_at_iso": "2026-11-24T08:00:00+00:00",
+      "harvest": {
+        "batch_id": "TH-SYN-028",
+        "name": "Synthetic Baby Spinach Leaves",
+        "quantity": "180 kg",
+        "farming_method": "Certified Organic (USDA)",
+        "packaging_date": "2026-11-24",
+        "farmer_id": 1,
+        "image": "default.jpg",
+        "farm_name": "Highland Heritage Farmsteads",
+        "farm_location": "Yuma Agricultural Zone",
+        "certifications": "Bio-Dynamic Demeter Standard; USDA Organic",
+        "notes": "Synthetic benchmark batch #28. Generated strictly for research evaluation."
+      },
+      "transport_checkpoints": [
+        {
+          "checkpoint_index": 0,
+          "status": "Picked Up from Farm",
+          "current_location": "Central Valley Sorting Facility",
+          "temperature": "3.9 \u00b0C",
+          "vehicle_number": "CAL-LOG-712",
+          "notes": "Checkpoint #1 telemetry confirmed within safe cold-chain band.",
+          "transporter_id": 2,
+          "timestamp_iso": "2026-11-24T14:00:00+00:00"
+        },
+        {
+          "checkpoint_index": 1,
+          "status": "In Transit - Regional Corridor",
+          "current_location": "Highway Temperature Inspection Station",
+          "temperature": "3.5 \u00b0C",
+          "vehicle_number": "WA-TRK-208",
+          "notes": "Checkpoint #2 telemetry confirmed within safe cold-chain band.",
+          "transporter_id": 2,
+          "timestamp_iso": "2026-11-25T02:00:00+00:00"
+        },
+        {
+          "checkpoint_index": 2,
+          "status": "Customs & Quality Clearance Verified",
+          "current_location": "State Cold Storage Hub",
+          "temperature": "3.8 \u00b0C",
+          "vehicle_number": "WA-TRK-208",
+          "notes": "Checkpoint #3 telemetry confirmed within safe cold-chain band.",
+          "transporter_id": 2,
+          "timestamp_iso": "2026-11-25T22:00:00+00:00"
+        }
+      ],
+      "retail": {
+        "store_name": "Cornerstone Natural Foods",
+        "store_location": "Tacoma Harbor Store",
+        "price": "4.49",
+        "stock_quantity": "180 kg",
+        "arrival_date": "2026-11-26",
+        "shelf_life": "18 Days",
+        "retailer_id": 3
+      },
+      "expected_baseline": {
+        "harvest_outcome": "verified",
+        "transport_outcome": "verified",
+        "retail_outcome": "verified",
+        "overall_outcome": "verified"
+      }
+    },
+    {
+      "batch_id": "TH-SYN-029",
+      "is_synthetic": true,
+      "synthetic_id": 29,
+      "created_at_iso": "2026-11-26T08:00:00+00:00",
+      "harvest": {
+        "batch_id": "TH-SYN-029",
+        "name": "Synthetic Organic Honeycrisp Apples",
+        "quantity": "500 kg",
+        "farming_method": "100% Certified Organic",
+        "packaging_date": "2026-11-26",
+        "farmer_id": 1,
+        "image": "default.jpg",
+        "farm_name": "Cascadia Bio-Dynamic Fields",
+        "farm_location": "Yakima Valley, WA",
+        "certifications": "Regenerative Organic Certified (ROC) Bronze; Fair Trade",
+        "notes": "Synthetic benchmark batch #29. Generated strictly for research evaluation."
+      },
+      "transport_checkpoints": [
+        {
+          "checkpoint_index": 0,
+          "status": "Picked Up from Farm",
+          "current_location": "Central Valley Sorting Facility",
+          "temperature": "4.1 \u00b0C",
+          "vehicle_number": "CAL-LOG-712",
+          "notes": "Checkpoint #1 telemetry confirmed within safe cold-chain band.",
+          "transporter_id": 2,
+          "timestamp_iso": "2026-11-26T14:00:00+00:00"
+        },
+        {
+          "checkpoint_index": 1,
+          "status": "In Transit - Regional Corridor",
+          "current_location": "Supermarket Distribution Center",
+          "temperature": "3.5 \u00b0C",
+          "vehicle_number": "STORE-FLT-900",
+          "notes": "Checkpoint #2 telemetry confirmed within safe cold-chain band.",
+          "transporter_id": 2,
+          "timestamp_iso": "2026-11-27T08:00:00+00:00"
+        }
+      ],
+      "retail": {
+        "store_name": "Urban Farmstead Market",
+        "store_location": "Vancouver Main Street",
+        "price": "4.89",
+        "stock_quantity": "500 kg",
+        "arrival_date": "2026-11-28",
+        "shelf_life": "17 Days",
+        "retailer_id": 3
+      },
+      "expected_baseline": {
+        "harvest_outcome": "verified",
+        "transport_outcome": "verified",
+        "retail_outcome": "verified",
+        "overall_outcome": "verified"
+      }
+    },
+    {
+      "batch_id": "TH-SYN-030",
+      "is_synthetic": true,
+      "synthetic_id": 30,
+      "created_at_iso": "2026-11-28T08:00:00+00:00",
+      "harvest": {
+        "batch_id": "TH-SYN-030",
+        "name": "Synthetic Organic Hass Avocados",
+        "quantity": "400 kg",
+        "farming_method": "Regenerative Organic",
+        "packaging_date": "2026-11-28",
+        "farmer_id": 1,
+        "image": "default.jpg",
+        "farm_name": "Highland Heritage Farmsteads",
+        "farm_location": "Michoac\u00e1n Micro-Farm #4",
+        "certifications": "USDA Organic; Non-GMO Project Verified; CCOF Certified",
+        "notes": "Synthetic benchmark batch #30. Generated strictly for research evaluation."
+      },
+      "transport_checkpoints": [
+        {
+          "checkpoint_index": 0,
+          "status": "Picked Up from Farm",
+          "current_location": "Port Intermodal Container Yard",
+          "temperature": "2.9 \u00b0C",
+          "vehicle_number": "DIST-TRK-401",
+          "notes": "Checkpoint #1 telemetry confirmed within safe cold-chain band.",
+          "transporter_id": 2,
+          "timestamp_iso": "2026-11-28T14:00:00+00:00"
+        },
+        {
+          "checkpoint_index": 1,
+          "status": "In Transit - Regional Corridor",
+          "current_location": "Metropolitan Logistics Cross-Dock",
+          "temperature": "3.2 \u00b0C",
+          "vehicle_number": "DIST-TRK-305",
+          "notes": "Checkpoint #2 telemetry confirmed within safe cold-chain band.",
+          "transporter_id": 2,
+          "timestamp_iso": "2026-11-29T05:00:00+00:00"
+        },
+        {
+          "checkpoint_index": 2,
+          "status": "Customs & Quality Clearance Verified",
+          "current_location": "State Cold Storage Hub",
+          "temperature": "2.8 \u00b0C",
+          "vehicle_number": "WA-TRK-208",
+          "notes": "Checkpoint #3 telemetry confirmed within safe cold-chain band.",
+          "transporter_id": 2,
+          "timestamp_iso": "2026-11-29T19:00:00+00:00"
+        }
+      ],
+      "retail": {
+        "store_name": "Cornerstone Natural Foods",
+        "store_location": "Tacoma Harbor Store",
+        "price": "4.49",
+        "stock_quantity": "400 kg",
+        "arrival_date": "2026-11-30",
+        "shelf_life": "19 Days",
+        "retailer_id": 3
+      },
+      "expected_baseline": {
+        "harvest_outcome": "verified",
+        "transport_outcome": "verified",
+        "retail_outcome": "verified",
+        "overall_outcome": "verified"
+      }
+    }
+  ]
+}
